@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "modules/proto/agentpb";
+
+
+service AgentService {
+  rpc Connect(stream AgentMessage) returns (stream AgentMessage);
+}
+enum MessageType {
+  UNKNOWN = 0;
+  HELLO = 1;
+  QUERY = 2;
+  RESULT = 3;
+  ERROR = 4;
+  HEARTBEAT = 5;
+  ACK = 6;
+}
+
+message AgentMessage {
+  string agent_id = 1;
+  MessageType type = 2;
+  string message  = 3;
+  AgentPayload  payload  = 4; // AgentPayload to better perfomance will be on of the options
+}
+message AgentPayload {
+  oneof data {
+    Produtos produtos = 1;
+    Vendas   vendas   = 2;
+    Clientes clientes = 3;
+    Categorias categorias =4;
+    Vendedores vendedores =5;
+    Financeiros financeiros = 6;
+
+    Erros    erros    = 7;
+    ACKReturn ack_return =8;
+  }
+}
+message ACKReturn {
+  ConnectStatus status =1;
+
+}
+enum ConnectStatus {
+  REJECTED = 0;
+  ACCEPTED = 1;
+
+}
+message Erros {
+  repeated Error error =1;
+}
+message Error {
+  string code = 1;
+  string message = 2;
+  string context = 3;
+}
+// produtos ---
+message Produtos {
+  repeated Produto items = 1; // batch
+}
+message Produto {
+  string id_externo = 1;
+  string nome  = 2;
+  string codigo  = 3;
+  float valor  = 4;
+  string  duracao = 5;
+  bool no_buyback = 6;
+  int32 comissao =7;
+  string categoria  =8;
+  string nome_categoria =9;
+  string descricao =10;
+  string estoque = 11;
+  bool contar_estoque = 12;
+  bool ativo = 13;  
+  string complemento = 14;
+}
+// produtos ---
+
+// clientes ---
+message Clientes {
+  repeated Cliente items = 1; // batch
+}
+message Cliente {
+  string id_externo = 1;
+  string nome = 2;
+  string referencia  = 3;
+  string whatsapp = 4;
+  string email =5;
+  string aniversario =6;
+  string pj_ou_pf = 7;
+  string cpf_cnpj =8;
+  string endereco =9;
+  string num =10;
+  string bairro =11;
+  string cidade =12;
+  int32 idade = 13;
+  string sexo =14;
+  int32 vendedor_id =15;
+}
+// clientes ---
+
+// categorias ---
+message Categorias {
+  repeated Categoria items = 1; // batch
+}
+message Categoria {
+  string id_externo = 1;
+  string nome        = 2;
+}
+// categorias ---
+
+// vendedores ---
+message Vendedores {
+  repeated Vendedor items = 1; // batch
+}
+message Vendedor {
+  string id_externo = 1;
+  string nome        = 2;
+  string codigo = 3;
+  bool todas_permissoes=4;
+  bool ativo =5;
+}
+// vendedores ---
+// vendas ---
+message Vendas {
+  repeated Venda items = 1; // batch
+}
+message Venda {
+  string id_externo = 1;
+  int32 empresa        = 2;
+  string cliente = 3;
+  string vendedor =4;
+  string data_compra =5;
+  float total_compra =6;
+  float valor_liquido=7;
+  string tipo_pagamento=8;
+  bool recorrente=9;
+  int32 parcelas=10;
+  float entrada =11;
+  string data_vencimento=12;
+  string metodo_pagamento=13;
+  bool orcamento =14;
+  int32 oferecer_denovo =15;
+  repeated Produtos_vendas produtos_venda=16;
+  string observacao =17;
+  repeated string datas_vencimento=18;
+
+}
+message Produtos_vendas {
+  string produto_id =1;
+  string quantidade =2;
+  string valor_unitario =3;
+}
+// vendas ---
+
+// vendedores ---
+message Financeiros {
+  repeated Financeiro items = 1; // batch
+}
+message Financeiro {
+  string id_externo = 1;
+  string cliente        = 2;
+  string status = 3;
+  float valor_total=4;
+  int32 parcelas =5;
+  float valor_parcela=6;
+  string data_vencimento =7; 
+  bool data_personalizadas =8;
+  repeated Infos_obranca infos_cobranca =9;
+  bool recorrente =10;
+  string venda =11;
+  string media =12;
+  string titulo_cobranca=13;
+  bool ativo =14;
+}
+message Infos_obranca {
+  string id_externo =1;
+  float valor_parcela =2;
+  string data_vencimento =3;
+  string status =4;
+}
+// vendedores ---
