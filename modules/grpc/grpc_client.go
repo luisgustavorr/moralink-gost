@@ -38,7 +38,18 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		} else {
 			fmt.Println("Desaprovado")
 		}
-		log.Printf("received ACK: %s - %s", msg.Message, ackReturn.Status, utils.JsonViewInterface(msg.Payload.GetAckReturn()))
+		log.Printf("received ACK: %s - %s", msg.Message, ackReturn.Status)
+		connectedUser := msg.Payload.GetAckReturn().ConnectedUser
+		db_info, err := utils.ParseDBConfig(connectedUser.ConfigJson)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("DB info : ", db_info)
+		utils.Conn = utils.ConnInfo{
+			UseApi:   connectedUser.UseApi,
+			Domainws: connectedUser.Domainws,
+			Cronjob:  connectedUser.Cronjob,
+		}
 		// c.SendMessage(&pb.AgentMessage{
 		// 	AgentId: viper.GetString("api.token"),
 		// 	Message: "Resultado QUery : 1q231",

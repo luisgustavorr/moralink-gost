@@ -89,6 +89,7 @@ const (
 	DbType_POSTGRESQL DbType = 1
 	DbType_FIREBIRD   DbType = 2
 	DbType_MSSQL      DbType = 3
+	DbType_MYSQL_OLD  DbType = 4
 )
 
 // Enum value maps for DbType.
@@ -98,12 +99,14 @@ var (
 		1: "POSTGRESQL",
 		2: "FIREBIRD",
 		3: "MSSQL",
+		4: "MYSQL_OLD",
 	}
 	DbType_value = map[string]int32{
 		"MYSQL":      0,
 		"POSTGRESQL": 1,
 		"FIREBIRD":   2,
 		"MSSQL":      3,
+		"MYSQL_OLD":  4,
 	}
 )
 
@@ -2007,13 +2010,14 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x06RESULT\x10\x03\x12\t\n" +
 	"\x05ERROR\x10\x04\x12\r\n" +
 	"\tHEARTBEAT\x10\x05\x12\a\n" +
-	"\x03ACK\x10\x06*=\n" +
+	"\x03ACK\x10\x06*L\n" +
 	"\aDb_type\x12\t\n" +
 	"\x05MYSQL\x10\x00\x12\x0e\n" +
 	"\n" +
 	"POSTGRESQL\x10\x01\x12\f\n" +
 	"\bFIREBIRD\x10\x02\x12\t\n" +
-	"\x05MSSQL\x10\x03*+\n" +
+	"\x05MSSQL\x10\x03\x12\r\n" +
+	"\tMYSQL_OLD\x10\x04*+\n" +
 	"\rConnectStatus\x12\f\n" +
 	"\bREJECTED\x10\x00\x12\f\n" +
 	"\bACCEPTED\x10\x012G\n" +

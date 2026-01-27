@@ -1,0 +1,6 @@
+☐ Create the db connections manager, that will be the part that defines which Db driver that will be used
+☐ Create each connection driver/functions
+☐ Create something to convert the JSON to the DB connections parameters required by each library (maybe use dsn, but not sure yet)
+☐ After the connection, MAYBE use an event to tell the server that the app connected to the db, so it will be a 2 step status (connected to server, and connected to DB) so it will be possible to restart the app in case of failed db connection (return the error from DB) 
+☐ Create the exec queries logic,( first the generic and then the structed ones, so the communication will be the first thing to be tested)
+☐ Do all the less critical parts of the app (cronjob,reconnection,verify token on Shark Business when connecting to server)
