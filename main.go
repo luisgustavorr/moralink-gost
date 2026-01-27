@@ -2,16 +2,18 @@ package main
 
 import (
 	Grpcclient "MoraLinkGOst/modules/grpc"
+	"MoraLinkGOst/modules/utils"
 	"context"
 	"log"
-	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 var _ = godotenv.Load()
 
 func main() {
+	utils.LoadConfig()
 	// service logic
 	// svcConfig := &service.Config{
 	// 	Name:        "moralink-gost",
@@ -40,7 +42,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	client := Grpcclient.New(
-		os.Getenv("AGENT_NAME"),
+		viper.GetString("api.user"),
 		"0.1.0",
 		"localhost:50051",
 	)

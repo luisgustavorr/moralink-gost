@@ -17,7 +17,12 @@ enum MessageType {
   HEARTBEAT = 5;
   ACK = 6;
 }
-
+enum Db_type{
+  MYSQL =0;
+  POSTGRESQL=1;
+  FIREBIRD=2;
+  MSSQL=3;
+}
 message AgentMessage {
   string agent_id = 1;
   MessageType type = 2;
@@ -32,14 +37,23 @@ message AgentPayload {
     Categorias categorias =4;
     Vendedores vendedores =5;
     Financeiros financeiros = 6;
-
-    Erros    erros    = 7;
-    ACKReturn ack_return =8;
+    string generic_return =7;
+    
+    Erros    erros    = 8;
+    ACKReturn ack_return =9;
   }
 }
 message ACKReturn {
   ConnectStatus status =1;
+  ConnectedUser connected_user=2;
 
+}
+message ConnectedUser {
+  Db_type db_type =1;
+  bool use_api =2;
+  string config_json=3;
+  string domainws=4;
+  string cronjob =5;
 }
 enum ConnectStatus {
   REJECTED = 0;

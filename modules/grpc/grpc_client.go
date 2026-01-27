@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"MoraLinkGOst/modules/utils"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -38,20 +38,20 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		} else {
 			fmt.Println("Desaprovado")
 		}
-		log.Printf("received ACK: %s - %s", msg.Message, ackReturn.Status)
-		c.SendMessage(&pb.AgentMessage{
-			AgentId: os.Getenv("AGENT_NAME"),
-			Message: "Resultado QUery : 1q231",
-			Type:    pb.MessageType_RESULT,
-			Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Produtos{
-				Produtos: &pb.Produtos{Items: []*pb.Produto{
-					{
-						IdExterno: "teste_123",
-						Valor:     12.30,
-					},
-				}},
-			}},
-		})
+		log.Printf("received ACK: %s - %s", msg.Message, ackReturn.Status, utils.JsonViewInterface(msg.Payload.GetAckReturn()))
+		// c.SendMessage(&pb.AgentMessage{
+		// 	AgentId: viper.GetString("api.token"),
+		// 	Message: "Resultado QUery : 1q231",
+		// 	Type:    pb.MessageType_RESULT,
+		// 	Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Produtos{
+		// 		Produtos: &pb.Produtos{Items: []*pb.Produto{
+		// 			{
+		// 				IdExterno: "teste_123",
+		// 				Valor:     12.30,
+		// 			},
+		// 		}},
+		// 	}},
+		// })
 	case pb.MessageType_HEARTBEAT:
 		log.Println("heartbeat received")
 
@@ -82,7 +82,7 @@ func (c *Client) Run(ctx context.Context) error {
 	c.stream = stream
 	// Send HELLO
 	message := &pb.AgentMessage{
-		AgentId: os.Getenv("AGENT_NAME"),
+		AgentId: viper.GetString("api.token"),
 		Message: "Olá, recebi sua mensagem",
 		Type:    pb.MessageType_HELLO,
 		Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Produtos{

@@ -1,6 +1,8 @@
 package utils
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 func JsonViewInterface(data any) string {
 	teste, _ := json.MarshalIndent(data, "", "")
