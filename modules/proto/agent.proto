@@ -30,6 +30,7 @@ message AgentMessage {
   MessageType type = 2;
   string message  = 3;
   AgentPayload  payload  = 4; // AgentPayload to better perfomance will be on of the options
+  
 }
 message AgentPayload {
   oneof data {
@@ -40,10 +41,22 @@ message AgentPayload {
     Vendedores vendedores =5;
     Financeiros financeiros = 6;
     string generic_return =7;
-
-    Erros    erros    = 8;
-    ACKReturn ack_return =9;
+    Query query_request =8;
+    Erros    erros    = 9;
+    ACKReturn ack_return =10;
   }
+}
+message Query {
+  Table table =1;
+  string query = 2;
+}
+enum Table {
+  QPRODUTOS =0;
+  QCLIENTES =1;
+  QCATEGORIAS=2;
+  QVENDAS=3;
+  QVENDEDORES=4;
+  QFINANCEIRO=5;
 }
 message ACKReturn {
   ConnectStatus status =1;

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	dbmanagers "MoraLinkGOst/modules/db_managers"
+	"MoraLinkGOst/modules/proto/agentpb"
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"MoraLinkGOst/modules/utils"
 
@@ -44,12 +46,9 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println("DB info : ", db_info)
-		utils.Conn = utils.ConnInfo{
-			UseApi:   connectedUser.UseApi,
-			Domainws: connectedUser.Domainws,
-			Cronjob:  connectedUser.Cronjob,
-		}
+		fmt.Println("DB info : ", db_info, connectedUser.DbType.Number())
+		db, _ := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
+		utils.Conn.DB = db
 		// c.SendMessage(&pb.AgentMessage{
 		// 	AgentId: viper.GetString("api.token"),
 		// 	Message: "Resultado QUery : 1q231",
@@ -65,6 +64,28 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		// })
 	case pb.MessageType_HEARTBEAT:
 		log.Println("heartbeat received")
+	case pb.MessageType_QUERY:
+		dbConn := utils.Conn.DB
+
+		switch msg.Payload.GetQueryRequest().GetTable() {
+		case 2:
+			result, err := dbConn.Queries.Categorias(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			if err == nil {
+				fmt.Println("devolver resultado", result)
+				resultPb := utils.ToProtoCategorias(result)
+				c.SendMessage(&agentpb.AgentMessage{
+					Type: agentpb.MessageType_RESULT,
+					Payload: &pb.AgentPayload{
+						Data: &pb.AgentPayload_Categorias{
+							Categorias: &pb.Categorias{
+								Items: resultPb,
+							},
+						},
+					},
+				})
+				log.Println("query received", msg.Message, utils.JsonViewInterface(result))
+			}
+		}
 
 	default:
 		log.Println("unknown message", msg.Type)
