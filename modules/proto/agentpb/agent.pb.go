@@ -244,9 +244,12 @@ func (ConnectStatus) EnumDescriptor() ([]byte, []int) {
 type AgentMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	Type          MessageType            `protobuf:"varint,2,opt,name=type,proto3,enum=agent.MessageType" json:"type,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	Payload       *AgentPayload          `protobuf:"bytes,4,opt,name=payload,proto3" json:"payload,omitempty"` // AgentPayload to better perfomance will be on of the options
+	BatchId       string                 `protobuf:"bytes,2,opt,name=batch_id,json=batchId,proto3" json:"batch_id,omitempty"`
+	Type          MessageType            `protobuf:"varint,3,opt,name=type,proto3,enum=agent.MessageType" json:"type,omitempty"`
+	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	Payload       *AgentPayload          `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"` // AgentPayload to better perfomance will be on of the options
+	Table         Table                  `protobuf:"varint,6,opt,name=table,proto3,enum=agent.Table" json:"table,omitempty"`
+	IsLast        bool                   `protobuf:"varint,7,opt,name=isLast,proto3" json:"isLast,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -288,6 +291,13 @@ func (x *AgentMessage) GetAgentId() string {
 	return ""
 }
 
+func (x *AgentMessage) GetBatchId() string {
+	if x != nil {
+		return x.BatchId
+	}
+	return ""
+}
+
 func (x *AgentMessage) GetType() MessageType {
 	if x != nil {
 		return x.Type
@@ -307,6 +317,20 @@ func (x *AgentMessage) GetPayload() *AgentPayload {
 		return x.Payload
 	}
 	return nil
+}
+
+func (x *AgentMessage) GetTable() Table {
+	if x != nil {
+		return x.Table
+	}
+	return Table_QPRODUTOS
+}
+
+func (x *AgentMessage) GetIsLast() bool {
+	if x != nil {
+		return x.IsLast
+	}
+	return false
 }
 
 type AgentPayload struct {
@@ -521,8 +545,8 @@ func (*AgentPayload_AckReturn) isAgentPayload_Data() {}
 
 type Query struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Table         Table                  `protobuf:"varint,1,opt,name=table,proto3,enum=agent.Table" json:"table,omitempty"`
-	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	BatchSize     int32                  `protobuf:"varint,2,opt,name=batchSize,proto3" json:"batchSize,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -557,18 +581,18 @@ func (*Query) Descriptor() ([]byte, []int) {
 	return file_modules_proto_agent_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *Query) GetTable() Table {
-	if x != nil {
-		return x.Table
-	}
-	return Table_QPRODUTOS
-}
-
 func (x *Query) GetQuery() string {
 	if x != nil {
 		return x.Query
 	}
 	return ""
+}
+
+func (x *Query) GetBatchSize() int32 {
+	if x != nil {
+		return x.BatchSize
+	}
+	return 0
 }
 
 type ACKReturn struct {
@@ -1966,12 +1990,15 @@ var File_modules_proto_agent_proto protoreflect.FileDescriptor
 
 const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x19modules/proto/agent.proto\x12\x05agent\"\x9a\x01\n" +
+	"\x19modules/proto/agent.proto\x12\x05agent\"\xf1\x01\n" +
 	"\fAgentMessage\x12\x19\n" +
-	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12&\n" +
-	"\x04type\x18\x02 \x01(\x0e2\x12.agent.MessageTypeR\x04type\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x12-\n" +
-	"\apayload\x18\x04 \x01(\v2\x13.agent.AgentPayloadR\apayload\"\xf6\x03\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x19\n" +
+	"\bbatch_id\x18\x02 \x01(\tR\abatchId\x12&\n" +
+	"\x04type\x18\x03 \x01(\x0e2\x12.agent.MessageTypeR\x04type\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x12-\n" +
+	"\apayload\x18\x05 \x01(\v2\x13.agent.AgentPayloadR\apayload\x12\"\n" +
+	"\x05table\x18\x06 \x01(\x0e2\f.agent.TableR\x05table\x12\x16\n" +
+	"\x06isLast\x18\a \x01(\bR\x06isLast\"\xf6\x03\n" +
 	"\fAgentPayload\x12-\n" +
 	"\bprodutos\x18\x01 \x01(\v2\x0f.agent.ProdutosH\x00R\bprodutos\x12'\n" +
 	"\x06vendas\x18\x02 \x01(\v2\r.agent.VendasH\x00R\x06vendas\x12-\n" +
@@ -1989,10 +2016,10 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
 	"ack_return\x18\n" +
 	" \x01(\v2\x10.agent.ACKReturnH\x00R\tackReturnB\x06\n" +
-	"\x04data\"A\n" +
-	"\x05Query\x12\"\n" +
-	"\x05table\x18\x01 \x01(\x0e2\f.agent.TableR\x05table\x12\x14\n" +
-	"\x05query\x18\x02 \x01(\tR\x05query\"v\n" +
+	"\x04data\";\n" +
+	"\x05Query\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1c\n" +
+	"\tbatchSize\x18\x02 \x01(\x05R\tbatchSize\"v\n" +
 	"\tACKReturn\x12,\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x14.agent.ConnectStatusR\x06status\x12;\n" +
 	"\x0econnected_user\x18\x02 \x01(\v2\x14.agent.ConnectedUserR\rconnectedUser\"\xa8\x01\n" +
@@ -2206,16 +2233,16 @@ var file_modules_proto_agent_proto_goTypes = []any{
 var file_modules_proto_agent_proto_depIdxs = []int32{
 	0,  // 0: agent.AgentMessage.type:type_name -> agent.MessageType
 	5,  // 1: agent.AgentMessage.payload:type_name -> agent.AgentPayload
-	11, // 2: agent.AgentPayload.produtos:type_name -> agent.Produtos
-	19, // 3: agent.AgentPayload.vendas:type_name -> agent.Vendas
-	13, // 4: agent.AgentPayload.clientes:type_name -> agent.Clientes
-	15, // 5: agent.AgentPayload.categorias:type_name -> agent.Categorias
-	17, // 6: agent.AgentPayload.vendedores:type_name -> agent.Vendedores
-	22, // 7: agent.AgentPayload.financeiros:type_name -> agent.Financeiros
-	6,  // 8: agent.AgentPayload.query_request:type_name -> agent.Query
-	9,  // 9: agent.AgentPayload.erros:type_name -> agent.Erros
-	7,  // 10: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
-	2,  // 11: agent.Query.table:type_name -> agent.Table
+	2,  // 2: agent.AgentMessage.table:type_name -> agent.Table
+	11, // 3: agent.AgentPayload.produtos:type_name -> agent.Produtos
+	19, // 4: agent.AgentPayload.vendas:type_name -> agent.Vendas
+	13, // 5: agent.AgentPayload.clientes:type_name -> agent.Clientes
+	15, // 6: agent.AgentPayload.categorias:type_name -> agent.Categorias
+	17, // 7: agent.AgentPayload.vendedores:type_name -> agent.Vendedores
+	22, // 8: agent.AgentPayload.financeiros:type_name -> agent.Financeiros
+	6,  // 9: agent.AgentPayload.query_request:type_name -> agent.Query
+	9,  // 10: agent.AgentPayload.erros:type_name -> agent.Erros
+	7,  // 11: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
 	3,  // 12: agent.ACKReturn.status:type_name -> agent.ConnectStatus
 	8,  // 13: agent.ACKReturn.connected_user:type_name -> agent.ConnectedUser
 	1,  // 14: agent.ConnectedUser.db_type:type_name -> agent.Db_type

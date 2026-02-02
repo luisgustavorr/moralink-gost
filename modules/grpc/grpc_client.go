@@ -66,12 +66,40 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		log.Println("heartbeat received")
 	case pb.MessageType_QUERY:
 		dbConn := utils.Conn.DB
+		batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
+		switch msg.GetTable() {
+		case 1:
+			fmt.Println("CLientes...")
+			result, err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			fmt.Println("error", err)
+			if err == nil {
+				resultPb := utils.ToProtoClientes(result)
+				for i := 0; i < len(resultPb); i += batchSize {
+					end := i + batchSize
+					if end > len(resultPb) {
+						end = len(resultPb)
+					}
 
-		switch msg.Payload.GetQueryRequest().GetTable() {
+					c.SendMessage(&agentpb.AgentMessage{
+						Type: agentpb.MessageType_RESULT,
+						Payload: &pb.AgentPayload{
+							Data: &pb.AgentPayload_Clientes{
+								Clientes: &pb.Clientes{
+									Items: resultPb[i:end],
+								},
+							},
+						},
+					})
+				}
+
+				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
+			} else {
+				c.SendError(err.Error())
+			}
 		case 2:
 			result, err := dbConn.Queries.Categorias(msg.Payload.GetQueryRequest().Query, dbConn.DB)
 			if err == nil {
-				fmt.Println("devolver resultado", result)
+				fmt.Println("devolver resultado", len(result))
 				resultPb := utils.ToProtoCategorias(result)
 				c.SendMessage(&agentpb.AgentMessage{
 					Type: agentpb.MessageType_RESULT,
@@ -83,7 +111,9 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 						},
 					},
 				})
-				log.Println("query received", msg.Message, utils.JsonViewInterface(result))
+				log.Println("query received", msg.Message, len(result))
+			} else {
+				c.SendError(err.Error())
 			}
 		}
 
@@ -148,7 +178,23 @@ func (c *Client) Run(ctx context.Context) error {
 }
 
 func (c *Client) SendMessage(msg *pb.AgentMessage) error {
-	fmt.Println("send:", utils.JsonViewInterface(msg))
 	err := c.stream.Send(msg)
+	return err
+}
+func (c *Client) SendError(message string) error {
+	err := c.SendMessage(&pb.AgentMessage{
+		AgentId: viper.GetString("api.token"),
+		Message: "Ocorreu um erro...",
+		Type:    pb.MessageType_ERROR,
+		Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Erros{
+			Erros: &pb.Erros{
+				Error: []*pb.Error{
+					{
+						Message: message,
+					},
+				},
+			},
+		}},
+	})
 	return err
 }

@@ -1,20 +1,19 @@
 package dbmanagers
 
 import (
-	pb "MoraLinkGOst/modules/proto/agentpb"
 	"MoraLinkGOst/modules/utils"
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
 func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		connInfo["host"].(string), connInfo["port"].(string), connInfo["user"].(string), connInfo["password"].(string), connInfo["database"].(string))
-	sqlDB, err := sql.Open("postgres", psqlInfo)
+	sqlDB, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao abrir conexão com PostgreSQL: %v", err)
 	}
@@ -49,19 +48,32 @@ func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*uti
 	return dI, nil
 }
 
-func GetProdutos(query string, db *sql.DB) ([]*pb.Produto, error) {
-	result := []*pb.Produto{}
+func GetProdutos(query string, db *sqlx.DB) ([]utils.ProdutoRow, error) {
+	result := []utils.ProdutoRow{}
 	return result, nil
 }
-func GetClientes(query string, db *sql.DB) ([]*pb.Cliente, error) {
-	result := []*pb.Cliente{}
+func GetClientes(query string, db *sqlx.DB) ([]utils.ClienteRow, error) {
+	result := []utils.ClienteRow{}
+	rows, err := db.Queryx(query)
+	if err != nil {
+		fmt.Println("Erro no get categorias", err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		rowStructed := utils.ClienteRow{}
+		err = rows.StructScan(&rowStructed)
+		if err == nil {
+			result = append(result, rowStructed)
+		}
+	}
+	return result, err
+}
+func GetVendas(query string, db *sqlx.DB) ([]utils.VendaRow, error) {
+	result := []utils.VendaRow{}
 	return result, nil
 }
-func GetVendas(query string, db *sql.DB) ([]*pb.Venda, error) {
-	result := []*pb.Venda{}
-	return result, nil
-}
-func GetCategorias(query string, db *sql.DB) ([]utils.CategoriaRow, error) {
+func GetCategorias(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
 	result := []utils.CategoriaRow{}
 	rows, err := db.Query(query)
 	if err != nil {
@@ -79,15 +91,15 @@ func GetCategorias(query string, db *sql.DB) ([]utils.CategoriaRow, error) {
 	fmt.Println(utils.JsonViewInterface(result))
 	return result, err
 }
-func GetVendedores(query string, db *sql.DB) ([]*pb.Vendedor, error) {
-	result := []*pb.Vendedor{}
+func GetVendedores(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
+	result := []utils.VendedorRow{}
 	return result, nil
 }
-func GetFinanceiros(query string, db *sql.DB) ([]*pb.Financeiro, error) {
-	result := []*pb.Financeiro{}
+func GetFinanceiros(query string, db *sqlx.DB) ([]utils.FinanceiroRow, error) {
+	result := []utils.FinanceiroRow{}
 	return result, nil
 }
-func GetGeneric(query string, db *sql.DB) (map[string]interface{}, error) {
+func GetGeneric(query string, db *sqlx.DB) (map[string]interface{}, error) {
 	result := map[string]interface{}{}
 	return result, nil
 }

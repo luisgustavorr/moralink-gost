@@ -27,9 +27,13 @@ enum Db_type{
 }
 message AgentMessage {
   string agent_id = 1;
-  MessageType type = 2;
-  string message  = 3;
-  AgentPayload  payload  = 4; // AgentPayload to better perfomance will be on of the options
+  string batch_id =2;
+  MessageType type = 3;
+  string message  = 4;
+  AgentPayload  payload  = 5; // AgentPayload to better perfomance will be on of the options
+  Table table =6;
+  bool isLast =7;
+
   
 }
 message AgentPayload {
@@ -47,8 +51,8 @@ message AgentPayload {
   }
 }
 message Query {
-  Table table =1;
-  string query = 2;
+  string query = 1;
+  int32 batchSize =2;
 }
 enum Table {
   QPRODUTOS =0;
