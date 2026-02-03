@@ -67,21 +67,30 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 	case pb.MessageType_QUERY:
 		dbConn := utils.Conn.DB
 		batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
-		switch msg.GetTable() {
+		tableAskedFor := msg.GetTable()
+		switch tableAskedFor {
 		case 1:
 			fmt.Println("CLientes...")
 			result, err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB)
 			fmt.Println("error", err)
 			if err == nil {
 				resultPb := utils.ToProtoClientes(result)
+				isLast := false
 				for i := 0; i < len(resultPb); i += batchSize {
 					end := i + batchSize
+
+					fmt.Println("Passando")
 					if end > len(resultPb) {
+						fmt.Println("Último ? ")
+						isLast = true
 						end = len(resultPb)
 					}
 
 					c.SendMessage(&agentpb.AgentMessage{
-						Type: agentpb.MessageType_RESULT,
+						AgentId: viper.GetString("api.token"),
+						Type:    agentpb.MessageType_RESULT,
+						Table:   tableAskedFor,
+						IsLast:  isLast,
 						Payload: &pb.AgentPayload{
 							Data: &pb.AgentPayload_Clientes{
 								Clientes: &pb.Clientes{
@@ -101,17 +110,33 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			if err == nil {
 				fmt.Println("devolver resultado", len(result))
 				resultPb := utils.ToProtoCategorias(result)
-				c.SendMessage(&agentpb.AgentMessage{
-					Type: agentpb.MessageType_RESULT,
-					Payload: &pb.AgentPayload{
-						Data: &pb.AgentPayload_Categorias{
-							Categorias: &pb.Categorias{
-								Items: resultPb,
+
+				isLast := false
+				for i := 0; i < len(resultPb); i += batchSize {
+					end := i + batchSize
+
+					fmt.Println("Passando")
+					if end > len(resultPb) {
+						fmt.Println("Último ? ")
+						isLast = true
+						end = len(resultPb)
+					}
+					c.SendMessage(&agentpb.AgentMessage{
+						AgentId: viper.GetString("api.token"),
+						Type:    agentpb.MessageType_RESULT,
+						Table:   tableAskedFor,
+						IsLast:  isLast,
+						Payload: &pb.AgentPayload{
+							Data: &pb.AgentPayload_Categorias{
+								Categorias: &pb.Categorias{
+									Items: resultPb,
+								},
 							},
 						},
-					},
-				})
-				log.Println("query received", msg.Message, len(result))
+					})
+				}
+
+				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
 			} else {
 				c.SendError(err.Error())
 			}
