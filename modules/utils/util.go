@@ -2,6 +2,7 @@ package utils
 
 import (
 	pb "MoraLinkGOst/modules/proto/agentpb"
+	"fmt"
 
 	"encoding/json"
 
@@ -52,22 +53,24 @@ type ProdutoVendaRow struct {
 	ValorTotal float32
 }
 type VendaRow struct {
-	IdExterno       *string  `db:"id_externo"`
-	Empresa         *int32   `db:"empresa"`
-	Cliente         *string  `db:"cliente"`
-	Vendedor        *string  `db:"vendador"`
-	DataCompra      *string  `db:"data_compra"`
-	TotalCompra     *float32 `db:"total_compra"`
-	ValorLiquido    *float32 `db:"valor_liquido"`
-	TipoPagamento   *string  `db:"tipo_pagamento"`
-	Recorrente      *bool    `db:"recorrente"`
-	Parcelas        *int32   `db:"parcelas"`
-	Entrada         *float32 `db:"entrada"`
-	DataVencimento  *string  `db:"data_vencimento"`
-	MetodoPagamento *string  `db:"metodo_pagamento"`
-	Orcamento       *bool    `db:"orcamento"`
-	OferecerDenovo  *int32   `db:"oferecer_denovo"`
-	Observacao      *string  `db:"observacao"`
+	IdExterno       *string            `db:"id_externo"`
+	Empresa         *int32             `db:"empresa"`
+	Cliente         *string            `db:"cliente"`
+	Vendedor        *string            `db:"vendador"`
+	DataCompra      *string            `db:"data_compra"`
+	TotalCompra     *float32           `db:"total_compra"`
+	ValorLiquido    *float32           `db:"valor_liquido"`
+	TipoPagamento   *string            `db:"tipo_pagamento"`
+	Recorrente      *bool              `db:"recorrente"`
+	Parcelas        *int32             `db:"parcelas"`
+	Entrada         *float32           `db:"entrada"`
+	DataVencimento  *string            `db:"data_vencimento"`
+	MetodoPagamento *string            `db:"metodo_pagamento"`
+	Orcamento       *bool              `db:"orcamento"`
+	OferecerDenovo  *int32             `db:"oferecer_denovo"`
+	ProdutosVenda   *[]ProdutoVendaRow `db:"produtos_venda"`
+	Observacao      *string            `db:"observacao"`
+	DatasVencimento *[]string          `db:"datas_vencimento"`
 }
 type VendedorRow struct {
 	IdExterno       *string `db:"id_externo"`
@@ -77,25 +80,26 @@ type VendedorRow struct {
 	Ativo           *bool   `db:"ativo"`
 }
 type FinanceiroRow struct {
-	IdExterno          *string  `db:"id_externo"`
-	Cliente            *string  `db:"cliente"`
-	Status             *string  `db:"status"`
-	ValorTotal         *float32 `db:"valor_total"`
-	Parcelas           *int32   `db:"parcelas"`
-	ValorParcela       *float32 `db:"valor_parcela"`
-	DataVencimento     *string  `db:"data_vencimento"`
-	DataPersonalizadas *bool    `db:"data_personalizadas"`
-	Recorrente         *bool    `db:"recorrente"`
-	Venda              *string  `db:"venda"`
-	Media              *string  `db:"media"`
-	TituloCobranca     *string  `db:"titulo_cobranca"`
-	Ativo              *bool    `db:"ativo"`
+	IdExterno          *string            `db:"id_externo"`
+	Cliente            *string            `db:"cliente"`
+	Status             *string            `db:"status"`
+	ValorTotal         *float32           `db:"valor_total"`
+	Parcelas           *int32             `db:"parcelas"`
+	ValorParcela       *float32           `db:"valor_parcela"`
+	DataVencimento     *string            `db:"data_vencimento"`
+	DataPersonalizadas *bool              `db:"data_personalizadas"`
+	InfosCobranca      *[]InfoCobrancaRow `db:"infos_cobranca"`
+	Recorrente         *bool              `db:"recorrente"`
+	Venda              *string            `db:"venda"`
+	Media              *string            `db:"media"`
+	TituloCobranca     *string            `db:"titulo_cobranca"`
+	Ativo              *bool              `db:"ativo"`
 }
 type InfoCobrancaRow struct {
-	FinanceiroId string
-	Descricao    string
-	Valor        float32
-	Data         string
+	IdExterno      string
+	ValorParcela   float32
+	DataVencimento string
+	Status         string
 }
 
 type QueriesFunctions struct {
@@ -175,6 +179,189 @@ func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {
 
 	return out
 }
+func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
+	out := make([]*pb.Produto, 0, len(rows))
+	for _, r := range rows {
+		produto := &pb.Produto{}
+		if r.IdExterno != nil {
+			produto.IdExterno = *r.IdExterno
+		}
+		if r.Nome != nil {
+			produto.Nome = *r.Nome
+		}
+		if r.Codigo != nil {
+			produto.Codigo = *r.Codigo
+		}
+		if r.Valor != nil {
+			produto.Valor = *r.Valor
+		}
+		if r.Duracao != nil {
+			produto.Duracao = *r.Duracao
+		}
+		if r.NoBuyback != nil {
+			produto.NoBuyback = *r.NoBuyback
+		}
+		if r.Comissao != nil {
+			produto.Comissao = *r.Comissao
+		}
+		if r.Categoria != nil {
+			produto.Categoria = *r.Categoria
+		}
+		if r.NomeCategoria != nil {
+			produto.NomeCategoria = *r.NomeCategoria
+		}
+		if r.Descricao != nil {
+			produto.Descricao = *r.Descricao
+		}
+		if r.Estoque != nil {
+			produto.Estoque = *r.Estoque
+		}
+		if r.ContarEstoque != nil {
+			produto.ContarEstoque = *r.ContarEstoque
+		}
+		if r.Ativo != nil {
+			produto.Ativo = *r.Ativo
+		}
+		if r.Complemento != nil {
+			produto.Complemento = *r.Complemento
+		}
+		out = append(out, produto)
+	}
+
+	return out
+}
+func ToProtoVendas(rows []VendaRow) []*pb.Venda {
+	out := make([]*pb.Venda, 0, len(rows))
+	for _, r := range rows {
+		venda := &pb.Venda{}
+		if r.IdExterno != nil {
+			venda.IdExterno = *r.IdExterno
+		}
+		if r.Empresa != nil {
+			venda.Empresa = *r.Empresa
+		}
+		if r.Cliente != nil {
+			venda.Cliente = *r.Cliente
+		}
+		if r.Vendedor != nil {
+			venda.Vendedor = *r.Vendedor
+		}
+		if r.DataCompra != nil {
+			venda.DataCompra = *r.DataCompra
+		}
+		if r.TotalCompra != nil {
+			venda.TotalCompra = *r.TotalCompra
+		}
+		if r.ValorLiquido != nil {
+			venda.ValorLiquido = *r.ValorLiquido
+		}
+		if r.TipoPagamento != nil {
+			venda.TipoPagamento = *r.TipoPagamento
+		}
+		if r.Recorrente != nil {
+			venda.Recorrente = *r.Recorrente
+		}
+		if r.Parcelas != nil {
+			venda.Parcelas = *r.Parcelas
+		}
+		if r.Entrada != nil {
+			venda.Entrada = *r.Entrada
+		}
+		if r.DataVencimento != nil {
+			venda.DataVencimento = *r.DataVencimento
+		}
+		if r.MetodoPagamento != nil {
+			venda.MetodoPagamento = *r.MetodoPagamento
+		}
+		if r.Orcamento != nil {
+			venda.Orcamento = *r.Orcamento
+		}
+		if r.OferecerDenovo != nil {
+			venda.OferecerDenovo = *r.OferecerDenovo
+		}
+		if r.ProdutosVenda != nil {
+			prodVenda := []*pb.ProdutosVendas{}
+			for _, v := range *r.ProdutosVenda {
+				prodVenda = append(prodVenda, &pb.ProdutosVendas{
+					ProdutoId:     v.IdProduto,
+					Quantidade:    ToString(v.Quantidade),
+					ValorUnitario: ToString(v.ValorUnit),
+				})
+			}
+			venda.ProdutosVenda = prodVenda
+		}
+		if r.Observacao != nil {
+			venda.Observacao = *r.Observacao
+		}
+		if r.DatasVencimento != nil {
+			venda.DatasVencimento = *r.DatasVencimento
+		}
+		out = append(out, venda)
+	}
+
+	return out
+}
+func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
+	out := make([]*pb.Financeiro, 0, len(rows))
+	for _, r := range rows {
+		financeiro := &pb.Financeiro{}
+		if r.IdExterno != nil {
+			financeiro.IdExterno = *r.IdExterno
+		}
+		if r.Cliente != nil {
+			financeiro.Cliente = *r.Cliente
+		}
+		if r.Status != nil {
+			financeiro.Status = *r.Status
+		}
+		if r.ValorTotal != nil {
+			financeiro.ValorTotal = *r.ValorTotal
+		}
+		if r.Parcelas != nil {
+			financeiro.Parcelas = *r.Parcelas
+		}
+		if r.ValorParcela != nil {
+			financeiro.ValorTotal = *r.ValorTotal
+		}
+		if r.DataVencimento != nil {
+			financeiro.DataVencimento = *r.DataVencimento
+		}
+		if r.DataPersonalizadas != nil {
+			financeiro.DataPersonalizadas = *r.DataPersonalizadas
+		}
+		if r.InfosCobranca != nil {
+			infosC := []*pb.InfosObranca{}
+			for _, v := range *r.InfosCobranca {
+				infosC = append(infosC, &pb.InfosObranca{
+					IdExterno:      v.IdExterno,
+					ValorParcela:   v.ValorParcela,
+					DataVencimento: v.DataVencimento,
+					Status:         v.Status,
+				})
+			}
+			financeiro.InfosCobranca = infosC
+		}
+		if r.Recorrente != nil {
+			financeiro.Recorrente = *r.Recorrente
+		}
+		if r.Venda != nil {
+			financeiro.Venda = *r.Venda
+		}
+		if r.Media != nil {
+			financeiro.Media = *r.DataVencimento
+		}
+		if r.TituloCobranca != nil {
+			financeiro.TituloCobranca = *r.TituloCobranca
+		}
+		if r.Ativo != nil {
+			financeiro.Ativo = *r.Ativo
+		}
+
+		out = append(out, financeiro)
+	}
+
+	return out
+}
 
 func ToProtoCategorias(rows []CategoriaRow) []*pb.Categoria {
 	out := make([]*pb.Categoria, 0, len(rows))
@@ -201,4 +388,14 @@ func ParseDBConfig(jsonStr string) (map[string]interface{}, error) {
 	var cfg map[string]interface{}
 	err := json.Unmarshal([]byte(jsonStr), &cfg)
 	return cfg, err
+}
+
+func ToString(val interface{}) string {
+	if directConverted, ok := val.(string); ok {
+		return directConverted
+	}
+	if val == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", val)
 }

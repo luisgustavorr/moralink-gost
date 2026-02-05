@@ -49,19 +49,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		fmt.Println("DB info : ", db_info, connectedUser.DbType.Number())
 		db, _ := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
 		utils.Conn.DB = db
-		// c.SendMessage(&pb.AgentMessage{
-		// 	AgentId: viper.GetString("api.token"),
-		// 	Message: "Resultado QUery : 1q231",
-		// 	Type:    pb.MessageType_RESULT,
-		// 	Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Produtos{
-		// 		Produtos: &pb.Produtos{Items: []*pb.Produto{
-		// 			{
-		// 				IdExterno: "teste_123",
-		// 				Valor:     12.30,
-		// 			},
-		// 		}},
-		// 	}},
-		// })
 	case pb.MessageType_HEARTBEAT:
 		log.Println("heartbeat received")
 	case pb.MessageType_QUERY:
