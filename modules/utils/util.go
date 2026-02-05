@@ -377,6 +377,29 @@ func ToProtoCategorias(rows []CategoriaRow) []*pb.Categoria {
 	}
 	return out
 }
+func ToProtoVendedores(rows []VendedorRow) []*pb.Vendedor {
+	out := make([]*pb.Vendedor, 0, len(rows))
+	for _, r := range rows {
+		vendedor := &pb.Vendedor{}
+		if r.IdExterno != nil {
+			vendedor.IdExterno = *r.IdExterno
+		}
+		if r.Nome != nil {
+			vendedor.Nome = *r.Nome
+		}
+		if r.Codigo != nil {
+			vendedor.Codigo = *r.Codigo
+		}
+		if r.TodasPermissoes != nil {
+			vendedor.TodasPermissoes = *r.TodasPermissoes
+		}
+		if r.Ativo != nil {
+			vendedor.Ativo = *r.Ativo
+		}
+		out = append(out, vendedor)
+	}
+	return out
+}
 
 var Conn = ConnInfo{}
 
