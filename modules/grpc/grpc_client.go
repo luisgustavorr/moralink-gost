@@ -127,6 +127,43 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			} else {
 				c.SendError(err.Error())
 			}
+		case 6:
+			result, err := dbConn.Queries.Generic(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			if err == nil {
+				fmt.Println("devolver resultado", len(result))
+				resultPb, err := utils.ToProtoGenecric(result)
+				if err != nil {
+					fmt.Println("ERRO NO GENERIC :", err)
+				}
+				isLast := false
+				for i := 0; i < len(result); i += batchSize {
+					end := i + batchSize
+
+					fmt.Println("Passando")
+					if end > len(result) {
+						fmt.Println("Último ? ")
+						isLast = true
+						end = len(result)
+					}
+					fmt.Println("Bid :", msg.BatchId)
+					c.SendMessage(&agentpb.AgentMessage{
+						AgentId: viper.GetString("api.token"),
+						Type:    agentpb.MessageType_RESULT,
+						Table:   tableAskedFor,
+						BatchId: msg.GetBatchId(),
+						IsLast:  isLast,
+						Payload: &pb.AgentPayload{
+							Data: &pb.AgentPayload_GenericReturn{
+								GenericReturn: resultPb,
+							},
+						},
+					})
+				}
+
+				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
+			} else {
+				c.SendError(err.Error())
+			}
 		}
 
 	default:

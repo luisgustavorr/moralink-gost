@@ -4,6 +4,7 @@ import (
 	"MoraLinkGOst/modules/utils"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -50,7 +51,20 @@ func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*uti
 
 func GetProdutos(query string, db *sqlx.DB) ([]utils.ProdutoRow, error) {
 	result := []utils.ProdutoRow{}
-	return result, nil
+	rows, err := db.Queryx(query)
+	if err != nil {
+		fmt.Println("Erro no get categorias", err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		rowStructed := utils.ProdutoRow{}
+		err = rows.StructScan(&rowStructed)
+		if err == nil {
+			result = append(result, rowStructed)
+		}
+	}
+	return result, err
 }
 func GetClientes(query string, db *sqlx.DB) ([]utils.ClienteRow, error) {
 	result := []utils.ClienteRow{}
@@ -71,11 +85,24 @@ func GetClientes(query string, db *sqlx.DB) ([]utils.ClienteRow, error) {
 }
 func GetVendas(query string, db *sqlx.DB) ([]utils.VendaRow, error) {
 	result := []utils.VendaRow{}
-	return result, nil
+	rows, err := db.Queryx(query)
+	if err != nil {
+		fmt.Println("Erro no get categorias", err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		rowStructed := utils.VendaRow{}
+		err = rows.StructScan(&rowStructed)
+		if err == nil {
+			result = append(result, rowStructed)
+		}
+	}
+	return result, err
 }
 func GetCategorias(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
 	result := []utils.CategoriaRow{}
-	rows, err := db.Query(query)
+	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no get categorias", err)
 		return nil, err
@@ -83,23 +110,77 @@ func GetCategorias(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
 	defer rows.Close()
 	for rows.Next() {
 		rowStructed := utils.CategoriaRow{}
-		err = rows.Scan(&rowStructed.IdExterno, &rowStructed.Nome)
+		err = rows.StructScan(&rowStructed)
 		if err == nil {
 			result = append(result, rowStructed)
 		}
 	}
-	fmt.Println(utils.JsonViewInterface(result))
 	return result, err
 }
 func GetVendedores(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
 	result := []utils.VendedorRow{}
-	return result, nil
+	rows, err := db.Queryx(query)
+	if err != nil {
+		fmt.Println("Erro no get categorias", err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		rowStructed := utils.VendedorRow{}
+		err = rows.StructScan(&rowStructed)
+		if err == nil {
+			result = append(result, rowStructed)
+		}
+	}
+	return result, err
 }
 func GetFinanceiros(query string, db *sqlx.DB) ([]utils.FinanceiroRow, error) {
 	result := []utils.FinanceiroRow{}
-	return result, nil
+	rows, err := db.Queryx(query)
+	if err != nil {
+		fmt.Println("Erro no get categorias", err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		rowStructed := utils.FinanceiroRow{}
+		err = rows.StructScan(&rowStructed)
+		if err == nil {
+			result = append(result, rowStructed)
+		}
+	}
+	return result, err
 }
-func GetGeneric(query string, db *sqlx.DB) (map[string]interface{}, error) {
-	result := map[string]interface{}{}
+func GetGeneric(query string, db *sqlx.DB) ([]map[string]interface{}, error) {
+	fmt.Println(query)
+	query = strings.ReplaceAll(query, `\`, "")
+	result := []map[string]interface{}{}
+
+	rows, err := db.Queryx(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		row := map[string]interface{}{}
+
+		if err := rows.MapScan(row); err != nil {
+			return nil, err
+		}
+
+		// 🔥 normalize types
+		for k, v := range row {
+			switch t := v.(type) {
+			case []byte:
+				row[k] = string(t)
+			case time.Time:
+				row[k] = t.Format(time.RFC3339)
+			}
+		}
+
+		result = append(result, row)
+	}
+
 	return result, nil
 }

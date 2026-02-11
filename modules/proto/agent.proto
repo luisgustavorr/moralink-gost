@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package agent;
-
+import "google/protobuf/struct.proto";
 option go_package = "modules/proto/agentpb";
 
 
@@ -44,12 +44,13 @@ message AgentPayload {
     Categorias categorias =4;
     Vendedores vendedores =5;
     Financeiros financeiros = 6;
-    string generic_return =7;
+      google.protobuf.ListValue generic_return = 7;
     Query query_request =8;
     Erros    erros    = 9;
     ACKReturn ack_return =10;
   }
 }
+
 message Query {
   string query = 1;
   int32 batchSize =2;
@@ -61,6 +62,7 @@ enum Table {
   QVENDAS=3;
   QVENDEDORES=4;
   QFINANCEIRO=5;
+  QGENERIC=6;
 }
 message ACKReturn {
   ConnectStatus status =1;

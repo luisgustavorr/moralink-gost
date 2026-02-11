@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type CategoriaRow struct {
@@ -109,7 +110,7 @@ type QueriesFunctions struct {
 	Vendedores  func(string, *sqlx.DB) ([]VendedorRow, error)
 	Clientes    func(string, *sqlx.DB) ([]ClienteRow, error)
 	Financeiros func(string, *sqlx.DB) ([]FinanceiroRow, error)
-	Generic     func(string, *sqlx.DB) (map[string]interface{}, error)
+	Generic     func(string, *sqlx.DB) ([]map[string]interface{}, error)
 }
 
 type DbInfos struct {
@@ -123,6 +124,14 @@ type ConnInfo struct {
 	Domainws string
 	Cronjob  string
 	DB       *DbInfos
+}
+
+func ToProtoGenecric(list []map[string]interface{}) (*structpb.ListValue, error) {
+	raw := make([]any, 0, len(list))
+	for _, row := range list {
+		raw = append(raw, row)
+	}
+	return structpb.NewList(raw)
 }
 
 func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {

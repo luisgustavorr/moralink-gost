@@ -9,6 +9,7 @@ package agentpb
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -146,6 +147,7 @@ const (
 	Table_QVENDAS     Table = 3
 	Table_QVENDEDORES Table = 4
 	Table_QFINANCEIRO Table = 5
+	Table_QGENERIC    Table = 6
 )
 
 // Enum value maps for Table.
@@ -157,6 +159,7 @@ var (
 		3: "QVENDAS",
 		4: "QVENDEDORES",
 		5: "QFINANCEIRO",
+		6: "QGENERIC",
 	}
 	Table_value = map[string]int32{
 		"QPRODUTOS":   0,
@@ -165,6 +168,7 @@ var (
 		"QVENDAS":     3,
 		"QVENDEDORES": 4,
 		"QFINANCEIRO": 5,
+		"QGENERIC":    6,
 	}
 )
 
@@ -443,13 +447,13 @@ func (x *AgentPayload) GetFinanceiros() *Financeiros {
 	return nil
 }
 
-func (x *AgentPayload) GetGenericReturn() string {
+func (x *AgentPayload) GetGenericReturn() *structpb.ListValue {
 	if x != nil {
 		if x, ok := x.Data.(*AgentPayload_GenericReturn); ok {
 			return x.GenericReturn
 		}
 	}
-	return ""
+	return nil
 }
 
 func (x *AgentPayload) GetQueryRequest() *Query {
@@ -508,7 +512,7 @@ type AgentPayload_Financeiros struct {
 }
 
 type AgentPayload_GenericReturn struct {
-	GenericReturn string `protobuf:"bytes,7,opt,name=generic_return,json=genericReturn,proto3,oneof"`
+	GenericReturn *structpb.ListValue `protobuf:"bytes,7,opt,name=generic_return,json=genericReturn,proto3,oneof"`
 }
 
 type AgentPayload_QueryRequest struct {
@@ -1990,7 +1994,7 @@ var File_modules_proto_agent_proto protoreflect.FileDescriptor
 
 const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x19modules/proto/agent.proto\x12\x05agent\"\xf1\x01\n" +
+	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\xf1\x01\n" +
 	"\fAgentMessage\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x19\n" +
 	"\bbatch_id\x18\x02 \x01(\tR\abatchId\x12&\n" +
@@ -1998,7 +2002,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12-\n" +
 	"\apayload\x18\x05 \x01(\v2\x13.agent.AgentPayloadR\apayload\x12\"\n" +
 	"\x05table\x18\x06 \x01(\x0e2\f.agent.TableR\x05table\x12\x16\n" +
-	"\x06isLast\x18\a \x01(\bR\x06isLast\"\xf6\x03\n" +
+	"\x06isLast\x18\a \x01(\bR\x06isLast\"\x92\x04\n" +
 	"\fAgentPayload\x12-\n" +
 	"\bprodutos\x18\x01 \x01(\v2\x0f.agent.ProdutosH\x00R\bprodutos\x12'\n" +
 	"\x06vendas\x18\x02 \x01(\v2\r.agent.VendasH\x00R\x06vendas\x12-\n" +
@@ -2009,8 +2013,8 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
 	"vendedores\x18\x05 \x01(\v2\x11.agent.VendedoresH\x00R\n" +
 	"vendedores\x126\n" +
-	"\vfinanceiros\x18\x06 \x01(\v2\x12.agent.FinanceirosH\x00R\vfinanceiros\x12'\n" +
-	"\x0egeneric_return\x18\a \x01(\tH\x00R\rgenericReturn\x123\n" +
+	"\vfinanceiros\x18\x06 \x01(\v2\x12.agent.FinanceirosH\x00R\vfinanceiros\x12C\n" +
+	"\x0egeneric_return\x18\a \x01(\v2\x1a.google.protobuf.ListValueH\x00R\rgenericReturn\x123\n" +
 	"\rquery_request\x18\b \x01(\v2\f.agent.QueryH\x00R\fqueryRequest\x12$\n" +
 	"\x05erros\x18\t \x01(\v2\f.agent.ErrosH\x00R\x05erros\x121\n" +
 	"\n" +
@@ -2175,14 +2179,15 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"POSTGRESQL\x10\x01\x12\f\n" +
 	"\bFIREBIRD\x10\x02\x12\t\n" +
 	"\x05MSSQL\x10\x03\x12\r\n" +
-	"\tMYSQL_OLD\x10\x04*e\n" +
+	"\tMYSQL_OLD\x10\x04*s\n" +
 	"\x05Table\x12\r\n" +
 	"\tQPRODUTOS\x10\x00\x12\r\n" +
 	"\tQCLIENTES\x10\x01\x12\x0f\n" +
 	"\vQCATEGORIAS\x10\x02\x12\v\n" +
 	"\aQVENDAS\x10\x03\x12\x0f\n" +
 	"\vQVENDEDORES\x10\x04\x12\x0f\n" +
-	"\vQFINANCEIRO\x10\x05*+\n" +
+	"\vQFINANCEIRO\x10\x05\x12\f\n" +
+	"\bQGENERIC\x10\x06*+\n" +
 	"\rConnectStatus\x12\f\n" +
 	"\bREJECTED\x10\x00\x12\f\n" +
 	"\bACCEPTED\x10\x012G\n" +
@@ -2204,31 +2209,32 @@ func file_modules_proto_agent_proto_rawDescGZIP() []byte {
 var file_modules_proto_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_modules_proto_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_modules_proto_agent_proto_goTypes = []any{
-	(MessageType)(0),       // 0: agent.MessageType
-	(DbType)(0),            // 1: agent.Db_type
-	(Table)(0),             // 2: agent.Table
-	(ConnectStatus)(0),     // 3: agent.ConnectStatus
-	(*AgentMessage)(nil),   // 4: agent.AgentMessage
-	(*AgentPayload)(nil),   // 5: agent.AgentPayload
-	(*Query)(nil),          // 6: agent.Query
-	(*ACKReturn)(nil),      // 7: agent.ACKReturn
-	(*ConnectedUser)(nil),  // 8: agent.ConnectedUser
-	(*Erros)(nil),          // 9: agent.Erros
-	(*Error)(nil),          // 10: agent.Error
-	(*Produtos)(nil),       // 11: agent.Produtos
-	(*Produto)(nil),        // 12: agent.Produto
-	(*Clientes)(nil),       // 13: agent.Clientes
-	(*Cliente)(nil),        // 14: agent.Cliente
-	(*Categorias)(nil),     // 15: agent.Categorias
-	(*Categoria)(nil),      // 16: agent.Categoria
-	(*Vendedores)(nil),     // 17: agent.Vendedores
-	(*Vendedor)(nil),       // 18: agent.Vendedor
-	(*Vendas)(nil),         // 19: agent.Vendas
-	(*Venda)(nil),          // 20: agent.Venda
-	(*ProdutosVendas)(nil), // 21: agent.Produtos_vendas
-	(*Financeiros)(nil),    // 22: agent.Financeiros
-	(*Financeiro)(nil),     // 23: agent.Financeiro
-	(*InfosObranca)(nil),   // 24: agent.Infos_obranca
+	(MessageType)(0),           // 0: agent.MessageType
+	(DbType)(0),                // 1: agent.Db_type
+	(Table)(0),                 // 2: agent.Table
+	(ConnectStatus)(0),         // 3: agent.ConnectStatus
+	(*AgentMessage)(nil),       // 4: agent.AgentMessage
+	(*AgentPayload)(nil),       // 5: agent.AgentPayload
+	(*Query)(nil),              // 6: agent.Query
+	(*ACKReturn)(nil),          // 7: agent.ACKReturn
+	(*ConnectedUser)(nil),      // 8: agent.ConnectedUser
+	(*Erros)(nil),              // 9: agent.Erros
+	(*Error)(nil),              // 10: agent.Error
+	(*Produtos)(nil),           // 11: agent.Produtos
+	(*Produto)(nil),            // 12: agent.Produto
+	(*Clientes)(nil),           // 13: agent.Clientes
+	(*Cliente)(nil),            // 14: agent.Cliente
+	(*Categorias)(nil),         // 15: agent.Categorias
+	(*Categoria)(nil),          // 16: agent.Categoria
+	(*Vendedores)(nil),         // 17: agent.Vendedores
+	(*Vendedor)(nil),           // 18: agent.Vendedor
+	(*Vendas)(nil),             // 19: agent.Vendas
+	(*Venda)(nil),              // 20: agent.Venda
+	(*ProdutosVendas)(nil),     // 21: agent.Produtos_vendas
+	(*Financeiros)(nil),        // 22: agent.Financeiros
+	(*Financeiro)(nil),         // 23: agent.Financeiro
+	(*InfosObranca)(nil),       // 24: agent.Infos_obranca
+	(*structpb.ListValue)(nil), // 25: google.protobuf.ListValue
 }
 var file_modules_proto_agent_proto_depIdxs = []int32{
 	0,  // 0: agent.AgentMessage.type:type_name -> agent.MessageType
@@ -2240,28 +2246,29 @@ var file_modules_proto_agent_proto_depIdxs = []int32{
 	15, // 6: agent.AgentPayload.categorias:type_name -> agent.Categorias
 	17, // 7: agent.AgentPayload.vendedores:type_name -> agent.Vendedores
 	22, // 8: agent.AgentPayload.financeiros:type_name -> agent.Financeiros
-	6,  // 9: agent.AgentPayload.query_request:type_name -> agent.Query
-	9,  // 10: agent.AgentPayload.erros:type_name -> agent.Erros
-	7,  // 11: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
-	3,  // 12: agent.ACKReturn.status:type_name -> agent.ConnectStatus
-	8,  // 13: agent.ACKReturn.connected_user:type_name -> agent.ConnectedUser
-	1,  // 14: agent.ConnectedUser.db_type:type_name -> agent.Db_type
-	10, // 15: agent.Erros.error:type_name -> agent.Error
-	12, // 16: agent.Produtos.items:type_name -> agent.Produto
-	14, // 17: agent.Clientes.items:type_name -> agent.Cliente
-	16, // 18: agent.Categorias.items:type_name -> agent.Categoria
-	18, // 19: agent.Vendedores.items:type_name -> agent.Vendedor
-	20, // 20: agent.Vendas.items:type_name -> agent.Venda
-	21, // 21: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
-	23, // 22: agent.Financeiros.items:type_name -> agent.Financeiro
-	24, // 23: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_obranca
-	4,  // 24: agent.AgentService.Connect:input_type -> agent.AgentMessage
-	4,  // 25: agent.AgentService.Connect:output_type -> agent.AgentMessage
-	25, // [25:26] is the sub-list for method output_type
-	24, // [24:25] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	25, // 9: agent.AgentPayload.generic_return:type_name -> google.protobuf.ListValue
+	6,  // 10: agent.AgentPayload.query_request:type_name -> agent.Query
+	9,  // 11: agent.AgentPayload.erros:type_name -> agent.Erros
+	7,  // 12: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
+	3,  // 13: agent.ACKReturn.status:type_name -> agent.ConnectStatus
+	8,  // 14: agent.ACKReturn.connected_user:type_name -> agent.ConnectedUser
+	1,  // 15: agent.ConnectedUser.db_type:type_name -> agent.Db_type
+	10, // 16: agent.Erros.error:type_name -> agent.Error
+	12, // 17: agent.Produtos.items:type_name -> agent.Produto
+	14, // 18: agent.Clientes.items:type_name -> agent.Cliente
+	16, // 19: agent.Categorias.items:type_name -> agent.Categoria
+	18, // 20: agent.Vendedores.items:type_name -> agent.Vendedor
+	20, // 21: agent.Vendas.items:type_name -> agent.Venda
+	21, // 22: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
+	23, // 23: agent.Financeiros.items:type_name -> agent.Financeiro
+	24, // 24: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_obranca
+	4,  // 25: agent.AgentService.Connect:input_type -> agent.AgentMessage
+	4,  // 26: agent.AgentService.Connect:output_type -> agent.AgentMessage
+	26, // [26:27] is the sub-list for method output_type
+	25, // [25:26] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_modules_proto_agent_proto_init() }
