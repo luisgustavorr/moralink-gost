@@ -136,9 +136,20 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					fmt.Println("ERRO NO GENERIC :", err)
 				}
 				isLast := false
-				for i := 0; i < len(result); i += batchSize {
+				i := 0
+				if len(result) == 0 {
+					c.SendMessage(&agentpb.AgentMessage{
+						AgentId: viper.GetString("api.token"),
+						Type:    agentpb.MessageType_RESULT,
+						Table:   tableAskedFor,
+						BatchId: msg.GetBatchId(),
+						IsLast:  isLast,
+						IsEmpty: true,
+						Payload: &pb.AgentPayload{},
+					})
+				}
+				for i = 0; i < len(result); i += batchSize {
 					end := i + batchSize
-
 					fmt.Println("Passando")
 					if end > len(result) {
 						fmt.Println("Último ? ")

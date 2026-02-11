@@ -33,6 +33,7 @@ message AgentMessage {
   AgentPayload  payload  = 5; // AgentPayload to better perfomance will be on of the options
   Table table =6;
   bool isLast =7;
+  bool isEmpty =8;
 
   
 }

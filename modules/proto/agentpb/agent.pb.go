@@ -254,6 +254,7 @@ type AgentMessage struct {
 	Payload       *AgentPayload          `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"` // AgentPayload to better perfomance will be on of the options
 	Table         Table                  `protobuf:"varint,6,opt,name=table,proto3,enum=agent.Table" json:"table,omitempty"`
 	IsLast        bool                   `protobuf:"varint,7,opt,name=isLast,proto3" json:"isLast,omitempty"`
+	IsEmpty       bool                   `protobuf:"varint,8,opt,name=isEmpty,proto3" json:"isEmpty,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -333,6 +334,13 @@ func (x *AgentMessage) GetTable() Table {
 func (x *AgentMessage) GetIsLast() bool {
 	if x != nil {
 		return x.IsLast
+	}
+	return false
+}
+
+func (x *AgentMessage) GetIsEmpty() bool {
+	if x != nil {
+		return x.IsEmpty
 	}
 	return false
 }
@@ -1994,7 +2002,7 @@ var File_modules_proto_agent_proto protoreflect.FileDescriptor
 
 const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\xf1\x01\n" +
+	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\x8b\x02\n" +
 	"\fAgentMessage\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x19\n" +
 	"\bbatch_id\x18\x02 \x01(\tR\abatchId\x12&\n" +
@@ -2002,7 +2010,8 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12-\n" +
 	"\apayload\x18\x05 \x01(\v2\x13.agent.AgentPayloadR\apayload\x12\"\n" +
 	"\x05table\x18\x06 \x01(\x0e2\f.agent.TableR\x05table\x12\x16\n" +
-	"\x06isLast\x18\a \x01(\bR\x06isLast\"\x92\x04\n" +
+	"\x06isLast\x18\a \x01(\bR\x06isLast\x12\x18\n" +
+	"\aisEmpty\x18\b \x01(\bR\aisEmpty\"\x92\x04\n" +
 	"\fAgentPayload\x12-\n" +
 	"\bprodutos\x18\x01 \x01(\v2\x0f.agent.ProdutosH\x00R\bprodutos\x12'\n" +
 	"\x06vendas\x18\x02 \x01(\v2\r.agent.VendasH\x00R\x06vendas\x12-\n" +
