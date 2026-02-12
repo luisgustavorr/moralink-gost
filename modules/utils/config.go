@@ -35,7 +35,7 @@ func LoadConfig() {
 
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	fmt.Println("Creating config file in : ", cfgDir)
+	fmt.Println("✅ 🔧 Creating config file in : ", cfgDir)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

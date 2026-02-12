@@ -10,6 +10,7 @@ import (
 // DecideWhoActs is the organizer, the one that get the db type and return which connection will be used to handle the connection
 func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbInfos, error) {
 	var err error
+	fmt.Printf("✅ ❔ Using %s connection \n", pb.DbType_name[int32(dType)])
 
 	var db = &utils.DbInfos{
 		Type: dType,
@@ -17,9 +18,7 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 
 	switch dType {
 	case 0:
-		fmt.Println("✅ ❔ Requerindo conexão MySql")
 	case 1:
-		fmt.Println("✅ ❔ Requerindo conexão Postgresql")
 		db, err = connectPostgresql(connInfo, db)
 		if err != nil {
 			fmt.Println("Error psql: ", err)
@@ -27,11 +26,8 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 		}
 
 	case 2:
-		fmt.Println("✅ ❔ Requerindo conexão Firebird")
 	case 3:
-		fmt.Println("✅ ❔ Requerindo conexão Mssql")
 	case 4:
-		fmt.Println("✅ ❔ Requerindo conexão MySql Antigo")
 
 	}
 	if err != nil {
