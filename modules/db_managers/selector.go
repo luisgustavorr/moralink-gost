@@ -17,22 +17,26 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 
 	switch dType {
 	case 0:
-		fmt.Println("Requerindo conexão MySql")
+		fmt.Println("✅ ❔ Requerindo conexão MySql")
 	case 1:
-		fmt.Println("Requerindo conexão Postgresql")
+		fmt.Println("✅ ❔ Requerindo conexão Postgresql")
 		db, err = connectPostgresql(connInfo, db)
-		fmt.Println("Resultado :", err)
+		if err != nil {
+			fmt.Println("Error psql: ", err)
+			panic(err)
+		}
 
 	case 2:
-		fmt.Println("Requerindo conexão Firebird")
+		fmt.Println("✅ ❔ Requerindo conexão Firebird")
 	case 3:
-		fmt.Println("Requerindo conexão Mssql")
+		fmt.Println("✅ ❔ Requerindo conexão Mssql")
 	case 4:
-		fmt.Println("Requerindo conexão MySql Antigo")
+		fmt.Println("✅ ❔ Requerindo conexão MySql Antigo")
 
 	}
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("✅ 💽 Connected to %s Database \n", pb.DbType_name[int32(dType)])
 	return db, err
 }

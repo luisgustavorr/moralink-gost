@@ -4,7 +4,9 @@ import (
 	Grpcclient "MoraLinkGOst/modules/grpc"
 	"MoraLinkGOst/modules/utils"
 	"context"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -12,6 +14,30 @@ import (
 
 var _ = godotenv.Load()
 
+func gRPCGuardian() {
+	fmt.Println("✅ 🛡️  Guardian started")
+
+	for {
+		ctx, cancel := context.WithCancel(context.Background())
+
+		client := Grpcclient.New(
+			viper.GetString("api.user"),
+			"0.1.0",
+			"localhost:50051",
+		)
+
+		err := client.Run(ctx)
+		cancel()
+
+		if err != nil {
+
+			log.Println("⛔ -> grpc disconnected error:", err)
+		}
+
+		// optional small pause
+		time.Sleep(2 * time.Second)
+	}
+}
 func main() {
 	utils.LoadConfig()
 	// service logic
@@ -38,17 +64,6 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 	// Moralink logic
-	log.Println("MoraLinkGOst started")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	client := Grpcclient.New(
-		viper.GetString("api.user"),
-		"0.1.0",
-		"localhost:50051",
-	)
-
-	if err := client.Run(ctx); err != nil {
-		log.Println("grpc error:", err)
-	}
-
+	fmt.Println("✅ 👻 MoraLinkGOst started")
+	gRPCGuardian()
 }

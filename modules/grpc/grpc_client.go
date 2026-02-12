@@ -36,19 +36,18 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 	case pb.MessageType_ACK:
 		ackReturn := msg.Payload.GetAckReturn()
 		if ackReturn.Status == 1 {
-			fmt.Println("Aprovado")
+			fmt.Println("✅ 🔐 ACK APPROVED")
 		} else {
-			fmt.Println("Desaprovado")
+			fmt.Println("❌ 🔐 ACK DISAPPROVED")
 		}
-		log.Printf("received ACK: %s - %s", msg.Message, ackReturn.Status)
 		connectedUser := msg.Payload.GetAckReturn().ConnectedUser
 		db_info, err := utils.ParseDBConfig(connectedUser.ConfigJson)
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println("DB info : ", db_info, connectedUser.DbType.Number())
 		db, _ := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
 		utils.Conn.DB = db
+		fmt.Println("✅ 🔗 Tunnel connected - ALL WORKING")
 	case pb.MessageType_HEARTBEAT:
 		log.Println("heartbeat received")
 	case pb.MessageType_QUERY:
@@ -193,7 +192,7 @@ func buildEmptyMimicReturn(table pb.Table, batchId string) *agentpb.AgentMessage
 	}
 }
 func (c *Client) Run(ctx context.Context) error {
-	fmt.Println("Iniciando gRPC")
+	fmt.Println("✅ 🌐 Grpc started")
 	conn, err := grpc.DialContext(
 		ctx,
 		c.addr,
@@ -234,8 +233,6 @@ func (c *Client) Run(ctx context.Context) error {
 		fmt.Println(err)
 		return err
 	}
-
-	log.Println("connected to server")
 
 	// Receive loop
 	for {

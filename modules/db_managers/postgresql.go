@@ -33,9 +33,6 @@ func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*uti
 	sqlDB.SetMaxIdleConns(5)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
-	var id int
-	sqlDB.QueryRow(`SELECT c.id FROM public."Caixas" AS c`).Scan(&id)
-	fmt.Println("Id recuperado ...", id)
 	dI.DB = sqlDB
 	dI.Queries = utils.QueriesFunctions{
 		Products:    GetProdutos,
