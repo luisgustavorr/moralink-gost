@@ -1516,7 +1516,7 @@ type Venda struct {
 	OferecerDenovo  int32                  `protobuf:"varint,15,opt,name=oferecer_denovo,json=oferecerDenovo,proto3" json:"oferecer_denovo,omitempty"`
 	ProdutosVenda   []*ProdutosVendas      `protobuf:"bytes,16,rep,name=produtos_venda,json=produtosVenda,proto3" json:"produtos_venda,omitempty"`
 	Observacao      string                 `protobuf:"bytes,17,opt,name=observacao,proto3" json:"observacao,omitempty"`
-	DatasVencimento []string               `protobuf:"bytes,18,rep,name=datas_vencimento,json=datasVencimento,proto3" json:"datas_vencimento,omitempty"`
+	DatasVencimento []*DatasVencimento     `protobuf:"bytes,18,rep,name=datas_vencimento,json=datasVencimento,proto3" json:"datas_vencimento,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1670,7 +1670,7 @@ func (x *Venda) GetObservacao() string {
 	return ""
 }
 
-func (x *Venda) GetDatasVencimento() []string {
+func (x *Venda) GetDatasVencimento() []*DatasVencimento {
 	if x != nil {
 		return x.DatasVencimento
 	}
@@ -1737,6 +1737,50 @@ func (x *ProdutosVendas) GetValorUnitario() string {
 	return ""
 }
 
+type DatasVencimento struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	DataVencimento string                 `protobuf:"bytes,1,opt,name=data_vencimento,json=dataVencimento,proto3" json:"data_vencimento,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *DatasVencimento) Reset() {
+	*x = DatasVencimento{}
+	mi := &file_modules_proto_agent_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DatasVencimento) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DatasVencimento) ProtoMessage() {}
+
+func (x *DatasVencimento) ProtoReflect() protoreflect.Message {
+	mi := &file_modules_proto_agent_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DatasVencimento.ProtoReflect.Descriptor instead.
+func (*DatasVencimento) Descriptor() ([]byte, []int) {
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *DatasVencimento) GetDataVencimento() string {
+	if x != nil {
+		return x.DataVencimento
+	}
+	return ""
+}
+
 // vendedores ---
 type Financeiros struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1747,7 +1791,7 @@ type Financeiros struct {
 
 func (x *Financeiros) Reset() {
 	*x = Financeiros{}
-	mi := &file_modules_proto_agent_proto_msgTypes[18]
+	mi := &file_modules_proto_agent_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1759,7 +1803,7 @@ func (x *Financeiros) String() string {
 func (*Financeiros) ProtoMessage() {}
 
 func (x *Financeiros) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[18]
+	mi := &file_modules_proto_agent_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1772,7 +1816,7 @@ func (x *Financeiros) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Financeiros.ProtoReflect.Descriptor instead.
 func (*Financeiros) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{18}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Financeiros) GetItems() []*Financeiro {
@@ -1804,7 +1848,7 @@ type Financeiro struct {
 
 func (x *Financeiro) Reset() {
 	*x = Financeiro{}
-	mi := &file_modules_proto_agent_proto_msgTypes[19]
+	mi := &file_modules_proto_agent_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1816,7 +1860,7 @@ func (x *Financeiro) String() string {
 func (*Financeiro) ProtoMessage() {}
 
 func (x *Financeiro) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[19]
+	mi := &file_modules_proto_agent_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1829,7 +1873,7 @@ func (x *Financeiro) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Financeiro.ProtoReflect.Descriptor instead.
 func (*Financeiro) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{19}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Financeiro) GetIdExterno() string {
@@ -1942,7 +1986,7 @@ type InfosObranca struct {
 
 func (x *InfosObranca) Reset() {
 	*x = InfosObranca{}
-	mi := &file_modules_proto_agent_proto_msgTypes[20]
+	mi := &file_modules_proto_agent_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1954,7 +1998,7 @@ func (x *InfosObranca) String() string {
 func (*InfosObranca) ProtoMessage() {}
 
 func (x *InfosObranca) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[20]
+	mi := &file_modules_proto_agent_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1967,7 +2011,7 @@ func (x *InfosObranca) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InfosObranca.ProtoReflect.Descriptor instead.
 func (*InfosObranca) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{20}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *InfosObranca) GetIdExterno() string {
@@ -2110,7 +2154,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x10todas_permissoes\x18\x04 \x01(\bR\x0ftodasPermissoes\x12\x14\n" +
 	"\x05ativo\x18\x05 \x01(\bR\x05ativo\",\n" +
 	"\x06Vendas\x12\"\n" +
-	"\x05items\x18\x01 \x03(\v2\f.agent.VendaR\x05items\"\x81\x05\n" +
+	"\x05items\x18\x01 \x03(\v2\f.agent.VendaR\x05items\"\x9a\x05\n" +
 	"\x05Venda\x12\x1d\n" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\x12\x18\n" +
@@ -2135,15 +2179,17 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x0eprodutos_venda\x18\x10 \x03(\v2\x16.agent.Produtos_vendasR\rprodutosVenda\x12\x1e\n" +
 	"\n" +
 	"observacao\x18\x11 \x01(\tR\n" +
-	"observacao\x12)\n" +
-	"\x10datas_vencimento\x18\x12 \x03(\tR\x0fdatasVencimento\"w\n" +
+	"observacao\x12B\n" +
+	"\x10datas_vencimento\x18\x12 \x03(\v2\x17.agent.Datas_vencimentoR\x0fdatasVencimento\"w\n" +
 	"\x0fProdutos_vendas\x12\x1d\n" +
 	"\n" +
 	"produto_id\x18\x01 \x01(\tR\tprodutoId\x12\x1e\n" +
 	"\n" +
 	"quantidade\x18\x02 \x01(\tR\n" +
 	"quantidade\x12%\n" +
-	"\x0evalor_unitario\x18\x03 \x01(\tR\rvalorUnitario\"6\n" +
+	"\x0evalor_unitario\x18\x03 \x01(\tR\rvalorUnitario\";\n" +
+	"\x10Datas_vencimento\x12'\n" +
+	"\x0fdata_vencimento\x18\x01 \x01(\tR\x0edataVencimento\"6\n" +
 	"\vFinanceiros\x12'\n" +
 	"\x05items\x18\x01 \x03(\v2\x11.agent.FinanceiroR\x05items\"\xe1\x03\n" +
 	"\n" +
@@ -2216,7 +2262,7 @@ func file_modules_proto_agent_proto_rawDescGZIP() []byte {
 }
 
 var file_modules_proto_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_modules_proto_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_modules_proto_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_modules_proto_agent_proto_goTypes = []any{
 	(MessageType)(0),           // 0: agent.MessageType
 	(DbType)(0),                // 1: agent.Db_type
@@ -2240,10 +2286,11 @@ var file_modules_proto_agent_proto_goTypes = []any{
 	(*Vendas)(nil),             // 19: agent.Vendas
 	(*Venda)(nil),              // 20: agent.Venda
 	(*ProdutosVendas)(nil),     // 21: agent.Produtos_vendas
-	(*Financeiros)(nil),        // 22: agent.Financeiros
-	(*Financeiro)(nil),         // 23: agent.Financeiro
-	(*InfosObranca)(nil),       // 24: agent.Infos_obranca
-	(*structpb.ListValue)(nil), // 25: google.protobuf.ListValue
+	(*DatasVencimento)(nil),    // 22: agent.Datas_vencimento
+	(*Financeiros)(nil),        // 23: agent.Financeiros
+	(*Financeiro)(nil),         // 24: agent.Financeiro
+	(*InfosObranca)(nil),       // 25: agent.Infos_obranca
+	(*structpb.ListValue)(nil), // 26: google.protobuf.ListValue
 }
 var file_modules_proto_agent_proto_depIdxs = []int32{
 	0,  // 0: agent.AgentMessage.type:type_name -> agent.MessageType
@@ -2254,8 +2301,8 @@ var file_modules_proto_agent_proto_depIdxs = []int32{
 	13, // 5: agent.AgentPayload.clientes:type_name -> agent.Clientes
 	15, // 6: agent.AgentPayload.categorias:type_name -> agent.Categorias
 	17, // 7: agent.AgentPayload.vendedores:type_name -> agent.Vendedores
-	22, // 8: agent.AgentPayload.financeiros:type_name -> agent.Financeiros
-	25, // 9: agent.AgentPayload.generic_return:type_name -> google.protobuf.ListValue
+	23, // 8: agent.AgentPayload.financeiros:type_name -> agent.Financeiros
+	26, // 9: agent.AgentPayload.generic_return:type_name -> google.protobuf.ListValue
 	6,  // 10: agent.AgentPayload.query_request:type_name -> agent.Query
 	9,  // 11: agent.AgentPayload.erros:type_name -> agent.Erros
 	7,  // 12: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
@@ -2269,15 +2316,16 @@ var file_modules_proto_agent_proto_depIdxs = []int32{
 	18, // 20: agent.Vendedores.items:type_name -> agent.Vendedor
 	20, // 21: agent.Vendas.items:type_name -> agent.Venda
 	21, // 22: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
-	23, // 23: agent.Financeiros.items:type_name -> agent.Financeiro
-	24, // 24: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_obranca
-	4,  // 25: agent.AgentService.Connect:input_type -> agent.AgentMessage
-	4,  // 26: agent.AgentService.Connect:output_type -> agent.AgentMessage
-	26, // [26:27] is the sub-list for method output_type
-	25, // [25:26] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	22, // 23: agent.Venda.datas_vencimento:type_name -> agent.Datas_vencimento
+	24, // 24: agent.Financeiros.items:type_name -> agent.Financeiro
+	25, // 25: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_obranca
+	4,  // 26: agent.AgentService.Connect:input_type -> agent.AgentMessage
+	4,  // 27: agent.AgentService.Connect:output_type -> agent.AgentMessage
+	27, // [27:28] is the sub-list for method output_type
+	26, // [26:27] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_modules_proto_agent_proto_init() }
@@ -2303,7 +2351,7 @@ func file_modules_proto_agent_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_modules_proto_agent_proto_rawDesc), len(file_modules_proto_agent_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   21,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

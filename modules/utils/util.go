@@ -49,30 +49,34 @@ type ProdutoRow struct {
 	Complemento   *string  `db:"complemento"`
 }
 type ProdutoVendaRow struct {
-	IdProduto  string
-	Quantidade int32
-	ValorUnit  float32
-	ValorTotal float32
+	IdProduto  any     `json:"produto_id"`
+	Quantidade int32   `json:"quantidade"`
+	ValorUnit  float32 `json:"valor_unitario"`
+}
+type DatasVencimentoRow struct {
+	DataVencimento string `json:"data_vencimento"`
 }
 type VendaRow struct {
-	IdExterno       *string            `db:"id_externo"`
-	Empresa         *int32             `db:"empresa"`
-	Cliente         *string            `db:"cliente"`
-	Vendedor        *string            `db:"vendador"`
-	DataCompra      *string            `db:"data_compra"`
-	TotalCompra     *float32           `db:"total_compra"`
-	ValorLiquido    *float32           `db:"valor_liquido"`
-	TipoPagamento   *string            `db:"tipo_pagamento"`
-	Recorrente      *bool              `db:"recorrente"`
-	Parcelas        *int32             `db:"parcelas"`
-	Entrada         *float32           `db:"entrada"`
-	DataVencimento  *string            `db:"data_vencimento"`
-	MetodoPagamento *string            `db:"metodo_pagamento"`
-	Orcamento       *bool              `db:"orcamento"`
-	OferecerDenovo  *int32             `db:"oferecer_denovo"`
-	ProdutosVenda   *[]ProdutoVendaRow `db:"produtos_venda"`
-	Observacao      *string            `db:"observacao"`
-	DatasVencimento *[]string          `db:"datas_vencimento"`
+	IdExterno          *string               `db:"id_externo"`
+	Empresa            *int32                `db:"empresa"`
+	Cliente            *string               `db:"cliente"`
+	Vendedor           *string               `db:"vendedor"`
+	DataCompra         *string               `db:"data_compra"`
+	TotalCompra        *float32              `db:"total_compra"`
+	ValorLiquido       *float32              `db:"valor_liquido"`
+	TipoPagamento      *string               `db:"tipo_pagamento"`
+	Recorrente         *bool                 `db:"recorrente"`
+	Parcelas           *int32                `db:"parcelas"`
+	Entrada            *float32              `db:"entrada"`
+	DataVencimento     *string               `db:"data_vencimento"`
+	MetodoPagamento    *string               `db:"metodo_pagamento"`
+	Orcamento          *bool                 `db:"orcamento"`
+	OferecerDenovo     *int32                `db:"oferecer_denovo"`
+	ProdutosVenda      *[]ProdutoVendaRow    `db:"-"`
+	ProdutosVendaRaw   *[]byte               `db:"produtos_venda"` // 👈 raw
+	Observacao         *string               `db:"observacao"`
+	DatasVencimentoRaw *[]byte               `db:"datas_vencimento"`
+	DatasVencimento    *[]DatasVencimentoRow `db:"-"`
 }
 type VendedorRow struct {
 	IdExterno       *string `db:"id_externo"`
@@ -107,7 +111,7 @@ type InfoCobrancaRow struct {
 type QueriesFunctions struct {
 	Products    func(query string, db *sqlx.DB, batchSize int, cb func([]ProdutoRow) error) error
 	Categorias  func(string, *sqlx.DB) ([]CategoriaRow, error)
-	Vendas      func(string, *sqlx.DB) ([]VendaRow, error)
+	Vendas      func(query string, db *sqlx.DB, batchSize int, cb func([]VendaRow) error) error
 	Vendedores  func(string, *sqlx.DB) ([]VendedorRow, error)
 	Clientes    func(query string, db *sqlx.DB, batchSize int, cb func([]ClienteRow) error) error
 	Financeiros func(string, *sqlx.DB) ([]FinanceiroRow, error)
@@ -293,7 +297,7 @@ func ToProtoVendas(rows []VendaRow) []*pb.Venda {
 			prodVenda := []*pb.ProdutosVendas{}
 			for _, v := range *r.ProdutosVenda {
 				prodVenda = append(prodVenda, &pb.ProdutosVendas{
-					ProdutoId:     v.IdProduto,
+					ProdutoId:     ToString(v.IdProduto),
 					Quantidade:    ToString(v.Quantidade),
 					ValorUnitario: ToString(v.ValorUnit),
 				})
@@ -304,7 +308,13 @@ func ToProtoVendas(rows []VendaRow) []*pb.Venda {
 			venda.Observacao = *r.Observacao
 		}
 		if r.DatasVencimento != nil {
-			venda.DatasVencimento = *r.DatasVencimento
+			datas := []*pb.DatasVencimento{}
+			for _, v := range *r.DatasVencimento {
+				datas = append(datas, &pb.DatasVencimento{
+					DataVencimento: v.DataVencimento,
+				})
+			}
+			venda.DatasVencimento = datas
 		}
 		out = append(out, venda)
 	}

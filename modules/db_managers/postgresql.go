@@ -3,6 +3,7 @@ package dbmanagers
 import (
 	"MoraLinkGOst/modules/utils"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -38,7 +39,7 @@ func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*uti
 		Products:    StreamProdutos,
 		Clientes:    StreamClientes,
 		Categorias:  GetCategorias,
-		Vendas:      GetVendas,
+		Vendas:      StreamVendas,
 		Vendedores:  GetVendedores,
 		Financeiros: GetFinanceiros,
 		Generic:     StreamGeneric,
@@ -113,6 +114,7 @@ func StreamProdutos(query string, db *sqlx.DB, batchSize int, cb func([]utils.Pr
 }
 
 func GetVendas(query string, db *sqlx.DB) ([]utils.VendaRow, error) {
+	query = strings.ReplaceAll(query, `\`, "")
 	result := []utils.VendaRow{}
 	rows, err := db.Queryx(query)
 	if err != nil {
@@ -121,13 +123,57 @@ func GetVendas(query string, db *sqlx.DB) ([]utils.VendaRow, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		rowStructed := utils.VendaRow{}
-		err = rows.StructScan(&rowStructed)
-		if err == nil {
-			result = append(result, rowStructed)
+		row := utils.VendaRow{}
+
+		if err := rows.StructScan(&row); err != nil {
+			return nil, err
 		}
+
+		if row.ProdutosVendaRaw != nil {
+			json.Unmarshal(*row.ProdutosVendaRaw, &row.ProdutosVenda)
+		}
+
+		result = append(result, row)
 	}
 	return result, err
+}
+
+func StreamVendas(query string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
+	query = strings.ReplaceAll(query, `\`, "")
+	rows, err := db.Queryx(query)
+	if err != nil {
+		fmt.Println("Erro no stream Vendas", err)
+		return err
+	}
+	defer rows.Close()
+	batch := make([]utils.VendaRow, 0, batchSize) // create a recyclable batch
+	for rows.Next() {
+		var row utils.VendaRow
+		if err := rows.StructScan(&row); err != nil {
+			return err
+		}
+		if row.ProdutosVendaRaw != nil {
+			json.Unmarshal(*row.ProdutosVendaRaw, &row.ProdutosVenda)
+		}
+		if row.DatasVencimentoRaw != nil {
+			json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
+		}
+		fmt.Println(utils.JsonViewInterface(row.DatasVencimento))
+		batch = append(batch, row)
+
+		if len(batch) == batchSize {
+			if err := cb(batch); err != nil {
+				return err
+			}
+			batch = batch[:0] // reuse backing array
+		}
+	}
+
+	if len(batch) > 0 {
+		return cb(batch)
+	}
+
+	return nil
 }
 func GetCategorias(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
 	query = strings.ReplaceAll(query, `\`, "")

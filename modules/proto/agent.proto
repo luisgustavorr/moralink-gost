@@ -179,13 +179,17 @@ message Venda {
   int32 oferecer_denovo =15;
   repeated Produtos_vendas produtos_venda=16;
   string observacao =17;
-  repeated string datas_vencimento=18;
+  repeated Datas_vencimento datas_vencimento=18;
 
 }
 message Produtos_vendas {
   string produto_id =1;
   string quantidade =2;
   string valor_unitario =3;
+}
+message Datas_vencimento {
+  string data_vencimento =1;
+
 }
 // vendas ---
 

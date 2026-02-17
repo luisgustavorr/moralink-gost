@@ -153,6 +153,36 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			} else {
 				c.SendError(err.Error())
 			}
+		case 3:
+			fmt.Println("Vendas...")
+			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
+			err := dbConn.Queries.Vendas(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.VendaRow) error {
+				if len(result) == 0 {
+					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				}
+				isLast := len(result) < batchSize
+				fmt.Println("Passando", isLast, len(result))
+				utils.LogMemUsage()
+				resultPb := utils.ToProtoVendas(result)
+				return c.SendMessage(&agentpb.AgentMessage{
+					AgentId: viper.GetString("api.token"),
+					Type:    agentpb.MessageType_RESULT,
+					Table:   tableAskedFor,
+					IsLast:  isLast,
+					Payload: &pb.AgentPayload{
+						Data: &pb.AgentPayload_Vendas{
+							Vendas: &pb.Vendas{
+								Items: resultPb,
+							},
+						},
+					},
+				})
+			})
+			fmt.Println("error", err)
+			if err != nil {
+
+				c.SendError(err.Error())
+			}
 		case 4:
 			result, err := dbConn.Queries.Vendedores(msg.Payload.GetQueryRequest().Query, dbConn.DB)
 			if err == nil {
