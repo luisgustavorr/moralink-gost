@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -40,6 +42,10 @@ func gRPCGuardian() {
 }
 func main() {
 	utils.LoadConfig()
+	go func() {
+		log.Println("pprof listening on :6060")
+		http.ListenAndServe("localhost:6060", nil)
+	}()
 	// service logic
 	// svcConfig := &service.Config{
 	// 	Name:        "moralink-gost",
