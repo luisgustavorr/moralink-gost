@@ -46,24 +46,6 @@ func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*uti
 	return dI, nil
 }
 
-func GetProdutos(query string, db *sqlx.DB) ([]utils.ProdutoRow, error) {
-	result := []utils.ProdutoRow{}
-	rows, err := db.Queryx(query)
-	if err != nil {
-		fmt.Println("Erro no get categorias", err)
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		rowStructed := utils.ProdutoRow{}
-		err = rows.StructScan(&rowStructed)
-		if err == nil {
-			result = append(result, rowStructed)
-		}
-	}
-	fmt.Println("REsulte :", len(result))
-	return result, err
-}
 func StreamClientes(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 
@@ -148,6 +130,8 @@ func GetVendas(query string, db *sqlx.DB) ([]utils.VendaRow, error) {
 	return result, err
 }
 func GetCategorias(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
+	query = strings.ReplaceAll(query, `\`, "")
+
 	result := []utils.CategoriaRow{}
 	rows, err := db.Queryx(query)
 	if err != nil {
@@ -165,6 +149,8 @@ func GetCategorias(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
 	return result, err
 }
 func GetVendedores(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
+	query = strings.ReplaceAll(query, `\`, "")
+
 	result := []utils.VendedorRow{}
 	rows, err := db.Queryx(query)
 	if err != nil {
@@ -182,6 +168,7 @@ func GetVendedores(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
 	return result, err
 }
 func GetFinanceiros(query string, db *sqlx.DB) ([]utils.FinanceiroRow, error) {
+	query = strings.ReplaceAll(query, `\`, "")
 	result := []utils.FinanceiroRow{}
 	rows, err := db.Queryx(query)
 	if err != nil {
@@ -198,39 +185,7 @@ func GetFinanceiros(query string, db *sqlx.DB) ([]utils.FinanceiroRow, error) {
 	}
 	return result, err
 }
-func GetGeneric(query string, db *sqlx.DB) ([]map[string]interface{}, error) {
-	fmt.Println(query)
-	query = strings.ReplaceAll(query, `\`, "")
-	result := []map[string]interface{}{}
 
-	rows, err := db.Queryx(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		row := map[string]interface{}{}
-
-		if err := rows.MapScan(row); err != nil {
-			return nil, err
-		}
-
-		// 🔥 normalize types
-		for k, v := range row {
-			switch t := v.(type) {
-			case []byte:
-				row[k] = string(t)
-			case time.Time:
-				row[k] = t.Format(time.RFC3339)
-			}
-		}
-
-		result = append(result, row)
-	}
-
-	return result, nil
-}
 func StreamGeneric(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 

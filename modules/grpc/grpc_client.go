@@ -153,6 +153,45 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			} else {
 				c.SendError(err.Error())
 			}
+		case 4:
+			result, err := dbConn.Queries.Vendedores(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			if err == nil {
+				if len(result) == 0 {
+					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				}
+				for i := 0; i < len(result); i += batchSize {
+					fmt.Println("devolver resultado", len(result))
+					end := i + batchSize
+					isLast := end == len(result)
+					fmt.Println("Passando")
+					if end > len(result) {
+						fmt.Println("Último ? ")
+						end = len(result)
+					}
+					resultPb := utils.ToProtoVendedores(result[i:end])
+					utils.LogMemUsage()
+
+					c.SendMessage(&agentpb.AgentMessage{
+						AgentId: viper.GetString("api.token"),
+						Type:    agentpb.MessageType_RESULT,
+						Table:   tableAskedFor,
+						IsLast:  isLast,
+						Payload: &pb.AgentPayload{
+							Data: &pb.AgentPayload_Vendedores{
+								Vendedores: &pb.Vendedores{
+									Items: resultPb,
+								},
+							},
+						},
+					})
+					resultPb = nil
+
+				}
+
+				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
+			} else {
+				c.SendError(err.Error())
+			}
 
 		case 6:
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
