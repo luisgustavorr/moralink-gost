@@ -55,25 +55,23 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 		tableAskedFor := msg.GetTable()
 		switch tableAskedFor {
-		case 1:
-			fmt.Println("CLientes...")
+		case 0:
+			fmt.Println("Produtos...")
 			result, err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB)
 			fmt.Println("error", err)
 			if err == nil {
-				resultPb := utils.ToProtoClientes(result)
-				isLast := false
-				if len(resultPb) == 0 {
+				if len(result) == 0 {
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
-				for i := 0; i < len(resultPb); i += batchSize {
+				for i := 0; i < len(result); i += batchSize {
 					end := i + batchSize
-
+					isLast := end == len(result)
 					fmt.Println("Passando")
-					if end > len(resultPb) {
+					if end > len(result) {
 						fmt.Println("Último ? ")
-						isLast = true
-						end = len(resultPb)
+						end = len(result)
 					}
+					resultPb := utils.ToProtoClientes(result[i:end])
 
 					c.SendMessage(&agentpb.AgentMessage{
 						AgentId: viper.GetString("api.token"),
@@ -83,7 +81,44 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 						Payload: &pb.AgentPayload{
 							Data: &pb.AgentPayload_Clientes{
 								Clientes: &pb.Clientes{
-									Items: resultPb[i:end],
+									Items: resultPb,
+								},
+							},
+						},
+					})
+				}
+
+				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
+			} else {
+				c.SendError(err.Error())
+			}
+		case 1:
+			fmt.Println("CLientes...")
+			result, err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			fmt.Println("error", err)
+			if err == nil {
+				if len(result) == 0 {
+					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				}
+				for i := 0; i < len(result); i += batchSize {
+					end := i + batchSize
+					isLast := end == len(result)
+					fmt.Println("Passando")
+					if end > len(result) {
+						fmt.Println("Último ? ")
+						end = len(result)
+					}
+					resultPb := utils.ToProtoClientes(result[i:end])
+
+					c.SendMessage(&agentpb.AgentMessage{
+						AgentId: viper.GetString("api.token"),
+						Type:    agentpb.MessageType_RESULT,
+						Table:   tableAskedFor,
+						IsLast:  isLast,
+						Payload: &pb.AgentPayload{
+							Data: &pb.AgentPayload_Clientes{
+								Clientes: &pb.Clientes{
+									Items: resultPb,
 								},
 							},
 						},
@@ -97,22 +132,21 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		case 2:
 			result, err := dbConn.Queries.Categorias(msg.Payload.GetQueryRequest().Query, dbConn.DB)
 			if err == nil {
-				fmt.Println("devolver resultado", len(result))
-				resultPb := utils.ToProtoCategorias(result)
 
-				isLast := false
-				if len(resultPb) == 0 {
+				if len(result) == 0 {
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
-				for i := 0; i < len(resultPb); i += batchSize {
+				for i := 0; i < len(result); i += batchSize {
+					fmt.Println("devolver resultado", len(result))
 					end := i + batchSize
-
+					isLast := end == len(result)
 					fmt.Println("Passando")
-					if end > len(resultPb) {
+					if end > len(result) {
 						fmt.Println("Último ? ")
-						isLast = true
-						end = len(resultPb)
+						end = len(result)
 					}
+					resultPb := utils.ToProtoCategorias(result[i:end])
+
 					c.SendMessage(&agentpb.AgentMessage{
 						AgentId: viper.GetString("api.token"),
 						Type:    agentpb.MessageType_RESULT,
@@ -121,7 +155,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 						Payload: &pb.AgentPayload{
 							Data: &pb.AgentPayload_Categorias{
 								Categorias: &pb.Categorias{
-									Items: resultPb[i:end],
+									Items: resultPb,
 								},
 							},
 						},
