@@ -84,7 +84,36 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				c.SendError(err.Error())
 			}
+		case 1:
+			fmt.Println("Clientes...")
+			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
+			err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.ClienteRow) error {
+				if len(result) == 0 {
+					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				}
+				isLast := len(result) < batchSize
+				fmt.Println("Passando", isLast, len(result))
+				utils.LogMemUsage()
+				resultPb := utils.ToProtoClientes(result)
+				return c.SendMessage(&agentpb.AgentMessage{
+					AgentId: viper.GetString("api.token"),
+					Type:    agentpb.MessageType_RESULT,
+					Table:   tableAskedFor,
+					IsLast:  isLast,
+					Payload: &pb.AgentPayload{
+						Data: &pb.AgentPayload_Clientes{
+							Clientes: &pb.Clientes{
+								Items: resultPb,
+							},
+						},
+					},
+				})
+			})
+			fmt.Println("error", err)
+			if err != nil {
 
+				c.SendError(err.Error())
+			}
 		case 2:
 			result, err := dbConn.Queries.Categorias(msg.Payload.GetQueryRequest().Query, dbConn.DB)
 			if err == nil {
@@ -124,36 +153,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			} else {
 				c.SendError(err.Error())
 			}
-		case 1:
-			fmt.Println("CLientes...")
-			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
-			err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.ClienteRow) error {
-				if len(result) == 0 {
-					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
-				}
-				isLast := len(result) < batchSize
-				fmt.Println("Passando", isLast, len(result))
-				utils.LogMemUsage()
-				resultPb := utils.ToProtoClientes(result)
-				return c.SendMessage(&agentpb.AgentMessage{
-					AgentId: viper.GetString("api.token"),
-					Type:    agentpb.MessageType_RESULT,
-					Table:   tableAskedFor,
-					IsLast:  isLast,
-					Payload: &pb.AgentPayload{
-						Data: &pb.AgentPayload_Clientes{
-							Clientes: &pb.Clientes{
-								Items: resultPb,
-							},
-						},
-					},
-				})
-			})
-			fmt.Println("error", err)
-			if err != nil {
 
-				c.SendError(err.Error())
-			}
 		case 6:
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 

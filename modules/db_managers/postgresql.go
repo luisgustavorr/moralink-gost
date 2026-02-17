@@ -61,9 +61,45 @@ func GetProdutos(query string, db *sqlx.DB) ([]utils.ProdutoRow, error) {
 			result = append(result, rowStructed)
 		}
 	}
+	fmt.Println("REsulte :", len(result))
 	return result, err
 }
+func StreamClientes(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
+	query = strings.ReplaceAll(query, `\`, "")
+
+	rows, err := db.Queryx(query)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	batch := make([]utils.ClienteRow, 0, batchSize)
+
+	for rows.Next() {
+		var row utils.ClienteRow
+		if err := rows.StructScan(&row); err != nil {
+			return err
+		}
+
+		batch = append(batch, row)
+
+		if len(batch) == batchSize {
+			if err := cb(batch); err != nil {
+				return err
+			}
+			batch = batch[:0] // reuse backing array
+		}
+	}
+
+	if len(batch) > 0 {
+		return cb(batch)
+	}
+
+	return nil
+}
+
 func StreamProdutos(query string, db *sqlx.DB, batchSize int, cb func([]utils.ProdutoRow) error) error {
+	query = strings.ReplaceAll(query, `\`, "")
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Produtos", err)
@@ -71,23 +107,24 @@ func StreamProdutos(query string, db *sqlx.DB, batchSize int, cb func([]utils.Pr
 	}
 	defer rows.Close()
 	batch := make([]utils.ProdutoRow, 0, batchSize) // create a recyclable batch
-
 	for rows.Next() {
-		row := utils.ProdutoRow{}
+		var row utils.ProdutoRow
 		if err := rows.StructScan(&row); err != nil {
 			return err
 		}
+
 		batch = append(batch, row)
-		if len(batch) == batchSize { // verify if the batch is big enough
-			if err := cb(batch); err != nil { // call the callback function with the filled batch as rows value
+
+		if len(batch) == batchSize {
+			if err := cb(batch); err != nil {
 				return err
 			}
-			batch = batch[:0] // empty the recyclable batch
+			batch = batch[:0] // reuse backing array
 		}
-		if len(batch) > 0 { // if the values are not enough to fill the batch until reach the limit (ex : if it's the last batch)
-			return cb(batch)
-		}
+	}
 
+	if len(batch) > 0 {
+		return cb(batch)
 	}
 
 	return nil
@@ -218,39 +255,6 @@ func StreamGeneric(query string, db *sqlx.DB, batchSize int, cb func([]map[strin
 				row[k] = t.Format(time.RFC3339)
 			}
 		}
-		batch = append(batch, row)
-
-		if len(batch) == batchSize {
-			if err := cb(batch); err != nil {
-				return err
-			}
-			batch = batch[:0] // reuse backing array
-		}
-	}
-
-	if len(batch) > 0 {
-		return cb(batch)
-	}
-
-	return nil
-}
-func StreamClientes(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
-	query = strings.ReplaceAll(query, `\`, "")
-
-	rows, err := db.Queryx(query)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	batch := make([]utils.ClienteRow, 0, batchSize)
-
-	for rows.Next() {
-		var row utils.ClienteRow
-		if err := rows.StructScan(&row); err != nil {
-			return err
-		}
-
 		batch = append(batch, row)
 
 		if len(batch) == batchSize {
