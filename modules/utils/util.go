@@ -105,13 +105,13 @@ type InfoCobrancaRow struct {
 }
 
 type QueriesFunctions struct {
-	Products    func(string, *sqlx.DB) ([]ProdutoRow, error)
+	Products    func(query string, db *sqlx.DB, batchSize int, cb func([]ProdutoRow) error) error
 	Categorias  func(string, *sqlx.DB) ([]CategoriaRow, error)
 	Vendas      func(string, *sqlx.DB) ([]VendaRow, error)
 	Vendedores  func(string, *sqlx.DB) ([]VendedorRow, error)
 	Clientes    func(query string, db *sqlx.DB, batchSize int, cb func([]ClienteRow) error) error
 	Financeiros func(string, *sqlx.DB) ([]FinanceiroRow, error)
-	Generic     func(string, *sqlx.DB) ([]map[string]interface{}, error)
+	Generic     func(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error
 }
 
 type DbInfos struct {
