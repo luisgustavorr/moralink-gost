@@ -3,6 +3,7 @@ package utils
 import (
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"fmt"
+	"runtime"
 
 	"encoding/json"
 
@@ -108,7 +109,7 @@ type QueriesFunctions struct {
 	Categorias  func(string, *sqlx.DB) ([]CategoriaRow, error)
 	Vendas      func(string, *sqlx.DB) ([]VendaRow, error)
 	Vendedores  func(string, *sqlx.DB) ([]VendedorRow, error)
-	Clientes    func(string, *sqlx.DB) ([]ClienteRow, error)
+	Clientes    func(query string, db *sqlx.DB, batchSize int, cb func([]ClienteRow) error) error
 	Financeiros func(string, *sqlx.DB) ([]FinanceiroRow, error)
 	Generic     func(string, *sqlx.DB) ([]map[string]interface{}, error)
 }
@@ -430,4 +431,9 @@ func ToString(val interface{}) string {
 		return ""
 	}
 	return fmt.Sprintf("%v", val)
+}
+func LogMemUsage() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Printf("🩺 💾 Memória: %.2fMB\n", float64(m.Alloc)/1024.0/1024.0)
 }
