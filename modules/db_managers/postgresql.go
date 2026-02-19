@@ -41,7 +41,7 @@ func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*uti
 		Categorias:  GetCategorias,
 		Vendas:      StreamVendas,
 		Vendedores:  GetVendedores,
-		Financeiros: GetFinanceiros,
+		Financeiros: StreamFinanceiros,
 		Generic:     StreamGeneric,
 	}
 	return dI, nil
@@ -213,25 +213,40 @@ func GetVendedores(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
 	}
 	return result, err
 }
-func GetFinanceiros(query string, db *sqlx.DB) ([]utils.FinanceiroRow, error) {
+
+func StreamFinanceiros(query string, db *sqlx.DB, batchSize int, cb func([]utils.FinanceiroRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
-	result := []utils.FinanceiroRow{}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no get categorias", err)
-		return nil, err
+		fmt.Println("Erro no stream Vendas", err)
+		return err
 	}
 	defer rows.Close()
+	batch := make([]utils.FinanceiroRow, 0, batchSize) // create a recyclable batch
 	for rows.Next() {
-		rowStructed := utils.FinanceiroRow{}
-		err = rows.StructScan(&rowStructed)
-		if err == nil {
-			result = append(result, rowStructed)
+		var row utils.FinanceiroRow
+		if err := rows.StructScan(&row); err != nil {
+			return err
+		}
+		if row.InfosCobrancaRaw != nil {
+			json.Unmarshal(*row.InfosCobrancaRaw, &row.InfosCobranca)
+		}
+
+		batch = append(batch, row)
+
+		if len(batch) == batchSize {
+			if err := cb(batch); err != nil {
+				return err
+			}
+			batch = batch[:0] // reuse backing array
 		}
 	}
-	return result, err
-}
+	if len(batch) > 0 {
+		return cb(batch)
+	}
 
+	return nil
+}
 func StreamGeneric(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 

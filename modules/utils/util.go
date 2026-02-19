@@ -94,7 +94,8 @@ type FinanceiroRow struct {
 	ValorParcela       *float32           `db:"valor_parcela"`
 	DataVencimento     *string            `db:"data_vencimento"`
 	DataPersonalizadas *bool              `db:"data_personalizadas"`
-	InfosCobranca      *[]InfoCobrancaRow `db:"infos_cobranca"`
+	InfosCobrancaRaw   *[]byte            `db:"infos_cobranca"`
+	InfosCobranca      *[]InfoCobrancaRow `db:"-"`
 	Recorrente         *bool              `db:"recorrente"`
 	Venda              *string            `db:"venda"`
 	Media              *string            `db:"media"`
@@ -102,10 +103,11 @@ type FinanceiroRow struct {
 	Ativo              *bool              `db:"ativo"`
 }
 type InfoCobrancaRow struct {
-	IdExterno      string
-	ValorParcela   float32
-	DataVencimento string
-	Status         string
+	IdExterno      any     `json:"id_externo"`
+	ValorParcela   float32 `json:"valor_parcela"`
+	DataVencimento string  `json:"data_vencimento"`
+	DataCriacao    string  `json:"data_criacao"`
+	Status         string  `json:"status"`
 }
 
 type QueriesFunctions struct {
@@ -114,7 +116,7 @@ type QueriesFunctions struct {
 	Vendas      func(query string, db *sqlx.DB, batchSize int, cb func([]VendaRow) error) error
 	Vendedores  func(string, *sqlx.DB) ([]VendedorRow, error)
 	Clientes    func(query string, db *sqlx.DB, batchSize int, cb func([]ClienteRow) error) error
-	Financeiros func(string, *sqlx.DB) ([]FinanceiroRow, error)
+	Financeiros func(query string, db *sqlx.DB, batchSize int, cb func([]FinanceiroRow) error) error
 	Generic     func(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error
 }
 
@@ -337,6 +339,9 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 		if r.ValorTotal != nil {
 			financeiro.ValorTotal = *r.ValorTotal
 		}
+		if r.ValorParcela != nil {
+			financeiro.ValorParcela = *r.ValorParcela
+		}
 		if r.Parcelas != nil {
 			financeiro.Parcelas = *r.Parcelas
 		}
@@ -353,9 +358,10 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 			infosC := []*pb.InfosObranca{}
 			for _, v := range *r.InfosCobranca {
 				infosC = append(infosC, &pb.InfosObranca{
-					IdExterno:      v.IdExterno,
+					IdExterno:      ToString(v.IdExterno),
 					ValorParcela:   v.ValorParcela,
 					DataVencimento: v.DataVencimento,
+					DataCriacao:    v.DataCriacao,
 					Status:         v.Status,
 				})
 			}

@@ -1979,7 +1979,8 @@ type InfosObranca struct {
 	IdExterno      string                 `protobuf:"bytes,1,opt,name=id_externo,json=idExterno,proto3" json:"id_externo,omitempty"`
 	ValorParcela   float32                `protobuf:"fixed32,2,opt,name=valor_parcela,json=valorParcela,proto3" json:"valor_parcela,omitempty"`
 	DataVencimento string                 `protobuf:"bytes,3,opt,name=data_vencimento,json=dataVencimento,proto3" json:"data_vencimento,omitempty"`
-	Status         string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
+	DataCriacao    string                 `protobuf:"bytes,4,opt,name=data_criacao,json=dataCriacao,proto3" json:"data_criacao,omitempty"`
+	Status         string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -2031,6 +2032,13 @@ func (x *InfosObranca) GetValorParcela() float32 {
 func (x *InfosObranca) GetDataVencimento() string {
 	if x != nil {
 		return x.DataVencimento
+	}
+	return ""
+}
+
+func (x *InfosObranca) GetDataCriacao() string {
+	if x != nil {
+		return x.DataCriacao
 	}
 	return ""
 }
@@ -2212,13 +2220,14 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x05venda\x18\v \x01(\tR\x05venda\x12\x14\n" +
 	"\x05media\x18\f \x01(\tR\x05media\x12'\n" +
 	"\x0ftitulo_cobranca\x18\r \x01(\tR\x0etituloCobranca\x12\x14\n" +
-	"\x05ativo\x18\x0e \x01(\bR\x05ativo\"\x94\x01\n" +
+	"\x05ativo\x18\x0e \x01(\bR\x05ativo\"\xb7\x01\n" +
 	"\rInfos_obranca\x12\x1d\n" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\x12#\n" +
 	"\rvalor_parcela\x18\x02 \x01(\x02R\fvalorParcela\x12'\n" +
-	"\x0fdata_vencimento\x18\x03 \x01(\tR\x0edataVencimento\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status*_\n" +
+	"\x0fdata_vencimento\x18\x03 \x01(\tR\x0edataVencimento\x12!\n" +
+	"\fdata_criacao\x18\x04 \x01(\tR\vdataCriacao\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status*_\n" +
 	"\vMessageType\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\t\n" +
 	"\x05HELLO\x10\x01\x12\t\n" +

@@ -222,7 +222,36 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			} else {
 				c.SendError(err.Error())
 			}
+		case 5:
+			fmt.Println("Financeiro...")
+			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
+			err := dbConn.Queries.Financeiros(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.FinanceiroRow) error {
+				if len(result) == 0 {
+					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				}
+				isLast := len(result) < batchSize
+				fmt.Println("Passando", isLast, len(result))
+				utils.LogMemUsage()
+				resultPb := utils.ToProtoFinanceiro(result)
+				return c.SendMessage(&agentpb.AgentMessage{
+					AgentId: viper.GetString("api.token"),
+					Type:    agentpb.MessageType_RESULT,
+					Table:   tableAskedFor,
+					IsLast:  isLast,
+					Payload: &pb.AgentPayload{
+						Data: &pb.AgentPayload_Financeiros{
+							Financeiros: &pb.Financeiros{
+								Items: resultPb,
+							},
+						},
+					},
+				})
+			})
+			fmt.Println("error", err)
+			if err != nil {
 
+				c.SendError(err.Error())
+			}
 		case 6:
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 
