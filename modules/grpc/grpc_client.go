@@ -82,7 +82,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			fmt.Println("error", err)
 			if err != nil {
 
-				c.SendError(err.Error())
+				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 1:
 			fmt.Println("Clientes...")
@@ -112,7 +112,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			fmt.Println("error", err)
 			if err != nil {
 
-				c.SendError(err.Error())
+				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 2:
 			result, err := dbConn.Queries.Categorias(msg.Payload.GetQueryRequest().Query, dbConn.DB)
@@ -151,7 +151,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
 			} else {
-				c.SendError(err.Error())
+				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 3:
 			fmt.Println("Vendas...")
@@ -181,7 +181,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			fmt.Println("error", err)
 			if err != nil {
 
-				c.SendError(err.Error())
+				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 4:
 			result, err := dbConn.Queries.Vendedores(msg.Payload.GetQueryRequest().Query, dbConn.DB)
@@ -220,7 +220,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
 			} else {
-				c.SendError(err.Error())
+				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 5:
 			fmt.Println("Financeiro...")
@@ -250,7 +250,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			fmt.Println("error", err)
 			if err != nil {
 
-				c.SendError(err.Error())
+				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 6:
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
@@ -289,7 +289,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			})
 
 			if err != nil {
-				c.SendError(err.Error())
+				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		}
 
@@ -366,10 +366,11 @@ func (c *Client) SendMessage(msg *pb.AgentMessage) error {
 	err := c.stream.Send(msg)
 	return err
 }
-func (c *Client) SendError(message string) error {
+func (c *Client) SendError(message string, batchid string) error {
 	err := c.SendMessage(&pb.AgentMessage{
 		AgentId: viper.GetString("api.token"),
 		Message: "Ocorreu um erro...",
+		BatchId: batchid,
 		Type:    pb.MessageType_ERROR,
 		Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Erros{
 			Erros: &pb.Erros{
