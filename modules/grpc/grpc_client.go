@@ -123,7 +123,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				for i := 0; i < len(result); i += batchSize {
 					fmt.Println("devolver resultado", len(result))
 					end := i + batchSize
-					isLast := end == len(result)
+					isLast := len(result) < batchSize
 					fmt.Println("Passando")
 					if end > len(result) {
 						fmt.Println("Último ? ")
@@ -192,7 +192,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				for i := 0; i < len(result); i += batchSize {
 					fmt.Println("devolver resultado", len(result))
 					end := i + batchSize
-					isLast := end == len(result)
+					isLast := len(result) < batchSize
 					fmt.Println("Passando")
 					if end > len(result) {
 						fmt.Println("Último ? ")

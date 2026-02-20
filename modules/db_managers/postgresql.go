@@ -73,7 +73,9 @@ func StreamClientes(query string, db *sqlx.DB, batchSize int, cb func([]utils.Cl
 			batch = batch[:0] // reuse backing array
 		}
 	}
-
+	if len(batch) == 0 {
+		return cb(batch)
+	}
 	if len(batch) > 0 {
 		return cb(batch)
 	}
@@ -105,7 +107,9 @@ func StreamProdutos(query string, db *sqlx.DB, batchSize int, cb func([]utils.Pr
 			batch = batch[:0] // reuse backing array
 		}
 	}
-
+	if len(batch) == 0 {
+		return cb(batch)
+	}
 	if len(batch) > 0 {
 		return cb(batch)
 	}
@@ -168,7 +172,9 @@ func StreamVendas(query string, db *sqlx.DB, batchSize int, cb func([]utils.Vend
 			batch = batch[:0] // reuse backing array
 		}
 	}
-
+	if len(batch) == 0 {
+		return cb(batch)
+	}
 	if len(batch) > 0 {
 		return cb(batch)
 	}
@@ -241,6 +247,9 @@ func StreamFinanceiros(query string, db *sqlx.DB, batchSize int, cb func([]utils
 			batch = batch[:0] // reuse backing array
 		}
 	}
+	if len(batch) == 0 {
+		return cb(batch)
+	}
 	if len(batch) > 0 {
 		return cb(batch)
 	}
@@ -280,7 +289,9 @@ func StreamGeneric(query string, db *sqlx.DB, batchSize int, cb func([]map[strin
 			batch = batch[:0] // reuse backing array
 		}
 	}
-
+	if len(batch) == 0 {
+		return cb(batch)
+	}
 	if len(batch) > 0 {
 		return cb(batch)
 	}
