@@ -5,17 +5,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/microsoft/go-mssqldb"
 )
 
 func connectMssql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
-	psqlInfo := fmt.Sprintf("sqlserver://%s:%s@%s:%s?database=%s", connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
-	fmt.Println(psqlInfo)
-	sqlDB, err := sqlx.Open("sqlserver", psqlInfo)
+
+	password := url.QueryEscape(connInfo["password"].(string))
+	dsn := fmt.Sprintf("sqlserver://%s:%s@%s:%s?database=%s",
+		connInfo["user"].(string),
+		password,
+		connInfo["server"].(string),
+		utils.ToString(connInfo["port"]),
+		connInfo["database"].(string),
+	)
+	sqlDB, err := sqlx.Open("sqlserver", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao abrir conexão com sqlserver: %v", err)
 	}

@@ -37,7 +37,11 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 			panic(err)
 		}
 	case 3:
-
+		db, err = connectMssql(connInfo, db)
+		if err != nil {
+			fmt.Println("Error psql: ", err)
+			panic(err)
+		}
 	case 4:
 		db, err = connectMysql(connInfo, db)
 		if err != nil {
