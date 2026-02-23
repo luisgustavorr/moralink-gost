@@ -31,8 +31,19 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 		}
 
 	case 2:
+		db, err = connectFirebird(connInfo, db)
+		if err != nil {
+			fmt.Println("Error psql: ", err)
+			panic(err)
+		}
 	case 3:
+
 	case 4:
+		db, err = connectMysql(connInfo, db)
+		if err != nil {
+			fmt.Println("Error psql: ", err)
+			panic(err)
+		}
 
 	}
 	if err != nil {
