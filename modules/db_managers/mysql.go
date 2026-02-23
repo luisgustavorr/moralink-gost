@@ -8,16 +8,17 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 )
 
-func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		connInfo["host"].(string), connInfo["port"].(string), connInfo["user"].(string), connInfo["password"].(string), connInfo["database"].(string))
-	sqlDB, err := sqlx.Open("postgres", psqlInfo)
+func connectMysql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
+	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
+	fmt.Println(psqlInfo)
+	sqlDB, err := sqlx.Open("mysql", psqlInfo)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao abrir conexão com PostgreSQL: %v", err)
+		return nil, fmt.Errorf("erro ao abrir conexão com MySql: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -33,18 +34,18 @@ func connectPostgresql(connInfo map[string]interface{}, dI *utils.DbInfos) (*uti
 	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
 	dI.DB = sqlDB
 	dI.Queries = utils.QueriesFunctions{
-		Products:    StreamProdutosPostgresql,
-		Clientes:    StreamClientesPostgresql,
-		Categorias:  GetCategoriasPostgresql,
-		Vendas:      StreamVendasPostgresql,
-		Vendedores:  GetVendedoresPostgresql,
-		Financeiros: StreamFinanceirosPostgresql,
-		Generic:     StreamGenericPostgresql,
+		Products:    StreamProdutosMySql,
+		Clientes:    StreamClientesMySql,
+		Categorias:  GetCategoriasMySql,
+		Vendas:      StreamVendasMySql,
+		Vendedores:  GetVendedoresMySql,
+		Financeiros: StreamFinanceirosMySql,
+		Generic:     StreamGenericMySql,
 	}
 	return dI, nil
 }
 
-func StreamClientesPostgresql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
+func StreamClientesMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 
 	rows, err := db.Queryx(query)
@@ -80,7 +81,7 @@ func StreamClientesPostgresql(query string, db *sqlx.DB, batchSize int, cb func(
 	return nil
 }
 
-func StreamProdutosPostgresql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ProdutoRow) error) error {
+func StreamProdutosMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ProdutoRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 	rows, err := db.Queryx(query)
 	if err != nil {
@@ -114,7 +115,7 @@ func StreamProdutosPostgresql(query string, db *sqlx.DB, batchSize int, cb func(
 	return nil
 }
 
-func StreamVendasPostgresql(query string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
+func StreamVendasMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 	rows, err := db.Queryx(query)
 	if err != nil {
@@ -153,7 +154,7 @@ func StreamVendasPostgresql(query string, db *sqlx.DB, batchSize int, cb func([]
 
 	return nil
 }
-func GetCategoriasPostgresql(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
+func GetCategoriasMySql(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
 	query = strings.ReplaceAll(query, `\`, "")
 
 	result := []utils.CategoriaRow{}
@@ -172,7 +173,7 @@ func GetCategoriasPostgresql(query string, db *sqlx.DB) ([]utils.CategoriaRow, e
 	}
 	return result, err
 }
-func GetVendedoresPostgresql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
+func GetVendedoresMySql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
 	query = strings.ReplaceAll(query, `\`, "")
 
 	result := []utils.VendedorRow{}
@@ -192,7 +193,7 @@ func GetVendedoresPostgresql(query string, db *sqlx.DB) ([]utils.VendedorRow, er
 	return result, err
 }
 
-func StreamFinanceirosPostgresql(query string, db *sqlx.DB, batchSize int, cb func([]utils.FinanceiroRow) error) error {
+func StreamFinanceirosMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.FinanceiroRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 	rows, err := db.Queryx(query)
 	if err != nil {
@@ -228,7 +229,7 @@ func StreamFinanceirosPostgresql(query string, db *sqlx.DB, batchSize int, cb fu
 
 	return nil
 }
-func StreamGenericPostgresql(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
+func StreamGenericMySql(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 
 	rows, err := db.Queryx(query)
