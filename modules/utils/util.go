@@ -355,9 +355,9 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 			financeiro.DataPersonalizadas = *r.DataPersonalizadas
 		}
 		if r.InfosCobranca != nil {
-			infosC := []*pb.InfosObranca{}
+			infosC := []*pb.InfosCobranca{}
 			for _, v := range *r.InfosCobranca {
-				infosC = append(infosC, &pb.InfosObranca{
+				infosC = append(infosC, &pb.InfosCobranca{
 					IdExterno:      ToString(v.IdExterno),
 					ValorParcela:   v.ValorParcela,
 					DataVencimento: v.DataVencimento,

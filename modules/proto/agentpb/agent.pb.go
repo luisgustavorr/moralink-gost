@@ -7,13 +7,12 @@
 package agentpb
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -33,6 +32,7 @@ const (
 	MessageType_ERROR     MessageType = 4
 	MessageType_HEARTBEAT MessageType = 5
 	MessageType_ACK       MessageType = 6
+	MessageType_COMMAND   MessageType = 7
 )
 
 // Enum value maps for MessageType.
@@ -45,6 +45,7 @@ var (
 		4: "ERROR",
 		5: "HEARTBEAT",
 		6: "ACK",
+		7: "COMMAND",
 	}
 	MessageType_value = map[string]int32{
 		"UNKNOWN":   0,
@@ -54,6 +55,7 @@ var (
 		"ERROR":     4,
 		"HEARTBEAT": 5,
 		"ACK":       6,
+		"COMMAND":   7,
 	}
 )
 
@@ -139,6 +141,56 @@ func (DbType) EnumDescriptor() ([]byte, []int) {
 	return file_modules_proto_agent_proto_rawDescGZIP(), []int{1}
 }
 
+// desc: Which Command was requested
+type Command int32
+
+const (
+	Command_RESTART_APP Command = 0
+	Command_RESTART_DB  Command = 1
+	Command_UPDATE_APP  Command = 2
+)
+
+// Enum value maps for Command.
+var (
+	Command_name = map[int32]string{
+		0: "RESTART_APP",
+		1: "RESTART_DB",
+		2: "UPDATE_APP",
+	}
+	Command_value = map[string]int32{
+		"RESTART_APP": 0,
+		"RESTART_DB":  1,
+		"UPDATE_APP":  2,
+	}
+)
+
+func (x Command) Enum() *Command {
+	p := new(Command)
+	*p = x
+	return p
+}
+
+func (x Command) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Command) Descriptor() protoreflect.EnumDescriptor {
+	return file_modules_proto_agent_proto_enumTypes[2].Descriptor()
+}
+
+func (Command) Type() protoreflect.EnumType {
+	return &file_modules_proto_agent_proto_enumTypes[2]
+}
+
+func (x Command) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Command.Descriptor instead.
+func (Command) EnumDescriptor() ([]byte, []int) {
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{2}
+}
+
 type Table int32
 
 const (
@@ -184,11 +236,11 @@ func (x Table) String() string {
 }
 
 func (Table) Descriptor() protoreflect.EnumDescriptor {
-	return file_modules_proto_agent_proto_enumTypes[2].Descriptor()
+	return file_modules_proto_agent_proto_enumTypes[3].Descriptor()
 }
 
 func (Table) Type() protoreflect.EnumType {
-	return &file_modules_proto_agent_proto_enumTypes[2]
+	return &file_modules_proto_agent_proto_enumTypes[3]
 }
 
 func (x Table) Number() protoreflect.EnumNumber {
@@ -197,7 +249,7 @@ func (x Table) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Table.Descriptor instead.
 func (Table) EnumDescriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{2}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{3}
 }
 
 type ConnectStatus int32
@@ -230,11 +282,11 @@ func (x ConnectStatus) String() string {
 }
 
 func (ConnectStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_modules_proto_agent_proto_enumTypes[3].Descriptor()
+	return file_modules_proto_agent_proto_enumTypes[4].Descriptor()
 }
 
 func (ConnectStatus) Type() protoreflect.EnumType {
-	return &file_modules_proto_agent_proto_enumTypes[3]
+	return &file_modules_proto_agent_proto_enumTypes[4]
 }
 
 func (x ConnectStatus) Number() protoreflect.EnumNumber {
@@ -243,8 +295,98 @@ func (x ConnectStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ConnectStatus.Descriptor instead.
 func (ConnectStatus) EnumDescriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{3}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{4}
 }
+
+type Commands struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Command Command                `protobuf:"varint,1,opt,name=command,proto3,enum=agent.Command" json:"command,omitempty"`
+	// Types that are valid to be assigned to AddInfo:
+	//
+	//	*Commands_AckReturn
+	//	*Commands_Version
+	AddInfo       isCommands_AddInfo `protobuf_oneof:"addInfo"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Commands) Reset() {
+	*x = Commands{}
+	mi := &file_modules_proto_agent_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Commands) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Commands) ProtoMessage() {}
+
+func (x *Commands) ProtoReflect() protoreflect.Message {
+	mi := &file_modules_proto_agent_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Commands.ProtoReflect.Descriptor instead.
+func (*Commands) Descriptor() ([]byte, []int) {
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Commands) GetCommand() Command {
+	if x != nil {
+		return x.Command
+	}
+	return Command_RESTART_APP
+}
+
+func (x *Commands) GetAddInfo() isCommands_AddInfo {
+	if x != nil {
+		return x.AddInfo
+	}
+	return nil
+}
+
+func (x *Commands) GetAckReturn() *ACKReturn {
+	if x != nil {
+		if x, ok := x.AddInfo.(*Commands_AckReturn); ok {
+			return x.AckReturn
+		}
+	}
+	return nil
+}
+
+func (x *Commands) GetVersion() string {
+	if x != nil {
+		if x, ok := x.AddInfo.(*Commands_Version); ok {
+			return x.Version
+		}
+	}
+	return ""
+}
+
+type isCommands_AddInfo interface {
+	isCommands_AddInfo()
+}
+
+type Commands_AckReturn struct {
+	AckReturn *ACKReturn `protobuf:"bytes,2,opt,name=ack_return,json=ackReturn,proto3,oneof"`
+}
+
+type Commands_Version struct {
+	Version string `protobuf:"bytes,3,opt,name=version,proto3,oneof"`
+}
+
+func (*Commands_AckReturn) isCommands_AddInfo() {}
+
+func (*Commands_Version) isCommands_AddInfo() {}
 
 type AgentMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -262,7 +404,7 @@ type AgentMessage struct {
 
 func (x *AgentMessage) Reset() {
 	*x = AgentMessage{}
-	mi := &file_modules_proto_agent_proto_msgTypes[0]
+	mi := &file_modules_proto_agent_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -274,7 +416,7 @@ func (x *AgentMessage) String() string {
 func (*AgentMessage) ProtoMessage() {}
 
 func (x *AgentMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[0]
+	mi := &file_modules_proto_agent_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -287,7 +429,7 @@ func (x *AgentMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentMessage.ProtoReflect.Descriptor instead.
 func (*AgentMessage) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{0}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *AgentMessage) GetAgentId() string {
@@ -360,6 +502,7 @@ type AgentPayload struct {
 	//	*AgentPayload_QueryRequest
 	//	*AgentPayload_Erros
 	//	*AgentPayload_AckReturn
+	//	*AgentPayload_Command
 	Data          isAgentPayload_Data `protobuf_oneof:"data"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -367,7 +510,7 @@ type AgentPayload struct {
 
 func (x *AgentPayload) Reset() {
 	*x = AgentPayload{}
-	mi := &file_modules_proto_agent_proto_msgTypes[1]
+	mi := &file_modules_proto_agent_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -379,7 +522,7 @@ func (x *AgentPayload) String() string {
 func (*AgentPayload) ProtoMessage() {}
 
 func (x *AgentPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[1]
+	mi := &file_modules_proto_agent_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -392,7 +535,7 @@ func (x *AgentPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AgentPayload.ProtoReflect.Descriptor instead.
 func (*AgentPayload) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{1}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *AgentPayload) GetData() isAgentPayload_Data {
@@ -492,6 +635,15 @@ func (x *AgentPayload) GetAckReturn() *ACKReturn {
 	return nil
 }
 
+func (x *AgentPayload) GetCommand() *Commands {
+	if x != nil {
+		if x, ok := x.Data.(*AgentPayload_Command); ok {
+			return x.Command
+		}
+	}
+	return nil
+}
+
 type isAgentPayload_Data interface {
 	isAgentPayload_Data()
 }
@@ -536,6 +688,10 @@ type AgentPayload_AckReturn struct {
 	AckReturn *ACKReturn `protobuf:"bytes,10,opt,name=ack_return,json=ackReturn,proto3,oneof"`
 }
 
+type AgentPayload_Command struct {
+	Command *Commands `protobuf:"bytes,11,opt,name=command,proto3,oneof"`
+}
+
 func (*AgentPayload_Produtos) isAgentPayload_Data() {}
 
 func (*AgentPayload_Vendas) isAgentPayload_Data() {}
@@ -556,6 +712,8 @@ func (*AgentPayload_Erros) isAgentPayload_Data() {}
 
 func (*AgentPayload_AckReturn) isAgentPayload_Data() {}
 
+func (*AgentPayload_Command) isAgentPayload_Data() {}
+
 type Query struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
@@ -566,7 +724,7 @@ type Query struct {
 
 func (x *Query) Reset() {
 	*x = Query{}
-	mi := &file_modules_proto_agent_proto_msgTypes[2]
+	mi := &file_modules_proto_agent_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -578,7 +736,7 @@ func (x *Query) String() string {
 func (*Query) ProtoMessage() {}
 
 func (x *Query) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[2]
+	mi := &file_modules_proto_agent_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -591,7 +749,7 @@ func (x *Query) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Query.ProtoReflect.Descriptor instead.
 func (*Query) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{2}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Query) GetQuery() string {
@@ -618,7 +776,7 @@ type ACKReturn struct {
 
 func (x *ACKReturn) Reset() {
 	*x = ACKReturn{}
-	mi := &file_modules_proto_agent_proto_msgTypes[3]
+	mi := &file_modules_proto_agent_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -630,7 +788,7 @@ func (x *ACKReturn) String() string {
 func (*ACKReturn) ProtoMessage() {}
 
 func (x *ACKReturn) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[3]
+	mi := &file_modules_proto_agent_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -643,7 +801,7 @@ func (x *ACKReturn) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ACKReturn.ProtoReflect.Descriptor instead.
 func (*ACKReturn) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{3}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ACKReturn) GetStatus() ConnectStatus {
@@ -673,7 +831,7 @@ type ConnectedUser struct {
 
 func (x *ConnectedUser) Reset() {
 	*x = ConnectedUser{}
-	mi := &file_modules_proto_agent_proto_msgTypes[4]
+	mi := &file_modules_proto_agent_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -685,7 +843,7 @@ func (x *ConnectedUser) String() string {
 func (*ConnectedUser) ProtoMessage() {}
 
 func (x *ConnectedUser) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[4]
+	mi := &file_modules_proto_agent_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -698,7 +856,7 @@ func (x *ConnectedUser) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectedUser.ProtoReflect.Descriptor instead.
 func (*ConnectedUser) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{4}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ConnectedUser) GetDbType() DbType {
@@ -745,7 +903,7 @@ type Erros struct {
 
 func (x *Erros) Reset() {
 	*x = Erros{}
-	mi := &file_modules_proto_agent_proto_msgTypes[5]
+	mi := &file_modules_proto_agent_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -757,7 +915,7 @@ func (x *Erros) String() string {
 func (*Erros) ProtoMessage() {}
 
 func (x *Erros) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[5]
+	mi := &file_modules_proto_agent_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -770,7 +928,7 @@ func (x *Erros) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Erros.ProtoReflect.Descriptor instead.
 func (*Erros) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{5}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Erros) GetError() []*Error {
@@ -791,7 +949,7 @@ type Error struct {
 
 func (x *Error) Reset() {
 	*x = Error{}
-	mi := &file_modules_proto_agent_proto_msgTypes[6]
+	mi := &file_modules_proto_agent_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -803,7 +961,7 @@ func (x *Error) String() string {
 func (*Error) ProtoMessage() {}
 
 func (x *Error) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[6]
+	mi := &file_modules_proto_agent_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -816,7 +974,7 @@ func (x *Error) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Error.ProtoReflect.Descriptor instead.
 func (*Error) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{6}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Error) GetCode() string {
@@ -850,7 +1008,7 @@ type Produtos struct {
 
 func (x *Produtos) Reset() {
 	*x = Produtos{}
-	mi := &file_modules_proto_agent_proto_msgTypes[7]
+	mi := &file_modules_proto_agent_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -862,7 +1020,7 @@ func (x *Produtos) String() string {
 func (*Produtos) ProtoMessage() {}
 
 func (x *Produtos) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[7]
+	mi := &file_modules_proto_agent_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -875,7 +1033,7 @@ func (x *Produtos) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Produtos.ProtoReflect.Descriptor instead.
 func (*Produtos) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{7}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Produtos) GetItems() []*Produto {
@@ -907,7 +1065,7 @@ type Produto struct {
 
 func (x *Produto) Reset() {
 	*x = Produto{}
-	mi := &file_modules_proto_agent_proto_msgTypes[8]
+	mi := &file_modules_proto_agent_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -919,7 +1077,7 @@ func (x *Produto) String() string {
 func (*Produto) ProtoMessage() {}
 
 func (x *Produto) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[8]
+	mi := &file_modules_proto_agent_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -932,7 +1090,7 @@ func (x *Produto) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Produto.ProtoReflect.Descriptor instead.
 func (*Produto) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{8}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Produto) GetIdExterno() string {
@@ -1043,7 +1201,7 @@ type Clientes struct {
 
 func (x *Clientes) Reset() {
 	*x = Clientes{}
-	mi := &file_modules_proto_agent_proto_msgTypes[9]
+	mi := &file_modules_proto_agent_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1055,7 +1213,7 @@ func (x *Clientes) String() string {
 func (*Clientes) ProtoMessage() {}
 
 func (x *Clientes) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[9]
+	mi := &file_modules_proto_agent_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1068,7 +1226,7 @@ func (x *Clientes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Clientes.ProtoReflect.Descriptor instead.
 func (*Clientes) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{9}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Clientes) GetItems() []*Cliente {
@@ -1101,7 +1259,7 @@ type Cliente struct {
 
 func (x *Cliente) Reset() {
 	*x = Cliente{}
-	mi := &file_modules_proto_agent_proto_msgTypes[10]
+	mi := &file_modules_proto_agent_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1113,7 +1271,7 @@ func (x *Cliente) String() string {
 func (*Cliente) ProtoMessage() {}
 
 func (x *Cliente) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[10]
+	mi := &file_modules_proto_agent_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1126,7 +1284,7 @@ func (x *Cliente) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Cliente.ProtoReflect.Descriptor instead.
 func (*Cliente) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{10}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Cliente) GetIdExterno() string {
@@ -1244,7 +1402,7 @@ type Categorias struct {
 
 func (x *Categorias) Reset() {
 	*x = Categorias{}
-	mi := &file_modules_proto_agent_proto_msgTypes[11]
+	mi := &file_modules_proto_agent_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1256,7 +1414,7 @@ func (x *Categorias) String() string {
 func (*Categorias) ProtoMessage() {}
 
 func (x *Categorias) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[11]
+	mi := &file_modules_proto_agent_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1269,7 +1427,7 @@ func (x *Categorias) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Categorias.ProtoReflect.Descriptor instead.
 func (*Categorias) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{11}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Categorias) GetItems() []*Categoria {
@@ -1289,7 +1447,7 @@ type Categoria struct {
 
 func (x *Categoria) Reset() {
 	*x = Categoria{}
-	mi := &file_modules_proto_agent_proto_msgTypes[12]
+	mi := &file_modules_proto_agent_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1301,7 +1459,7 @@ func (x *Categoria) String() string {
 func (*Categoria) ProtoMessage() {}
 
 func (x *Categoria) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[12]
+	mi := &file_modules_proto_agent_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1314,7 +1472,7 @@ func (x *Categoria) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Categoria.ProtoReflect.Descriptor instead.
 func (*Categoria) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{12}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Categoria) GetIdExterno() string {
@@ -1341,7 +1499,7 @@ type Vendedores struct {
 
 func (x *Vendedores) Reset() {
 	*x = Vendedores{}
-	mi := &file_modules_proto_agent_proto_msgTypes[13]
+	mi := &file_modules_proto_agent_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1353,7 +1511,7 @@ func (x *Vendedores) String() string {
 func (*Vendedores) ProtoMessage() {}
 
 func (x *Vendedores) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[13]
+	mi := &file_modules_proto_agent_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1366,7 +1524,7 @@ func (x *Vendedores) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Vendedores.ProtoReflect.Descriptor instead.
 func (*Vendedores) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{13}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Vendedores) GetItems() []*Vendedor {
@@ -1389,7 +1547,7 @@ type Vendedor struct {
 
 func (x *Vendedor) Reset() {
 	*x = Vendedor{}
-	mi := &file_modules_proto_agent_proto_msgTypes[14]
+	mi := &file_modules_proto_agent_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1401,7 +1559,7 @@ func (x *Vendedor) String() string {
 func (*Vendedor) ProtoMessage() {}
 
 func (x *Vendedor) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[14]
+	mi := &file_modules_proto_agent_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1414,7 +1572,7 @@ func (x *Vendedor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Vendedor.ProtoReflect.Descriptor instead.
 func (*Vendedor) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{14}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Vendedor) GetIdExterno() string {
@@ -1463,7 +1621,7 @@ type Vendas struct {
 
 func (x *Vendas) Reset() {
 	*x = Vendas{}
-	mi := &file_modules_proto_agent_proto_msgTypes[15]
+	mi := &file_modules_proto_agent_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1475,7 +1633,7 @@ func (x *Vendas) String() string {
 func (*Vendas) ProtoMessage() {}
 
 func (x *Vendas) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[15]
+	mi := &file_modules_proto_agent_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1488,7 +1646,7 @@ func (x *Vendas) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Vendas.ProtoReflect.Descriptor instead.
 func (*Vendas) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{15}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Vendas) GetItems() []*Venda {
@@ -1524,7 +1682,7 @@ type Venda struct {
 
 func (x *Venda) Reset() {
 	*x = Venda{}
-	mi := &file_modules_proto_agent_proto_msgTypes[16]
+	mi := &file_modules_proto_agent_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1536,7 +1694,7 @@ func (x *Venda) String() string {
 func (*Venda) ProtoMessage() {}
 
 func (x *Venda) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[16]
+	mi := &file_modules_proto_agent_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1549,7 +1707,7 @@ func (x *Venda) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Venda.ProtoReflect.Descriptor instead.
 func (*Venda) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{16}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Venda) GetIdExterno() string {
@@ -1689,7 +1847,7 @@ type ProdutosVendas struct {
 
 func (x *ProdutosVendas) Reset() {
 	*x = ProdutosVendas{}
-	mi := &file_modules_proto_agent_proto_msgTypes[17]
+	mi := &file_modules_proto_agent_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1701,7 +1859,7 @@ func (x *ProdutosVendas) String() string {
 func (*ProdutosVendas) ProtoMessage() {}
 
 func (x *ProdutosVendas) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[17]
+	mi := &file_modules_proto_agent_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1714,7 +1872,7 @@ func (x *ProdutosVendas) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProdutosVendas.ProtoReflect.Descriptor instead.
 func (*ProdutosVendas) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{17}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ProdutosVendas) GetProdutoId() string {
@@ -1747,7 +1905,7 @@ type DatasVencimento struct {
 
 func (x *DatasVencimento) Reset() {
 	*x = DatasVencimento{}
-	mi := &file_modules_proto_agent_proto_msgTypes[18]
+	mi := &file_modules_proto_agent_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1759,7 +1917,7 @@ func (x *DatasVencimento) String() string {
 func (*DatasVencimento) ProtoMessage() {}
 
 func (x *DatasVencimento) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[18]
+	mi := &file_modules_proto_agent_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1772,7 +1930,7 @@ func (x *DatasVencimento) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DatasVencimento.ProtoReflect.Descriptor instead.
 func (*DatasVencimento) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{18}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *DatasVencimento) GetDataVencimento() string {
@@ -1792,7 +1950,7 @@ type Financeiros struct {
 
 func (x *Financeiros) Reset() {
 	*x = Financeiros{}
-	mi := &file_modules_proto_agent_proto_msgTypes[19]
+	mi := &file_modules_proto_agent_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1804,7 +1962,7 @@ func (x *Financeiros) String() string {
 func (*Financeiros) ProtoMessage() {}
 
 func (x *Financeiros) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[19]
+	mi := &file_modules_proto_agent_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1817,7 +1975,7 @@ func (x *Financeiros) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Financeiros.ProtoReflect.Descriptor instead.
 func (*Financeiros) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{19}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Financeiros) GetItems() []*Financeiro {
@@ -1837,7 +1995,7 @@ type Financeiro struct {
 	ValorParcela       float32                `protobuf:"fixed32,6,opt,name=valor_parcela,json=valorParcela,proto3" json:"valor_parcela,omitempty"`
 	DataVencimento     string                 `protobuf:"bytes,7,opt,name=data_vencimento,json=dataVencimento,proto3" json:"data_vencimento,omitempty"`
 	DataPersonalizadas bool                   `protobuf:"varint,8,opt,name=data_personalizadas,json=dataPersonalizadas,proto3" json:"data_personalizadas,omitempty"`
-	InfosCobranca      []*InfosObranca        `protobuf:"bytes,9,rep,name=infos_cobranca,json=infosCobranca,proto3" json:"infos_cobranca,omitempty"`
+	InfosCobranca      []*InfosCobranca       `protobuf:"bytes,9,rep,name=infos_cobranca,json=infosCobranca,proto3" json:"infos_cobranca,omitempty"`
 	Recorrente         bool                   `protobuf:"varint,10,opt,name=recorrente,proto3" json:"recorrente,omitempty"`
 	Venda              string                 `protobuf:"bytes,11,opt,name=venda,proto3" json:"venda,omitempty"`
 	Media              string                 `protobuf:"bytes,12,opt,name=media,proto3" json:"media,omitempty"`
@@ -1849,7 +2007,7 @@ type Financeiro struct {
 
 func (x *Financeiro) Reset() {
 	*x = Financeiro{}
-	mi := &file_modules_proto_agent_proto_msgTypes[20]
+	mi := &file_modules_proto_agent_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1861,7 +2019,7 @@ func (x *Financeiro) String() string {
 func (*Financeiro) ProtoMessage() {}
 
 func (x *Financeiro) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[20]
+	mi := &file_modules_proto_agent_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1874,7 +2032,7 @@ func (x *Financeiro) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Financeiro.ProtoReflect.Descriptor instead.
 func (*Financeiro) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{20}
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Financeiro) GetIdExterno() string {
@@ -1933,7 +2091,7 @@ func (x *Financeiro) GetDataPersonalizadas() bool {
 	return false
 }
 
-func (x *Financeiro) GetInfosCobranca() []*InfosObranca {
+func (x *Financeiro) GetInfosCobranca() []*InfosCobranca {
 	if x != nil {
 		return x.InfosCobranca
 	}
@@ -1975,7 +2133,7 @@ func (x *Financeiro) GetAtivo() bool {
 	return false
 }
 
-type InfosObranca struct {
+type InfosCobranca struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	IdExterno      string                 `protobuf:"bytes,1,opt,name=id_externo,json=idExterno,proto3" json:"id_externo,omitempty"`
 	ValorParcela   float32                `protobuf:"fixed32,2,opt,name=valor_parcela,json=valorParcela,proto3" json:"valor_parcela,omitempty"`
@@ -1986,21 +2144,21 @@ type InfosObranca struct {
 	sizeCache      protoimpl.SizeCache
 }
 
-func (x *InfosObranca) Reset() {
-	*x = InfosObranca{}
-	mi := &file_modules_proto_agent_proto_msgTypes[21]
+func (x *InfosCobranca) Reset() {
+	*x = InfosCobranca{}
+	mi := &file_modules_proto_agent_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *InfosObranca) String() string {
+func (x *InfosCobranca) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*InfosObranca) ProtoMessage() {}
+func (*InfosCobranca) ProtoMessage() {}
 
-func (x *InfosObranca) ProtoReflect() protoreflect.Message {
-	mi := &file_modules_proto_agent_proto_msgTypes[21]
+func (x *InfosCobranca) ProtoReflect() protoreflect.Message {
+	mi := &file_modules_proto_agent_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2011,40 +2169,40 @@ func (x *InfosObranca) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use InfosObranca.ProtoReflect.Descriptor instead.
-func (*InfosObranca) Descriptor() ([]byte, []int) {
-	return file_modules_proto_agent_proto_rawDescGZIP(), []int{21}
+// Deprecated: Use InfosCobranca.ProtoReflect.Descriptor instead.
+func (*InfosCobranca) Descriptor() ([]byte, []int) {
+	return file_modules_proto_agent_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *InfosObranca) GetIdExterno() string {
+func (x *InfosCobranca) GetIdExterno() string {
 	if x != nil {
 		return x.IdExterno
 	}
 	return ""
 }
 
-func (x *InfosObranca) GetValorParcela() float32 {
+func (x *InfosCobranca) GetValorParcela() float32 {
 	if x != nil {
 		return x.ValorParcela
 	}
 	return 0
 }
 
-func (x *InfosObranca) GetDataVencimento() string {
+func (x *InfosCobranca) GetDataVencimento() string {
 	if x != nil {
 		return x.DataVencimento
 	}
 	return ""
 }
 
-func (x *InfosObranca) GetDataCriacao() string {
+func (x *InfosCobranca) GetDataCriacao() string {
 	if x != nil {
 		return x.DataCriacao
 	}
 	return ""
 }
 
-func (x *InfosObranca) GetStatus() string {
+func (x *InfosCobranca) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
@@ -2055,7 +2213,13 @@ var File_modules_proto_agent_proto protoreflect.FileDescriptor
 
 const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\x8b\x02\n" +
+	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\x8e\x01\n" +
+	"\bCommands\x12(\n" +
+	"\acommand\x18\x01 \x01(\x0e2\x0e.agent.CommandR\acommand\x121\n" +
+	"\n" +
+	"ack_return\x18\x02 \x01(\v2\x10.agent.ACKReturnH\x00R\tackReturn\x12\x1a\n" +
+	"\aversion\x18\x03 \x01(\tH\x00R\aversionB\t\n" +
+	"\aaddInfo\"\x8b\x02\n" +
 	"\fAgentMessage\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x19\n" +
 	"\bbatch_id\x18\x02 \x01(\tR\abatchId\x12&\n" +
@@ -2064,7 +2228,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\apayload\x18\x05 \x01(\v2\x13.agent.AgentPayloadR\apayload\x12\"\n" +
 	"\x05table\x18\x06 \x01(\x0e2\f.agent.TableR\x05table\x12\x16\n" +
 	"\x06isLast\x18\a \x01(\bR\x06isLast\x12\x18\n" +
-	"\aisEmpty\x18\b \x01(\bR\aisEmpty\"\x92\x04\n" +
+	"\aisEmpty\x18\b \x01(\bR\aisEmpty\"\xbf\x04\n" +
 	"\fAgentPayload\x12-\n" +
 	"\bprodutos\x18\x01 \x01(\v2\x0f.agent.ProdutosH\x00R\bprodutos\x12'\n" +
 	"\x06vendas\x18\x02 \x01(\v2\r.agent.VendasH\x00R\x06vendas\x12-\n" +
@@ -2081,7 +2245,8 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x05erros\x18\t \x01(\v2\f.agent.ErrosH\x00R\x05erros\x121\n" +
 	"\n" +
 	"ack_return\x18\n" +
-	" \x01(\v2\x10.agent.ACKReturnH\x00R\tackReturnB\x06\n" +
+	" \x01(\v2\x10.agent.ACKReturnH\x00R\tackReturn\x12+\n" +
+	"\acommand\x18\v \x01(\v2\x0f.agent.CommandsH\x00R\acommandB\x06\n" +
 	"\x04data\";\n" +
 	"\x05Query\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1c\n" +
@@ -2200,7 +2365,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x10Datas_vencimento\x12'\n" +
 	"\x0fdata_vencimento\x18\x01 \x01(\tR\x0edataVencimento\"6\n" +
 	"\vFinanceiros\x12'\n" +
-	"\x05items\x18\x01 \x03(\v2\x11.agent.FinanceiroR\x05items\"\xe1\x03\n" +
+	"\x05items\x18\x01 \x03(\v2\x11.agent.FinanceiroR\x05items\"\xe2\x03\n" +
 	"\n" +
 	"Financeiro\x12\x1d\n" +
 	"\n" +
@@ -2212,8 +2377,8 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\bparcelas\x18\x05 \x01(\x05R\bparcelas\x12#\n" +
 	"\rvalor_parcela\x18\x06 \x01(\x02R\fvalorParcela\x12'\n" +
 	"\x0fdata_vencimento\x18\a \x01(\tR\x0edataVencimento\x12/\n" +
-	"\x13data_personalizadas\x18\b \x01(\bR\x12dataPersonalizadas\x12;\n" +
-	"\x0einfos_cobranca\x18\t \x03(\v2\x14.agent.Infos_obrancaR\rinfosCobranca\x12\x1e\n" +
+	"\x13data_personalizadas\x18\b \x01(\bR\x12dataPersonalizadas\x12<\n" +
+	"\x0einfos_cobranca\x18\t \x03(\v2\x15.agent.Infos_cobrancaR\rinfosCobranca\x12\x1e\n" +
 	"\n" +
 	"recorrente\x18\n" +
 	" \x01(\bR\n" +
@@ -2221,14 +2386,14 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x05venda\x18\v \x01(\tR\x05venda\x12\x14\n" +
 	"\x05media\x18\f \x01(\tR\x05media\x12'\n" +
 	"\x0ftitulo_cobranca\x18\r \x01(\tR\x0etituloCobranca\x12\x14\n" +
-	"\x05ativo\x18\x0e \x01(\bR\x05ativo\"\xb7\x01\n" +
-	"\rInfos_obranca\x12\x1d\n" +
+	"\x05ativo\x18\x0e \x01(\bR\x05ativo\"\xb8\x01\n" +
+	"\x0eInfos_cobranca\x12\x1d\n" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\x12#\n" +
 	"\rvalor_parcela\x18\x02 \x01(\x02R\fvalorParcela\x12'\n" +
 	"\x0fdata_vencimento\x18\x03 \x01(\tR\x0edataVencimento\x12!\n" +
 	"\fdata_criacao\x18\x04 \x01(\tR\vdataCriacao\x12\x16\n" +
-	"\x06status\x18\x05 \x01(\tR\x06status*_\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status*l\n" +
 	"\vMessageType\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\t\n" +
 	"\x05HELLO\x10\x01\x12\t\n" +
@@ -2237,14 +2402,21 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x06RESULT\x10\x03\x12\t\n" +
 	"\x05ERROR\x10\x04\x12\r\n" +
 	"\tHEARTBEAT\x10\x05\x12\a\n" +
-	"\x03ACK\x10\x06*L\n" +
+	"\x03ACK\x10\x06\x12\v\n" +
+	"\aCOMMAND\x10\a*L\n" +
 	"\aDb_type\x12\t\n" +
 	"\x05MYSQL\x10\x00\x12\x0e\n" +
 	"\n" +
 	"POSTGRESQL\x10\x01\x12\f\n" +
 	"\bFIREBIRD\x10\x02\x12\t\n" +
 	"\x05MSSQL\x10\x03\x12\r\n" +
-	"\tMYSQL_OLD\x10\x04*s\n" +
+	"\tMYSQL_OLD\x10\x04*:\n" +
+	"\aCommand\x12\x0f\n" +
+	"\vRESTART_APP\x10\x00\x12\x0e\n" +
+	"\n" +
+	"RESTART_DB\x10\x01\x12\x0e\n" +
+	"\n" +
+	"UPDATE_APP\x10\x02*s\n" +
 	"\x05Table\x12\r\n" +
 	"\tQPRODUTOS\x10\x00\x12\r\n" +
 	"\tQCLIENTES\x10\x01\x12\x0f\n" +
@@ -2271,71 +2443,76 @@ func file_modules_proto_agent_proto_rawDescGZIP() []byte {
 	return file_modules_proto_agent_proto_rawDescData
 }
 
-var file_modules_proto_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_modules_proto_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_modules_proto_agent_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_modules_proto_agent_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_modules_proto_agent_proto_goTypes = []any{
 	(MessageType)(0),           // 0: agent.MessageType
 	(DbType)(0),                // 1: agent.Db_type
-	(Table)(0),                 // 2: agent.Table
-	(ConnectStatus)(0),         // 3: agent.ConnectStatus
-	(*AgentMessage)(nil),       // 4: agent.AgentMessage
-	(*AgentPayload)(nil),       // 5: agent.AgentPayload
-	(*Query)(nil),              // 6: agent.Query
-	(*ACKReturn)(nil),          // 7: agent.ACKReturn
-	(*ConnectedUser)(nil),      // 8: agent.ConnectedUser
-	(*Erros)(nil),              // 9: agent.Erros
-	(*Error)(nil),              // 10: agent.Error
-	(*Produtos)(nil),           // 11: agent.Produtos
-	(*Produto)(nil),            // 12: agent.Produto
-	(*Clientes)(nil),           // 13: agent.Clientes
-	(*Cliente)(nil),            // 14: agent.Cliente
-	(*Categorias)(nil),         // 15: agent.Categorias
-	(*Categoria)(nil),          // 16: agent.Categoria
-	(*Vendedores)(nil),         // 17: agent.Vendedores
-	(*Vendedor)(nil),           // 18: agent.Vendedor
-	(*Vendas)(nil),             // 19: agent.Vendas
-	(*Venda)(nil),              // 20: agent.Venda
-	(*ProdutosVendas)(nil),     // 21: agent.Produtos_vendas
-	(*DatasVencimento)(nil),    // 22: agent.Datas_vencimento
-	(*Financeiros)(nil),        // 23: agent.Financeiros
-	(*Financeiro)(nil),         // 24: agent.Financeiro
-	(*InfosObranca)(nil),       // 25: agent.Infos_obranca
-	(*structpb.ListValue)(nil), // 26: google.protobuf.ListValue
+	(Command)(0),               // 2: agent.Command
+	(Table)(0),                 // 3: agent.Table
+	(ConnectStatus)(0),         // 4: agent.ConnectStatus
+	(*Commands)(nil),           // 5: agent.Commands
+	(*AgentMessage)(nil),       // 6: agent.AgentMessage
+	(*AgentPayload)(nil),       // 7: agent.AgentPayload
+	(*Query)(nil),              // 8: agent.Query
+	(*ACKReturn)(nil),          // 9: agent.ACKReturn
+	(*ConnectedUser)(nil),      // 10: agent.ConnectedUser
+	(*Erros)(nil),              // 11: agent.Erros
+	(*Error)(nil),              // 12: agent.Error
+	(*Produtos)(nil),           // 13: agent.Produtos
+	(*Produto)(nil),            // 14: agent.Produto
+	(*Clientes)(nil),           // 15: agent.Clientes
+	(*Cliente)(nil),            // 16: agent.Cliente
+	(*Categorias)(nil),         // 17: agent.Categorias
+	(*Categoria)(nil),          // 18: agent.Categoria
+	(*Vendedores)(nil),         // 19: agent.Vendedores
+	(*Vendedor)(nil),           // 20: agent.Vendedor
+	(*Vendas)(nil),             // 21: agent.Vendas
+	(*Venda)(nil),              // 22: agent.Venda
+	(*ProdutosVendas)(nil),     // 23: agent.Produtos_vendas
+	(*DatasVencimento)(nil),    // 24: agent.Datas_vencimento
+	(*Financeiros)(nil),        // 25: agent.Financeiros
+	(*Financeiro)(nil),         // 26: agent.Financeiro
+	(*InfosCobranca)(nil),      // 27: agent.Infos_cobranca
+	(*structpb.ListValue)(nil), // 28: google.protobuf.ListValue
 }
 var file_modules_proto_agent_proto_depIdxs = []int32{
-	0,  // 0: agent.AgentMessage.type:type_name -> agent.MessageType
-	5,  // 1: agent.AgentMessage.payload:type_name -> agent.AgentPayload
-	2,  // 2: agent.AgentMessage.table:type_name -> agent.Table
-	11, // 3: agent.AgentPayload.produtos:type_name -> agent.Produtos
-	19, // 4: agent.AgentPayload.vendas:type_name -> agent.Vendas
-	13, // 5: agent.AgentPayload.clientes:type_name -> agent.Clientes
-	15, // 6: agent.AgentPayload.categorias:type_name -> agent.Categorias
-	17, // 7: agent.AgentPayload.vendedores:type_name -> agent.Vendedores
-	23, // 8: agent.AgentPayload.financeiros:type_name -> agent.Financeiros
-	26, // 9: agent.AgentPayload.generic_return:type_name -> google.protobuf.ListValue
-	6,  // 10: agent.AgentPayload.query_request:type_name -> agent.Query
-	9,  // 11: agent.AgentPayload.erros:type_name -> agent.Erros
-	7,  // 12: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
-	3,  // 13: agent.ACKReturn.status:type_name -> agent.ConnectStatus
-	8,  // 14: agent.ACKReturn.connected_user:type_name -> agent.ConnectedUser
-	1,  // 15: agent.ConnectedUser.db_type:type_name -> agent.Db_type
-	10, // 16: agent.Erros.error:type_name -> agent.Error
-	12, // 17: agent.Produtos.items:type_name -> agent.Produto
-	14, // 18: agent.Clientes.items:type_name -> agent.Cliente
-	16, // 19: agent.Categorias.items:type_name -> agent.Categoria
-	18, // 20: agent.Vendedores.items:type_name -> agent.Vendedor
-	20, // 21: agent.Vendas.items:type_name -> agent.Venda
-	21, // 22: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
-	22, // 23: agent.Venda.datas_vencimento:type_name -> agent.Datas_vencimento
-	24, // 24: agent.Financeiros.items:type_name -> agent.Financeiro
-	25, // 25: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_obranca
-	4,  // 26: agent.AgentService.Connect:input_type -> agent.AgentMessage
-	4,  // 27: agent.AgentService.Connect:output_type -> agent.AgentMessage
-	27, // [27:28] is the sub-list for method output_type
-	26, // [26:27] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	2,  // 0: agent.Commands.command:type_name -> agent.Command
+	9,  // 1: agent.Commands.ack_return:type_name -> agent.ACKReturn
+	0,  // 2: agent.AgentMessage.type:type_name -> agent.MessageType
+	7,  // 3: agent.AgentMessage.payload:type_name -> agent.AgentPayload
+	3,  // 4: agent.AgentMessage.table:type_name -> agent.Table
+	13, // 5: agent.AgentPayload.produtos:type_name -> agent.Produtos
+	21, // 6: agent.AgentPayload.vendas:type_name -> agent.Vendas
+	15, // 7: agent.AgentPayload.clientes:type_name -> agent.Clientes
+	17, // 8: agent.AgentPayload.categorias:type_name -> agent.Categorias
+	19, // 9: agent.AgentPayload.vendedores:type_name -> agent.Vendedores
+	25, // 10: agent.AgentPayload.financeiros:type_name -> agent.Financeiros
+	28, // 11: agent.AgentPayload.generic_return:type_name -> google.protobuf.ListValue
+	8,  // 12: agent.AgentPayload.query_request:type_name -> agent.Query
+	11, // 13: agent.AgentPayload.erros:type_name -> agent.Erros
+	9,  // 14: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
+	5,  // 15: agent.AgentPayload.command:type_name -> agent.Commands
+	4,  // 16: agent.ACKReturn.status:type_name -> agent.ConnectStatus
+	10, // 17: agent.ACKReturn.connected_user:type_name -> agent.ConnectedUser
+	1,  // 18: agent.ConnectedUser.db_type:type_name -> agent.Db_type
+	12, // 19: agent.Erros.error:type_name -> agent.Error
+	14, // 20: agent.Produtos.items:type_name -> agent.Produto
+	16, // 21: agent.Clientes.items:type_name -> agent.Cliente
+	18, // 22: agent.Categorias.items:type_name -> agent.Categoria
+	20, // 23: agent.Vendedores.items:type_name -> agent.Vendedor
+	22, // 24: agent.Vendas.items:type_name -> agent.Venda
+	23, // 25: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
+	24, // 26: agent.Venda.datas_vencimento:type_name -> agent.Datas_vencimento
+	26, // 27: agent.Financeiros.items:type_name -> agent.Financeiro
+	27, // 28: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_cobranca
+	6,  // 29: agent.AgentService.Connect:input_type -> agent.AgentMessage
+	6,  // 30: agent.AgentService.Connect:output_type -> agent.AgentMessage
+	30, // [30:31] is the sub-list for method output_type
+	29, // [29:30] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_modules_proto_agent_proto_init() }
@@ -2343,7 +2520,11 @@ func file_modules_proto_agent_proto_init() {
 	if File_modules_proto_agent_proto != nil {
 		return
 	}
-	file_modules_proto_agent_proto_msgTypes[1].OneofWrappers = []any{
+	file_modules_proto_agent_proto_msgTypes[0].OneofWrappers = []any{
+		(*Commands_AckReturn)(nil),
+		(*Commands_Version)(nil),
+	}
+	file_modules_proto_agent_proto_msgTypes[2].OneofWrappers = []any{
 		(*AgentPayload_Produtos)(nil),
 		(*AgentPayload_Vendas)(nil),
 		(*AgentPayload_Clientes)(nil),
@@ -2354,14 +2535,15 @@ func file_modules_proto_agent_proto_init() {
 		(*AgentPayload_QueryRequest)(nil),
 		(*AgentPayload_Erros)(nil),
 		(*AgentPayload_AckReturn)(nil),
+		(*AgentPayload_Command)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_modules_proto_agent_proto_rawDesc), len(file_modules_proto_agent_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   22,
+			NumEnums:      5,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

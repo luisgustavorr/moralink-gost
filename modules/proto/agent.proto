@@ -16,6 +16,7 @@ enum MessageType {
   ERROR = 4;
   HEARTBEAT = 5;
   ACK = 6;
+  COMMAND = 7;
 }
 enum Db_type{
   MYSQL =0;
@@ -24,6 +25,19 @@ enum Db_type{
   MSSQL=3;
   MYSQL_OLD =4;
 
+}
+// desc: Which Command was requested
+enum Command {
+   RESTART_APP =0;
+   RESTART_DB =1;
+   UPDATE_APP =2;
+}
+message Commands {
+  Command command = 1;
+  oneof addInfo {
+ACKReturn ack_return =2;
+string version = 3;
+  }
 }
 message AgentMessage {
   string agent_id = 1;
@@ -49,6 +63,7 @@ message AgentPayload {
     Query query_request =8;
     Erros    erros    = 9;
     ACKReturn ack_return =10;
+    Commands command = 11;
   }
 }
 
