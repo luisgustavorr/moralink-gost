@@ -13,26 +13,6 @@ import (
 )
 
 func connectMysql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
-	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
-	fmt.Println(psqlInfo)
-	sqlDB, err := sqlx.Open("mysql", psqlInfo)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao abrir conexão com MySql: %v", err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := sqlDB.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("ping ao banco de dados falhou: %v", err)
-	}
-
-	sqlDB.SetMaxOpenConns(5)
-	sqlDB.SetMaxIdleConns(5)
-	sqlDB.SetConnMaxLifetime(30 * time.Minute)
-	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
-	dI.DB = sqlDB
 	dI.Queries = utils.QueriesFunctions{
 		Products:    StreamProdutosMySql,
 		Clientes:    StreamClientesMySql,
@@ -42,12 +22,35 @@ func connectMysql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.Db
 		Financeiros: StreamFinanceirosMySql,
 		Generic:     StreamGenericMySql,
 	}
+	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
+	fmt.Println(psqlInfo)
+	sqlDB, err := sqlx.Open("mysql", psqlInfo)
+	if err != nil {
+		return dI, fmt.Errorf("erro ao abrir conexão com MySql: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return dI, fmt.Errorf("ping ao banco de dados falhou: %v", err)
+	}
+
+	sqlDB.SetMaxOpenConns(5)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+	dI.DB = sqlDB
+
 	return dI, nil
 }
 
 func StreamClientesMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
-
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err
@@ -83,6 +86,9 @@ func StreamClientesMySql(query string, db *sqlx.DB, batchSize int, cb func([]uti
 
 func StreamProdutosMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ProdutoRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Produtos", err)
@@ -117,6 +123,9 @@ func StreamProdutosMySql(query string, db *sqlx.DB, batchSize int, cb func([]uti
 
 func StreamVendasMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Vendas", err)
@@ -156,8 +165,10 @@ func StreamVendasMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils
 }
 func GetCategoriasMySql(query string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
 	query = strings.ReplaceAll(query, `\`, "")
-
 	result := []utils.CategoriaRow{}
+	if db == nil {
+		return result, fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no get categorias", err)
@@ -175,8 +186,10 @@ func GetCategoriasMySql(query string, db *sqlx.DB) ([]utils.CategoriaRow, error)
 }
 func GetVendedoresMySql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) {
 	query = strings.ReplaceAll(query, `\`, "")
-
 	result := []utils.VendedorRow{}
+	if db == nil {
+		return result, fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no get categorias", err)
@@ -195,6 +208,9 @@ func GetVendedoresMySql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) 
 
 func StreamFinanceirosMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils.FinanceiroRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Vendas", err)
@@ -231,7 +247,9 @@ func StreamFinanceirosMySql(query string, db *sqlx.DB, batchSize int, cb func([]
 }
 func StreamGenericMySql(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
-
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err

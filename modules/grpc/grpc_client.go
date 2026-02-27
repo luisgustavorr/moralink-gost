@@ -45,9 +45,15 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		if err != nil {
 			fmt.Println(err)
 		}
-		db, _ := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
+		db, err := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
 		utils.Conn.DB = db
-		fmt.Println("✅ 🔗 Tunnel connected - ALL WORKING")
+		if err != nil {
+			fmt.Println("⚠️ 🔗 Tunnel connected - DB not working")
+
+		} else {
+			fmt.Println("✅ 🔗 Tunnel connected - ALL WORKING")
+
+		}
 	case pb.MessageType_HEARTBEAT:
 		log.Println("heartbeat received")
 	case pb.MessageType_QUERY:
@@ -254,7 +260,11 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			}
 		case 6:
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
-
+			if dbConn == nil {
+				dbConn = &utils.DbInfos{
+					DB: nil,
+				}
+			}
 			err := dbConn.Queries.Generic(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []map[string]interface{}) error {
 				fmt.Println("devolver resultado", len(result))
 				if len(result) == 0 {

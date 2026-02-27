@@ -13,26 +13,6 @@ import (
 )
 
 func connectFirebird(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
-	psqlInfo := fmt.Sprintf("%s:%s@%s:%s%s",
-		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
-	fmt.Println(psqlInfo)
-	sqlDB, err := sqlx.Open("firebirdsql", psqlInfo)
-	if err != nil {
-		return nil, fmt.Errorf("erro ao abrir conexão com Firebird: %v", err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := sqlDB.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("ping ao banco de dados falhou: %v", err)
-	}
-
-	sqlDB.SetMaxOpenConns(5)
-	sqlDB.SetMaxIdleConns(5)
-	sqlDB.SetConnMaxLifetime(30 * time.Minute)
-	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
-	dI.DB = sqlDB
 	dI.Queries = utils.QueriesFunctions{
 		Products:    StreamProdutosFirebird,
 		Clientes:    StreamClientesFirebird,
@@ -42,12 +22,36 @@ func connectFirebird(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils
 		Financeiros: StreamFinanceirosFirebird,
 		Generic:     StreamGenericFirebird,
 	}
+	psqlInfo := fmt.Sprintf("%s:%s@%s:%s%s",
+		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
+	fmt.Println(psqlInfo)
+	sqlDB, err := sqlx.Open("firebirdsql", psqlInfo)
+	if err != nil {
+		return dI, fmt.Errorf("erro ao abrir conexão com Firebird: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return dI, fmt.Errorf("ping ao banco de dados falhou: %v", err)
+	}
+
+	sqlDB.SetMaxOpenConns(5)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+	dI.DB = sqlDB
+
 	return dI, nil
 }
 
 func StreamClientesFirebird(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err
@@ -83,6 +87,9 @@ func StreamClientesFirebird(query string, db *sqlx.DB, batchSize int, cb func([]
 
 func StreamProdutosFirebird(query string, db *sqlx.DB, batchSize int, cb func([]utils.ProdutoRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Produtos", err)
@@ -117,6 +124,9 @@ func StreamProdutosFirebird(query string, db *sqlx.DB, batchSize int, cb func([]
 
 func StreamVendasFirebird(query string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Vendas", err)
@@ -158,6 +168,9 @@ func GetCategoriasFirebird(query string, db *sqlx.DB) ([]utils.CategoriaRow, err
 	query = strings.ReplaceAll(query, `\`, "")
 
 	result := []utils.CategoriaRow{}
+	if db == nil {
+		return result, fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no get categorias", err)
@@ -177,6 +190,9 @@ func GetVendedoresFirebird(query string, db *sqlx.DB) ([]utils.VendedorRow, erro
 	query = strings.ReplaceAll(query, `\`, "")
 
 	result := []utils.VendedorRow{}
+	if db == nil {
+		return result, fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no get categorias", err)
@@ -195,6 +211,9 @@ func GetVendedoresFirebird(query string, db *sqlx.DB) ([]utils.VendedorRow, erro
 
 func StreamFinanceirosFirebird(query string, db *sqlx.DB, batchSize int, cb func([]utils.FinanceiroRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Vendas", err)
@@ -232,6 +251,9 @@ func StreamFinanceirosFirebird(query string, db *sqlx.DB, batchSize int, cb func
 func StreamGenericFirebird(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err

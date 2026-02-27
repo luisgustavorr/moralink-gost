@@ -14,7 +14,15 @@ import (
 )
 
 func connectMssql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
-
+	dI.Queries = utils.QueriesFunctions{
+		Products:    StreamProdutosMssql,
+		Clientes:    StreamClientesMssql,
+		Categorias:  GetCategoriasMssql,
+		Vendas:      StreamVendasMssql,
+		Vendedores:  GetVendedoresMssql,
+		Financeiros: StreamFinanceirosMssql,
+		Generic:     StreamGenericMssql,
+	}
 	password := url.QueryEscape(connInfo["password"].(string))
 	dsn := fmt.Sprintf("sqlserver://%s:%s@%s:%s?database=%s",
 		connInfo["user"].(string),
@@ -25,14 +33,14 @@ func connectMssql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.Db
 	)
 	sqlDB, err := sqlx.Open("sqlserver", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao abrir conexão com sqlserver: %v", err)
+		return dI, fmt.Errorf("erro ao abrir conexão com sqlserver: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := sqlDB.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("ping ao banco de dados falhou: %v", err)
+		return dI, fmt.Errorf("ping ao banco de dados falhou: %v", err)
 	}
 
 	sqlDB.SetMaxOpenConns(5)
@@ -40,21 +48,16 @@ func connectMssql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.Db
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
 	dI.DB = sqlDB
-	dI.Queries = utils.QueriesFunctions{
-		Products:    StreamProdutosMssql,
-		Clientes:    StreamClientesMssql,
-		Categorias:  GetCategoriasMssql,
-		Vendas:      StreamVendasMssql,
-		Vendedores:  GetVendedoresMssql,
-		Financeiros: StreamFinanceirosMssql,
-		Generic:     StreamGenericMssql,
-	}
+
 	return dI, nil
 }
 
 func StreamClientesMssql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err
@@ -90,6 +93,9 @@ func StreamClientesMssql(query string, db *sqlx.DB, batchSize int, cb func([]uti
 
 func StreamProdutosMssql(query string, db *sqlx.DB, batchSize int, cb func([]utils.ProdutoRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Produtos", err)
@@ -124,6 +130,9 @@ func StreamProdutosMssql(query string, db *sqlx.DB, batchSize int, cb func([]uti
 
 func StreamVendasMssql(query string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Vendas", err)
@@ -165,6 +174,9 @@ func GetCategoriasMssql(query string, db *sqlx.DB) ([]utils.CategoriaRow, error)
 	query = strings.ReplaceAll(query, `\`, "")
 
 	result := []utils.CategoriaRow{}
+	if db == nil {
+		return result, fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no get categorias", err)
@@ -184,6 +196,9 @@ func GetVendedoresMssql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) 
 	query = strings.ReplaceAll(query, `\`, "")
 
 	result := []utils.VendedorRow{}
+	if db == nil {
+		return result, fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no get categorias", err)
@@ -202,6 +217,9 @@ func GetVendedoresMssql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) 
 
 func StreamFinanceirosMssql(query string, db *sqlx.DB, batchSize int, cb func([]utils.FinanceiroRow) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		fmt.Println("Erro no stream Vendas", err)
@@ -239,6 +257,9 @@ func StreamFinanceirosMssql(query string, db *sqlx.DB, batchSize int, cb func([]
 func StreamGenericMssql(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
 
+	if db == nil {
+		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
+	}
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err
