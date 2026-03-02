@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	commandManagers "MoraLinkGOst/modules/command_managers"
 	dbmanagers "MoraLinkGOst/modules/db_managers"
@@ -398,4 +399,34 @@ func (c *Client) SendError(message string, batchid string) error {
 		}},
 	})
 	return err
+}
+
+func GRPCGuardian(ctx context.Context) {
+	fmt.Println("✅ 🛡️  Guardian started")
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("🛑 Guardian stopping")
+			return
+		default:
+		}
+
+		innerCtx, cancel := context.WithCancel(ctx)
+
+		client := New(
+			viper.GetString("api.user"),
+			"0.1.0",
+			"localhost:50051",
+		)
+
+		err := client.Run(innerCtx)
+		cancel()
+
+		if err != nil {
+			log.Println("⛔ -> grpc disconnected error:", err)
+		}
+
+		time.Sleep(2 * time.Second)
+	}
 }

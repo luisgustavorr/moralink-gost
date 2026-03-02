@@ -1,75 +1,47 @@
 package main
 
 import (
-	Grpcclient "MoraLinkGOst/modules/grpc"
+	Service "MoraLinkGOst/modules/service"
 	"MoraLinkGOst/modules/utils"
-	"context"
-	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"time"
+	"os"
 
 	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
+	"github.com/kardianos/service"
 )
 
 var _ = godotenv.Load()
 
-func gRPCGuardian() {
-	fmt.Println("✅ 🛡️  Guardian started")
-
-	for {
-		ctx, cancel := context.WithCancel(context.Background())
-
-		client := Grpcclient.New(
-			viper.GetString("api.user"),
-			"0.1.0",
-			"localhost:50051",
-		)
-
-		err := client.Run(ctx)
-		cancel()
-
-		if err != nil {
-
-			log.Println("⛔ -> grpc disconnected error:", err)
-		}
-
-		// optional small pause
-		time.Sleep(2 * time.Second)
-	}
-}
 func main() {
 	utils.LoadConfig()
-	go func() {
-		log.Println("pprof listening on :6060")
-		http.ListenAndServe("localhost:6060", nil)
-	}()
-	// service logic
-	// svcConfig := &service.Config{
-	// 	Name:        "moralink-gost",
-	// 	DisplayName: "Aplicativo de integração",
-	// 	Description: "Gerencia a integração com o SharkBusiness",
-	// }
-	// prg := &Service.Program{}
-	// svc, err := service.New(prg, svcConfig)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// // Handle install / uninstall / start / stop
-	// if len(os.Args) > 1 {
-	// 	err = service.Control(svc, os.Args[1])
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	return
-	// }
-	// err = svc.Run()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// Moralink logic
-	fmt.Println("✅ 👻 MoraLinkGOst started")
-	gRPCGuardian()
+	if os.Getenv("dev") == "1" {
+		go func() {
+			log.Println("pprof listening on :6060")
+			http.ListenAndServe("localhost:6060", nil)
+		}()
+	}
+
+	svcConfig := &service.Config{
+		Name:        "moralink-gost",
+		DisplayName: "MoraLink",
+		Description: "Gerencia a integração com o SharkBusiness",
+	}
+	prg := &Service.Program{}
+	svc, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(os.Args) > 1 {
+		err = service.Control(svc, os.Args[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+	err = svc.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -11,11 +12,18 @@ import (
 
 func ConfigPath() (string, error) {
 	base, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
+
+	if err != nil || base == "" {
+		// Fallback depending on OS
+		if runtime.GOOS == "windows" {
+			base = `C:\ProgramData\moralink-gost`
+		} else {
+			base = "/etc/moralink-gost"
+		}
 	}
 
-	path := filepath.Join(base, "moralingost")
+	path := filepath.Join(base, "moralink-gost")
+
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		return "", err
 	}
