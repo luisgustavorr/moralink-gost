@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -27,28 +27,81 @@ type Asset struct {
 }
 
 func serviceExecutablePath() string {
+	exe, err := os.Executable()
+	if err == nil {
+		return exe
+	}
 	if runtime.GOOS == "windows" {
 		return `C:\Program Files\MoraLink\moralink-gost.exe`
 	}
-	return filepath.Join(os.TempDir(), "moralink-gost")
+	return "/usr/local/bin/moralink-gost"
 }
-
-func DownloadRelease(tag string) error {
-	release, err := GetRelease(tag)
-	asset := pickAsset(release.Assets)
-
-	if asset == nil {
-		return fmt.Errorf("no compatible asset found for %s/%s in release %s")
-	}
-	fmt.Println("Downloading %s (%s)...", asset.Name, asset.BrowserDownloadURL)
-	targetPath := serviceExecutablePath()
-	tmpPath := targetPath + ".tmp"
-	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest("GET", asset.BrowserDownloadURL, nil)
+func spawnApplyAndExit(tmpPath, targetPath string) error {
+	exe, err := os.Executable()
 	if err != nil {
 		return err
 	}
 
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		// On Windows use cmd.exe to wait a moment then apply
+		script := fmt.Sprintf(
+			`timeout /t 3 /nobreak >nul && move /Y "%s" "%s" && sc start moralink-gost`,
+			tmpPath, targetPath,
+		)
+		cmd = exec.Command("cmd.exe", "/C", script)
+	} else {
+		// On Linux/macOS: wait, swap, restart via systemctl
+		script := fmt.Sprintf(
+			`sleep 3 && mv -f "%s" "%s" && systemctl restart moralink-gost`,
+			tmpPath, targetPath,
+		)
+		cmd = exec.Command("bash", "-c", script)
+	}
+
+	// Detach from this process so it survives after we exit
+	_ = exe // suppress unused warning
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	cmd.Stdin = nil
+	setSysProcAttrDetached(cmd) // platform-specific, see below
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to spawn updater: %w", err)
+	}
+
+	fmt.Printf("✅ Updater process spawned (pid %d). Service will restart shortly.\n", cmd.Process.Pid)
+
+	// Signal the service to stop cleanly — the spawned process will restart it
+	go func() {
+		time.Sleep(1 * time.Second)
+		p, _ := os.FindProcess(os.Getpid())
+		p.Signal(os.Interrupt)
+	}()
+
+	return nil
+}
+func DownloadRelease(tag string) error {
+	release, err := GetRelease(tag)
+	if err != nil {
+		return err
+	}
+	asset := pickAsset(release.Assets)
+	if asset == nil {
+		return fmt.Errorf("no compatible asset found for this OS/arch in release %s", tag)
+	}
+
+	fmt.Printf("Downloading %s...\n", asset.Name)
+
+	targetPath := serviceExecutablePath()
+	// Download to a .tmp next to the real binary
+	tmpPath := targetPath + ".tmp"
+
+	client := &http.Client{Timeout: 5 * time.Minute}
+	req, err := http.NewRequest("GET", asset.BrowserDownloadURL, nil)
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Accept", "application/octet-stream")
 	req.Header.Set("Authorization", "token "+os.Getenv("RELEASE_GH"))
 
@@ -56,34 +109,31 @@ func DownloadRelease(tag string) error {
 	if err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
-
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s\n%s", resp.Status)
+		return fmt.Errorf("bad status from GitHub: %s", resp.Status)
 	}
+
 	out, err := os.Create(tmpPath)
 	if err != nil {
+		return fmt.Errorf("cannot create temp file: %w", err)
+	}
+	if _, err = io.Copy(out, resp.Body); err != nil {
+		out.Close()
 		return err
 	}
-	defer out.Close()
+	out.Close()
 
-	_, err = io.Copy(out, resp.Body)
-	err = os.Chmod(tmpPath, 0755)
-
-	if runtime.GOOS == "windows" {
-		backupPath := targetPath + ".old"
-		os.Remove(backupPath)
-		if err := os.Rename(targetPath, backupPath); err != nil {
-			return fmt.Errorf("failed to backup old binary: %w", err)
-		}
-	}
-	if err := os.Rename(tmpPath, targetPath); err != nil {
-		return fmt.Errorf("failed to replace binary: %w", err)
+	if err := os.Chmod(tmpPath, 0755); err != nil {
+		return err
 	}
 
-	fmt.Printf("Binary replaced at %s \n", targetPath)
+	fmt.Println("✅ Download complete. Spawning updater process...")
 
-	return err
+	// Launch ourselves with --update-apply so we exit the service first,
+	// then the detached process swaps the binary and restarts the service.
+	return spawnApplyAndExit(tmpPath, targetPath)
 }
 func pickAsset(assets []Asset) *Asset {
 	goos := runtime.GOOS

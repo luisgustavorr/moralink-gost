@@ -32,10 +32,16 @@ func ExecCommand(c *pb.Commands) {
 
 		// RestartDB()
 	case pb.Command_UPDATE_APP:
-		err := updater.DownloadRelease("v0.0.1")
-		if err != nil {
-			fmt.Println("Erro no GetRelease ", err.Error())
+		version := c.GetVersion()
+		if version == "" {
+			version = "latest" // you can resolve "latest" in GetRelease
 		}
+		go func() { // run in goroutine so gRPC stream isn't blocked
+			err := updater.DownloadRelease(version)
+			if err != nil {
+				fmt.Println("❌ Update failed:", err.Error())
+			}
+		}()
 	}
 
 }
