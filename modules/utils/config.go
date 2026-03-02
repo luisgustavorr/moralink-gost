@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -10,32 +11,49 @@ import (
 	"github.com/spf13/viper"
 )
 
-func ConfigPath() (string, error) {
-	base, err := os.UserConfigDir()
+func ConfigPath() string {
+	// Priority 1: explicit env override (great for systemd with Environment= directive)
+	if override := os.Getenv("MORALINK_CONFIG_DIR"); override != "" {
+		_ = os.MkdirAll(override, 0o755)
+		return override
+	}
 
-	if err != nil || base == "" {
-		// Fallback depending on OS
-		if runtime.GOOS == "windows" {
-			base = `C:\ProgramData\moralink-gost`
-		} else {
-			base = "/etc/moralink-gost"
+	// Priority 2: try the standard user config dir
+	if base, err := os.UserConfigDir(); err == nil && base != "" {
+		path := filepath.Join(base, "moralink-gost")
+		if err := os.MkdirAll(path, 0o755); err == nil {
+			return path
 		}
 	}
 
-	path := filepath.Join(base, "moralink-gost")
-
-	if err := os.MkdirAll(path, 0o755); err != nil {
-		return "", err
+	// Priority 3: OS-specific system-level fallback (for services without $HOME)
+	var systemPath string
+	if runtime.GOOS == "windows" {
+		// PROGRAMDATA is always set on Windows, even for SYSTEM account
+		programData := os.Getenv("PROGRAMDATA")
+		if programData == "" {
+			programData = `C:\ProgramData`
+		}
+		systemPath = filepath.Join(programData, "moralink-gost")
+	} else {
+		systemPath = "/etc/moralink-gost"
 	}
 
-	return path, nil
+	if err := os.MkdirAll(systemPath, 0o755); err != nil {
+		// Priority 4: last resort — next to the executable
+		exe, err2 := os.Executable()
+		if err2 != nil {
+			log.Fatalf("cannot determine config path: %v", err)
+		}
+		systemPath = filepath.Dir(exe)
+		log.Printf("⚠️  Warning: using executable directory as config path: %s", systemPath)
+	}
+
+	return systemPath
 }
 
 func LoadConfig() {
-	cfgDir, err := ConfigPath()
-	if err != nil {
-		panic(err)
-	}
+	cfgDir := ConfigPath()
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
@@ -43,20 +61,21 @@ func LoadConfig() {
 
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	fmt.Println("✅ 🔧 Creating config file in : ", cfgDir)
+	fmt.Println("✅ 🔧 Creating config file in nv : ", cfgDir)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// First run: create default config
 			viper.Set("server.grpc_port", 50051)
 			viper.Set("api.user", "teste_disparo_shark")
-
+			viper.Set("api.token", "4d99239abe64126085c2da40d2eb6b83ed57f3ca")
 			configFile := filepath.Join(cfgDir, "config.yaml")
 			if err := viper.WriteConfigAs(configFile); err != nil {
-				panic(err)
+				log.Fatalf("failed to write default config to %s: %v", configFile, err)
 			}
+			fmt.Println("✅ 🔧 Default config written to:", configFile)
 		} else {
-			panic(err)
+			log.Fatalf("failed to read config: %v", err)
 		}
 	}
 }

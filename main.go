@@ -2,7 +2,7 @@ package main
 
 import (
 	Service "MoraLinkGOst/modules/service"
-	"MoraLinkGOst/modules/utils"
+	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -12,10 +12,16 @@ import (
 	"github.com/kardianos/service"
 )
 
-var _ = godotenv.Load()
+var logger service.Logger
 
 func main() {
-	utils.LoadConfig()
+
+	exePath, err := os.Executable()
+	if err == nil {
+		_ = godotenv.Load(exePath[:len(exePath)-len("moralink-gost.exe")] + ".env")
+	}
+	_ = godotenv.Load()
+
 	if os.Getenv("dev") == "1" {
 		go func() {
 			log.Println("pprof listening on :6060")
@@ -25,23 +31,52 @@ func main() {
 
 	svcConfig := &service.Config{
 		Name:        "moralink-gost",
-		DisplayName: "MoraLink",
-		Description: "Gerencia a integração com o SharkBusiness",
+		DisplayName: "MoraLink GOst",
+		Description: "Gerencia a integração com o Shark Business",
+		Option: service.KeyValue{
+			"DelayedAutoStart":       true,
+			"OnFailure":              "restart",
+			"OnFailureDelayDuration": "5s",
+			"OnFailureResetPeriod":   10,
+		},
 	}
+
 	prg := &Service.Program{}
 	svc, err := service.New(prg, svcConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(os.Args) > 1 {
-		err = service.Control(svc, os.Args[1])
-		if err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-	err = svc.Run()
+
+	logger, err = svc.Logger(nil)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if len(os.Args) > 1 {
+		action := os.Args[1]
+
+		if action == "help" {
+			fmt.Println("Usage: moralink-gost [command]")
+			fmt.Println("Commands:")
+			fmt.Println("  install    - Register as a Windows/Linux service")
+			fmt.Println("  uninstall  - Remove the service")
+			fmt.Println("  start      - Start the service")
+			fmt.Println("  stop       - Stop the service")
+			fmt.Println("  restart    - Restart the service")
+			fmt.Println("  status     - Print service status")
+			fmt.Println("  (no arg)   - Run interactively")
+			return
+		}
+
+		err = service.Control(svc, action)
+		if err != nil {
+			log.Fatalf("Failed to %s service: %v\n(try running as Administrator on Windows)", action, err)
+		}
+		fmt.Printf("Service '%s' action '%s' completed successfully.\n", svcConfig.Name, action)
+		return
+	}
+
+	if err = svc.Run(); err != nil {
+		logger.Error(err)
 	}
 }

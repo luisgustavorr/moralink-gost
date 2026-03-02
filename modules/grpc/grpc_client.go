@@ -415,7 +415,7 @@ func GRPCGuardian(ctx context.Context) {
 		innerCtx, cancel := context.WithCancel(ctx)
 
 		client := New(
-			viper.GetString("api.user"),
+			viper.GetString("api.token"),
 			"0.1.0",
 			"localhost:50051",
 		)
@@ -424,7 +424,7 @@ func GRPCGuardian(ctx context.Context) {
 		cancel()
 
 		if err != nil {
-			log.Println("⛔ -> grpc disconnected error:", err)
+			log.Println("⛔ -> grpc disconnected error:", err, viper.GetString("api.token"), viper.GetString("api.user"))
 		}
 
 		time.Sleep(2 * time.Second)
