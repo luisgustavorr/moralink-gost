@@ -24,7 +24,6 @@ func connectFirebird(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils
 	}
 	psqlInfo := fmt.Sprintf("%s:%s@%s:%s%s",
 		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
-	fmt.Println(psqlInfo)
 	sqlDB, err := sqlx.Open("firebirdsql", psqlInfo)
 	if err != nil {
 		return dI, fmt.Errorf("erro ao abrir conexão com Firebird: %v", err)

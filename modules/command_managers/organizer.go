@@ -3,6 +3,7 @@ package commandManagers
 import (
 	dbmanagers "MoraLinkGOst/modules/db_managers"
 	pb "MoraLinkGOst/modules/proto/agentpb"
+	"MoraLinkGOst/modules/updater"
 	"MoraLinkGOst/modules/utils"
 	"fmt"
 )
@@ -30,6 +31,11 @@ func ExecCommand(c *pb.Commands) {
 		}
 
 		// RestartDB()
+	case pb.Command_UPDATE_APP:
+		err := updater.DownloadRelease("v0.0.1")
+		if err != nil {
+			fmt.Println("Erro no GetRelease ", err.Error())
+		}
 	}
 
 }
