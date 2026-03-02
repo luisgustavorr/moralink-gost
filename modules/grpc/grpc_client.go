@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	commandManagers "MoraLinkGOst/modules/command_managers"
 	dbmanagers "MoraLinkGOst/modules/db_managers"
 	"MoraLinkGOst/modules/proto/agentpb"
 	pb "MoraLinkGOst/modules/proto/agentpb"
@@ -33,6 +34,10 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 	switch msg.Type {
 	case pb.MessageType_ERROR:
 		log.Printf("received command: %s", msg.Message)
+	case pb.MessageType_COMMAND:
+		fmt.Println("Comando recebido ... ", pb.Command_name[int32(msg.GetPayload().GetCommand().GetType())])
+		commandManagers.ExecCommand(msg.GetPayload().GetCommand())
+
 	case pb.MessageType_ACK:
 		ackReturn := msg.Payload.GetAckReturn()
 		if ackReturn.Status == 1 {

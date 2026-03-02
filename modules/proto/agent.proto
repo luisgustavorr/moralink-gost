@@ -33,7 +33,7 @@ enum Command {
    UPDATE_APP =2;
 }
 message Commands {
-  Command command = 1;
+  Command type = 1;
   oneof addInfo {
 ACKReturn ack_return =2;
 string version = 3;

@@ -299,8 +299,8 @@ func (ConnectStatus) EnumDescriptor() ([]byte, []int) {
 }
 
 type Commands struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Command Command                `protobuf:"varint,1,opt,name=command,proto3,enum=agent.Command" json:"command,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Type  Command                `protobuf:"varint,1,opt,name=type,proto3,enum=agent.Command" json:"type,omitempty"`
 	// Types that are valid to be assigned to AddInfo:
 	//
 	//	*Commands_AckReturn
@@ -340,9 +340,9 @@ func (*Commands) Descriptor() ([]byte, []int) {
 	return file_modules_proto_agent_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Commands) GetCommand() Command {
+func (x *Commands) GetType() Command {
 	if x != nil {
-		return x.Command
+		return x.Type
 	}
 	return Command_RESTART_APP
 }
@@ -2213,9 +2213,9 @@ var File_modules_proto_agent_proto protoreflect.FileDescriptor
 
 const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\x8e\x01\n" +
-	"\bCommands\x12(\n" +
-	"\acommand\x18\x01 \x01(\x0e2\x0e.agent.CommandR\acommand\x121\n" +
+	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\x88\x01\n" +
+	"\bCommands\x12\"\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x0e.agent.CommandR\x04type\x121\n" +
 	"\n" +
 	"ack_return\x18\x02 \x01(\v2\x10.agent.ACKReturnH\x00R\tackReturn\x12\x1a\n" +
 	"\aversion\x18\x03 \x01(\tH\x00R\aversionB\t\n" +
@@ -2477,7 +2477,7 @@ var file_modules_proto_agent_proto_goTypes = []any{
 	(*structpb.ListValue)(nil), // 28: google.protobuf.ListValue
 }
 var file_modules_proto_agent_proto_depIdxs = []int32{
-	2,  // 0: agent.Commands.command:type_name -> agent.Command
+	2,  // 0: agent.Commands.type:type_name -> agent.Command
 	9,  // 1: agent.Commands.ack_return:type_name -> agent.ACKReturn
 	0,  // 2: agent.AgentMessage.type:type_name -> agent.MessageType
 	7,  // 3: agent.AgentMessage.payload:type_name -> agent.AgentPayload
