@@ -402,7 +402,7 @@ func GRPCGuardian(ctx context.Context) {
 	if os.Getenv("dev") == "1" {
 		host = "localhost:50051"
 	}
-	fmt.Println("✅ 🛡️  Guardian started, search connection at : ", host)
+	fmt.Println("✅ 🛡️  Guardian started, search connection at : ", host, utils.Version)
 
 	for {
 		select {
@@ -416,7 +416,7 @@ func GRPCGuardian(ctx context.Context) {
 
 		client := New(
 			viper.GetString("api.token"),
-			os.Getenv("VERSION"),
+			utils.Version,
 			host,
 		)
 

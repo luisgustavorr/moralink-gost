@@ -16,8 +16,8 @@ type Program struct {
 }
 
 func (p *Program) run() {
-	utils.LoadConfig()
 
+	utils.LoadConfig()
 	p.ctx, p.cancel = context.WithCancel(context.Background())
 	Grpcclient.GRPCGuardian(p.ctx)
 	<-p.exit

@@ -11,6 +11,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+var Version string = "v0.0.1"
+
 type CategoriaRow struct {
 	IdExterno *string `db:"id_externo"`
 	Nome      *string `db:"nome"`
