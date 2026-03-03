@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MoraLinkGOst/modules/logger"
 	Service "MoraLinkGOst/modules/service"
 	"MoraLinkGOst/modules/updater"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 	"github.com/kardianos/service"
 )
 
-var logger service.Logger
 var (
 	Version   = "dev"
 	ReleaseGH = "" // injected at build time from .env via ldflags
@@ -52,10 +52,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logger, err = svc.Logger(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	logger.InitDefault()
 
 	if len(os.Args) > 1 {
 		action := os.Args[1]
