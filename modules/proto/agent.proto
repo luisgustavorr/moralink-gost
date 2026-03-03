@@ -42,12 +42,13 @@ string version = 3;
 message AgentMessage {
   string agent_id = 1;
   string batch_id =2;
-  MessageType type = 3;
-  string message  = 4;
-  AgentPayload  payload  = 5; // AgentPayload to better perfomance will be on of the options
-  Table table =6;
-  bool isLast =7;
-  bool isEmpty =8;
+  string version =3;
+  MessageType type = 4;
+  string message  = 5;
+  AgentPayload  payload  = 6; // AgentPayload to better perfomance will be on of the options
+  Table table =7;
+  bool isLast =8;
+  bool isEmpty =9;
 
   
 }

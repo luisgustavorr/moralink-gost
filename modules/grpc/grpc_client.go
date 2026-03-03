@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	commandManagers "MoraLinkGOst/modules/command_managers"
@@ -348,16 +349,9 @@ func (c *Client) Run(ctx context.Context) error {
 	// Send HELLO
 	message := &pb.AgentMessage{
 		AgentId: viper.GetString("api.token"),
-		Message: "Olá, recebi sua mensagem",
+		Message: "Requesting connection",
 		Type:    pb.MessageType_HELLO,
-		Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Produtos{
-			Produtos: &pb.Produtos{Items: []*pb.Produto{
-				{
-					IdExterno: "teste_123",
-					Valor:     12.30,
-				},
-			}},
-		}},
+		Version: c.version,
 	}
 	// err = stream.Send(message)
 	c.SendMessage(message)
@@ -379,6 +373,7 @@ func (c *Client) Run(ctx context.Context) error {
 }
 
 func (c *Client) SendMessage(msg *pb.AgentMessage) error {
+	msg.Version = c.version
 	err := c.stream.Send(msg)
 	return err
 }
@@ -387,6 +382,7 @@ func (c *Client) SendError(message string, batchid string) error {
 		AgentId: viper.GetString("api.token"),
 		Message: "Ocorreu um erro...",
 		BatchId: batchid,
+		Version: c.version,
 		Type:    pb.MessageType_ERROR,
 		Payload: &pb.AgentPayload{Data: &pb.AgentPayload_Erros{
 			Erros: &pb.Erros{
@@ -402,7 +398,11 @@ func (c *Client) SendError(message string, batchid string) error {
 }
 
 func GRPCGuardian(ctx context.Context) {
-	fmt.Println("✅ 🛡️  Guardian started")
+	host := "134.209.215.199:50051"
+	if os.Getenv("dev") == "1" {
+		host = "localhost:50051"
+	}
+	fmt.Println("✅ 🛡️  Guardian started, search connection at : ", host)
 
 	for {
 		select {
@@ -416,8 +416,8 @@ func GRPCGuardian(ctx context.Context) {
 
 		client := New(
 			viper.GetString("api.token"),
-			"0.1.0",
-			"localhost:50051",
+			os.Getenv("VERSION"),
+			host,
 		)
 
 		err := client.Run(innerCtx)
