@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -61,7 +60,7 @@ func LoadConfig() {
 
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	fmt.Println("✅ 🔧 Creating config file in nv : ", cfgDir)
+	log.Println("✅ 🔧 Creating config file in nv : ", cfgDir)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -73,7 +72,7 @@ func LoadConfig() {
 			if err := viper.WriteConfigAs(configFile); err != nil {
 				log.Fatalf("failed to write default config to %s: %v", configFile, err)
 			}
-			fmt.Println("✅ 🔧 Default config written to:", configFile)
+			log.Println("✅ 🔧 Default config written to:", configFile)
 		} else {
 			log.Fatalf("failed to read config: %v", err)
 		}

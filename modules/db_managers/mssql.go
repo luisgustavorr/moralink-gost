@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 	"time"
@@ -98,7 +99,7 @@ func StreamProdutosMssql(query string, db *sqlx.DB, batchSize int, cb func([]uti
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Produtos", err)
+		log.Println("Erro no stream Produtos", err)
 		return err
 	}
 	defer rows.Close()
@@ -135,7 +136,7 @@ func StreamVendasMssql(query string, db *sqlx.DB, batchSize int, cb func([]utils
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Vendas", err)
+		log.Println("Erro no stream Vendas", err)
 		return err
 	}
 	defer rows.Close()
@@ -151,7 +152,7 @@ func StreamVendasMssql(query string, db *sqlx.DB, batchSize int, cb func([]utils
 		if row.DatasVencimentoRaw != nil {
 			json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
 		}
-		fmt.Println(utils.JsonViewInterface(row.DatasVencimento))
+		log.Println(utils.JsonViewInterface(row.DatasVencimento))
 		batch = append(batch, row)
 
 		if len(batch) == batchSize {
@@ -179,7 +180,7 @@ func GetCategoriasMssql(query string, db *sqlx.DB) ([]utils.CategoriaRow, error)
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no get categorias", err)
+		log.Println("Erro no get categorias", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -201,7 +202,7 @@ func GetVendedoresMssql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) 
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no get categorias", err)
+		log.Println("Erro no get categorias", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -222,7 +223,7 @@ func StreamFinanceirosMssql(query string, db *sqlx.DB, batchSize int, cb func([]
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Vendas", err)
+		log.Println("Erro no stream Vendas", err)
 		return err
 	}
 	defer rows.Close()

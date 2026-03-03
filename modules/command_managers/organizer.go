@@ -5,13 +5,13 @@ import (
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"MoraLinkGOst/modules/updater"
 	"MoraLinkGOst/modules/utils"
-	"fmt"
+	"log"
 )
 
 func ExecCommand(c *pb.Commands) {
 	switch c.GetType() {
 	case pb.Command_RESTART_APP:
-		fmt.Println("RESTART APP COMMAND...")
+		log.Println("RESTART APP COMMAND...")
 		RestartSelf()
 	case pb.Command_RESTART_DB:
 		addInfo := c.GetAckReturn()
@@ -19,14 +19,14 @@ func ExecCommand(c *pb.Commands) {
 			connectedUser := addInfo.ConnectedUser
 			db_info, err := utils.ParseDBConfig(connectedUser.ConfigJson)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 			db, err := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
 			utils.Conn.DB = db
 			if err != nil {
-				fmt.Println("⚠️ 🔗 Tunnel connected - DB not working")
+				log.Println("⚠️ 🔗 Tunnel connected - DB not working")
 			} else {
-				fmt.Println("✅ 🔗 Tunnel connected - ALL WORKING")
+				log.Println("✅ 🔗 Tunnel connected - ALL WORKING")
 			}
 		}
 
@@ -39,7 +39,7 @@ func ExecCommand(c *pb.Commands) {
 		go func() { // run in goroutine so gRPC stream isn't blocked
 			err := updater.DownloadRelease(version)
 			if err != nil {
-				fmt.Println("❌ Update failed:", err.Error())
+				log.Println("❌ Update failed:", err.Error())
 			}
 		}()
 	}

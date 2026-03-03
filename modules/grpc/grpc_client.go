@@ -2,7 +2,6 @@ package Grpcclient
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -37,28 +36,28 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 	case pb.MessageType_ERROR:
 		log.Printf("received command: %s", msg.Message)
 	case pb.MessageType_COMMAND:
-		fmt.Println("Comando recebido ... ", pb.Command_name[int32(msg.GetPayload().GetCommand().GetType())])
+		log.Println("Comando recebido ... ", pb.Command_name[int32(msg.GetPayload().GetCommand().GetType())])
 		commandManagers.ExecCommand(msg.GetPayload().GetCommand())
 
 	case pb.MessageType_ACK:
 		ackReturn := msg.Payload.GetAckReturn()
 		if ackReturn.Status == 1 {
-			fmt.Println("✅ 🔐 ACK APPROVED")
+			log.Println("✅ 🔐 ACK APPROVED")
 		} else {
-			fmt.Println("❌ 🔐 ACK DISAPPROVED")
+			log.Println("❌ 🔐 ACK DISAPPROVED")
 		}
 		connectedUser := msg.Payload.GetAckReturn().ConnectedUser
 		db_info, err := utils.ParseDBConfig(connectedUser.ConfigJson)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		db, err := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
 		utils.Conn.DB = db
 		if err != nil {
-			fmt.Println("⚠️ 🔗 Tunnel connected - DB not working")
+			log.Println("⚠️ 🔗 Tunnel connected - DB not working")
 
 		} else {
-			fmt.Println("✅ 🔗 Tunnel connected - ALL WORKING")
+			log.Println("✅ 🔗 Tunnel connected - ALL WORKING")
 
 		}
 	case pb.MessageType_HEARTBEAT:
@@ -69,7 +68,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		tableAskedFor := msg.GetTable()
 		switch tableAskedFor {
 		case 0:
-			fmt.Println("Produtos...")
+			log.Println("Produtos...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			err := dbConn.Queries.Products(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.ProdutoRow) error {
 				if len(result) == 0 {
@@ -92,20 +91,20 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			fmt.Println("error", err)
+			log.Println("error", err)
 			if err != nil {
 
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 1:
-			fmt.Println("Clientes...")
+			log.Println("Clientes...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.ClienteRow) error {
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				fmt.Println("Passando", isLast, len(result))
+				log.Println("Passando", isLast, len(result))
 				utils.LogMemUsage()
 				resultPb := utils.ToProtoClientes(result)
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -122,7 +121,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			fmt.Println("error", err)
+			log.Println("error", err)
 			if err != nil {
 
 				c.SendError(err.Error(), msg.GetBatchId())
@@ -134,12 +133,12 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				for i := 0; i < len(result); i += batchSize {
-					fmt.Println("devolver resultado", len(result))
+					log.Println("devolver resultado", len(result))
 					end := i + batchSize
 					isLast := len(result) < batchSize
-					fmt.Println("Passando")
+					log.Println("Passando")
 					if end > len(result) {
-						fmt.Println("Último ? ")
+						log.Println("Último ? ")
 						end = len(result)
 					}
 					resultPb := utils.ToProtoCategorias(result[i:end])
@@ -167,14 +166,14 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 3:
-			fmt.Println("Vendas...")
+			log.Println("Vendas...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			err := dbConn.Queries.Vendas(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.VendaRow) error {
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				fmt.Println("Passando", isLast, len(result))
+				log.Println("Passando", isLast, len(result))
 				utils.LogMemUsage()
 				resultPb := utils.ToProtoVendas(result)
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -191,7 +190,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			fmt.Println("error", err)
+			log.Println("error", err)
 			if err != nil {
 
 				c.SendError(err.Error(), msg.GetBatchId())
@@ -203,12 +202,12 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				for i := 0; i < len(result); i += batchSize {
-					fmt.Println("devolver resultado", len(result))
+					log.Println("devolver resultado", len(result))
 					end := i + batchSize
 					isLast := len(result) < batchSize
-					fmt.Println("Passando")
+					log.Println("Passando")
 					if end > len(result) {
-						fmt.Println("Último ? ")
+						log.Println("Último ? ")
 						end = len(result)
 					}
 					resultPb := utils.ToProtoVendedores(result[i:end])
@@ -236,14 +235,14 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 5:
-			fmt.Println("Financeiro...")
+			log.Println("Financeiro...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			err := dbConn.Queries.Financeiros(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.FinanceiroRow) error {
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				fmt.Println("Passando", isLast, len(result))
+				log.Println("Passando", isLast, len(result))
 				utils.LogMemUsage()
 				resultPb := utils.ToProtoFinanceiro(result)
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -260,7 +259,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			fmt.Println("error", err)
+			log.Println("error", err)
 			if err != nil {
 
 				c.SendError(err.Error(), msg.GetBatchId())
@@ -273,21 +272,21 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 			}
 			err := dbConn.Queries.Generic(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []map[string]interface{}) error {
-				fmt.Println("devolver resultado", len(result))
+				log.Println("devolver resultado", len(result))
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				fmt.Println("Passando", isLast, len(result))
+				log.Println("Passando", isLast, len(result))
 
 				utils.LogMemUsage()
 
 				resultPb, err := utils.ToProtoGenecric(result)
 				if err != nil {
-					fmt.Println("ERRO NO GENERIC :", err)
+					log.Println("ERRO NO GENERIC :", err)
 				}
 
-				fmt.Println("Bid :", msg.BatchId)
+				log.Println("Bid :", msg.BatchId)
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
 					Type:    agentpb.MessageType_RESULT,
@@ -326,7 +325,7 @@ func buildEmptyMimicReturn(table pb.Table, batchId string) *agentpb.AgentMessage
 	}
 }
 func (c *Client) Run(ctx context.Context) error {
-	fmt.Println("✅ 🌐 Grpc started")
+	log.Println("✅ 🌐 Grpc started")
 	conn, err := grpc.DialContext(
 		ctx,
 		c.addr,
@@ -342,7 +341,7 @@ func (c *Client) Run(ctx context.Context) error {
 
 	stream, err := client.Connect(ctx)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return err
 	}
 	c.stream = stream
@@ -357,7 +356,7 @@ func (c *Client) Run(ctx context.Context) error {
 	c.SendMessage(message)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return err
 	}
 
@@ -402,12 +401,12 @@ func GRPCGuardian(ctx context.Context) {
 	if os.Getenv("dev") == "1" {
 		host = "localhost:50051"
 	}
-	fmt.Println("✅ 🛡️  Guardian started, search connection at : ", host, utils.Version)
+	log.Println("✅ 🛡️  Guardian started, search connection at : ", host, utils.Version)
 
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("🛑 Guardian stopping")
+			log.Println("🛑 Guardian stopping")
 			return
 		default:
 		}

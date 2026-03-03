@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -29,7 +30,7 @@ type Asset struct {
 var githubToken string
 
 func Configure(token string) {
-	fmt.Println("Getting token from make", token)
+	log.Println("Getting token from make", token)
 	githubToken = token
 }
 func serviceExecutablePath() string {
@@ -76,7 +77,7 @@ func spawnApplyAndExit(tmpPath, targetPath string) error {
 		return fmt.Errorf("failed to spawn updater: %w", err)
 	}
 
-	fmt.Printf("✅ Updater process spawned (pid %d). Service will restart shortly.\n", cmd.Process.Pid)
+	log.Printf("✅ Updater process spawned (pid %d). Service will restart shortly.\n", cmd.Process.Pid)
 
 	// Signal the service to stop cleanly — the spawned process will restart it
 	go func() {
@@ -97,7 +98,7 @@ func DownloadRelease(tag string) error {
 		return fmt.Errorf("no compatible asset found for this OS/arch in release %s", tag)
 	}
 
-	fmt.Printf("Downloading %s...\n", asset.Name)
+	log.Printf("Downloading %s...\n", asset.Name)
 
 	targetPath := serviceExecutablePath()
 	// Download to a .tmp next to the real binary
@@ -135,7 +136,7 @@ func DownloadRelease(tag string) error {
 		return err
 	}
 
-	fmt.Println("✅ Download complete. Spawning updater process...")
+	log.Println("✅ Download complete. Spawning updater process...")
 
 	// Launch ourselves with --update-apply so we exit the service first,
 	// then the detached process swaps the binary and restarts the service.

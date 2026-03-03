@@ -30,7 +30,7 @@ func Init(logDir string) error {
 	std = log.New(multi, "", log.LstdFlags|log.Lshortfile)
 	log.SetOutput(multi)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	fmt.Println("Switching std place")
+	fmt.Println("Switching std place", logDir)
 	return nil
 }
 

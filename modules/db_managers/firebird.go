@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -91,7 +92,7 @@ func StreamProdutosFirebird(query string, db *sqlx.DB, batchSize int, cb func([]
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Produtos", err)
+		log.Println("Erro no stream Produtos", err)
 		return err
 	}
 	defer rows.Close()
@@ -128,7 +129,7 @@ func StreamVendasFirebird(query string, db *sqlx.DB, batchSize int, cb func([]ut
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Vendas", err)
+		log.Println("Erro no stream Vendas", err)
 		return err
 	}
 	defer rows.Close()
@@ -144,7 +145,7 @@ func StreamVendasFirebird(query string, db *sqlx.DB, batchSize int, cb func([]ut
 		if row.DatasVencimentoRaw != nil {
 			json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
 		}
-		fmt.Println(utils.JsonViewInterface(row.DatasVencimento))
+		log.Println(utils.JsonViewInterface(row.DatasVencimento))
 		batch = append(batch, row)
 
 		if len(batch) == batchSize {
@@ -172,7 +173,7 @@ func GetCategoriasFirebird(query string, db *sqlx.DB) ([]utils.CategoriaRow, err
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no get categorias", err)
+		log.Println("Erro no get categorias", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -194,7 +195,7 @@ func GetVendedoresFirebird(query string, db *sqlx.DB) ([]utils.VendedorRow, erro
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no get categorias", err)
+		log.Println("Erro no get categorias", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -215,7 +216,7 @@ func StreamFinanceirosFirebird(query string, db *sqlx.DB, batchSize int, cb func
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Vendas", err)
+		log.Println("Erro no stream Vendas", err)
 		return err
 	}
 	defer rows.Close()

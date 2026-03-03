@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -24,7 +25,8 @@ func connectMysql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.Db
 	}
 	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
-	fmt.Println(psqlInfo)
+
+	log.Println(psqlInfo)
 	sqlDB, err := sqlx.Open("mysql", psqlInfo)
 	if err != nil {
 		return dI, fmt.Errorf("erro ao abrir conexão com MySql: %v", err)
@@ -91,7 +93,7 @@ func StreamProdutosMySql(query string, db *sqlx.DB, batchSize int, cb func([]uti
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Produtos", err)
+		log.Println("Erro no stream Produtos", err)
 		return err
 	}
 	defer rows.Close()
@@ -128,7 +130,7 @@ func StreamVendasMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Vendas", err)
+		log.Println("Erro no stream Vendas", err)
 		return err
 	}
 	defer rows.Close()
@@ -144,7 +146,7 @@ func StreamVendasMySql(query string, db *sqlx.DB, batchSize int, cb func([]utils
 		if row.DatasVencimentoRaw != nil {
 			json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
 		}
-		fmt.Println(utils.JsonViewInterface(row.DatasVencimento))
+		log.Println(utils.JsonViewInterface(row.DatasVencimento))
 		batch = append(batch, row)
 
 		if len(batch) == batchSize {
@@ -171,7 +173,7 @@ func GetCategoriasMySql(query string, db *sqlx.DB) ([]utils.CategoriaRow, error)
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no get categorias", err)
+		log.Println("Erro no get categorias", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -192,7 +194,7 @@ func GetVendedoresMySql(query string, db *sqlx.DB) ([]utils.VendedorRow, error) 
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no get categorias", err)
+		log.Println("Erro no get categorias", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -213,7 +215,7 @@ func StreamFinanceirosMySql(query string, db *sqlx.DB, batchSize int, cb func([]
 	}
 	rows, err := db.Queryx(query)
 	if err != nil {
-		fmt.Println("Erro no stream Vendas", err)
+		log.Println("Erro no stream Vendas", err)
 		return err
 	}
 	defer rows.Close()

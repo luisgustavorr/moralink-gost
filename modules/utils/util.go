@@ -3,6 +3,7 @@ package utils
 import (
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"fmt"
+	"log"
 	"runtime"
 
 	"encoding/json"
@@ -453,5 +454,5 @@ func ToString(val interface{}) string {
 func LogMemUsage() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	fmt.Printf("🩺 💾 Memória: %.2fMB\n", float64(m.Alloc)/1024.0/1024.0)
+	log.Printf("🩺 💾 Memória: %.2fMB\n", float64(m.Alloc)/1024.0/1024.0)
 }

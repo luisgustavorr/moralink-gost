@@ -4,7 +4,6 @@ import (
 	"MoraLinkGOst/modules/logger"
 	Service "MoraLinkGOst/modules/service"
 	"MoraLinkGOst/modules/updater"
-	"fmt"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -47,26 +46,25 @@ func main() {
 	}
 
 	prg := &Service.Program{}
+
 	svc, err := service.New(prg, svcConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	logger.InitDefault()
-
 	if len(os.Args) > 1 {
 		action := os.Args[1]
 
 		if action == "help" {
-			fmt.Println("Usage: moralink-gost [command]")
-			fmt.Println("Commands:")
-			fmt.Println("  install    - Register as a Windows/Linux service")
-			fmt.Println("  uninstall  - Remove the service")
-			fmt.Println("  start      - Start the service")
-			fmt.Println("  stop       - Stop the service")
-			fmt.Println("  restart    - Restart the service")
-			fmt.Println("  status     - Print service status")
-			fmt.Println("  (no arg)   - Run interactively")
+			log.Println("Usage: moralink-gost [command]")
+			log.Println("Commands:")
+			log.Println("  install    - Register as a Windows/Linux service")
+			log.Println("  uninstall  - Remove the service")
+			log.Println("  start      - Start the service")
+			log.Println("  stop       - Stop the service")
+			log.Println("  restart    - Restart the service")
+			log.Println("  status     - Print service status")
+			log.Println("  (no arg)   - Run interactively")
 			return
 		}
 
@@ -74,7 +72,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to %s service: %v\n(try running as Administrator on Windows)", action, err)
 		}
-		fmt.Printf("Service '%s' action '%s' completed successfully.\n", svcConfig.Name, action)
+		log.Printf("Service '%s' action '%s' completed successfully.\n", svcConfig.Name, action)
 		return
 	}
 

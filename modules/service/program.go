@@ -2,6 +2,7 @@ package Service
 
 import (
 	Grpcclient "MoraLinkGOst/modules/grpc"
+	"MoraLinkGOst/modules/logger"
 	"MoraLinkGOst/modules/utils"
 	"context"
 	"log"
@@ -16,8 +17,10 @@ type Program struct {
 }
 
 func (p *Program) run() {
+	logger.InitDefault()
 
 	utils.LoadConfig()
+
 	p.ctx, p.cancel = context.WithCancel(context.Background())
 	Grpcclient.GRPCGuardian(p.ctx)
 	<-p.exit
