@@ -2,6 +2,7 @@ package main
 
 import (
 	Service "MoraLinkGOst/modules/service"
+	"MoraLinkGOst/modules/updater"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,9 +14,13 @@ import (
 )
 
 var logger service.Logger
+var (
+	Version   = "dev"
+	ReleaseGH = "" // injected at build time from .env via ldflags
+)
 
 func main() {
-
+	updater.Configure(ReleaseGH)
 	exePath, err := os.Executable()
 	if err == nil {
 		_ = godotenv.Load(exePath[:len(exePath)-len("moralink-gost.exe")] + ".env")

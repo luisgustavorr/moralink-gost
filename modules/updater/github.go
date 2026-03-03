@@ -26,6 +26,12 @@ type Asset struct {
 	Size               int64  `json:"size"`
 }
 
+var githubToken string
+
+func Configure(token string) {
+	fmt.Println("Getting token from make", token)
+	githubToken = token
+}
 func serviceExecutablePath() string {
 	exe, err := os.Executable()
 	if err == nil {
@@ -103,7 +109,7 @@ func DownloadRelease(tag string) error {
 		return err
 	}
 	req.Header.Set("Accept", "application/octet-stream")
-	req.Header.Set("Authorization", "token "+os.Getenv("RELEASE_GH"))
+	req.Header.Set("Authorization", "token "+githubToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -153,7 +159,7 @@ func GetRelease(tag string) (*Release, error) {
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "moralink-updater")
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("RELEASE_GH"))
+	req.Header.Set("Authorization", "Bearer "+githubToken)
 
 	resp, err := client.Do(req)
 	if err != nil {

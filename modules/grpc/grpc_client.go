@@ -399,7 +399,7 @@ func (c *Client) SendError(message string, batchid string) error {
 
 func GRPCGuardian(ctx context.Context) {
 	host := "134.209.215.199:50051"
-	if os.Getenv("dev") == "1" {
+	if os.Getenv("dev") != "1" {
 		host = "localhost:50051"
 	}
 	fmt.Println("✅ 🛡️  Guardian started, search connection at : ", host, utils.Version)
