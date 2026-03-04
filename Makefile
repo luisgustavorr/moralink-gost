@@ -36,6 +36,11 @@ windows: dist syso
 	go build $(LDFLAGS) -o dist/$(APP)-windows-amd64.exe .
 	@echo "✓  Built dist/$(APP)-windows-amd64.exe"
 
+installer: windows
+	@echo "→  Building Windows installer..."
+	cd build_assets && makensis installer.nsi
+	@echo "✓  Built dist/moralink-gost-setup.exe"
+
 install-scheduler:
 	./dist/$(APP)-linux-amd64 --install-scheduler
 
