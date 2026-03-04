@@ -1,6 +1,7 @@
 package main
 
 import (
+	commandManagers "MoraLinkGOst/modules/command_managers"
 	"MoraLinkGOst/modules/logger"
 	Service "MoraLinkGOst/modules/service"
 	"MoraLinkGOst/modules/updater"
@@ -51,7 +52,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	commandManagers.ServiceRunning = svc
 	if len(os.Args) > 1 {
 		action := os.Args[1]
 

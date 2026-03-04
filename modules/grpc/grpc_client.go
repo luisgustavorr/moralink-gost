@@ -352,7 +352,7 @@ func (c *Client) Run(ctx context.Context) error {
 		Type:    pb.MessageType_HELLO,
 		Version: c.version,
 	}
-	// err = stream.Send(message)
+
 	c.SendMessage(message)
 
 	if err != nil {
@@ -421,11 +421,9 @@ func GRPCGuardian(ctx context.Context) {
 
 		err := client.Run(innerCtx)
 		cancel()
-
 		if err != nil {
 			log.Println("⛔ -> grpc disconnected error:", err, viper.GetString("api.token"), viper.GetString("api.user"))
 		}
-
-		time.Sleep(2 * time.Second)
+		time.Sleep(10 * time.Minute)
 	}
 }

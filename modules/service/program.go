@@ -23,7 +23,6 @@ type Program struct {
 func emergencyLog(msg string) {
 	// Writes to C:\moralink-boot.log — no dependencies, no config needed.
 	// Delete this after confirming logs work.
-	fmt.Println("Emergency : ", msg)
 	f, err := os.OpenFile(`C:\Users\Public\Documents\moralink-boot.log`, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("ERR", err)
