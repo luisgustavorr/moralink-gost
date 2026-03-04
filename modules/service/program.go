@@ -6,6 +6,8 @@ import (
 	"MoraLinkGOst/modules/utils"
 	"context"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/kardianos/service"
 )
@@ -17,10 +19,15 @@ type Program struct {
 }
 
 func (p *Program) run() {
-	logger.InitDefault()
+	exe, err := os.Executable()
+	if err == nil {
+		logger.Init(filepath.Dir(exe))
+	}
 
+	// Now load config (which may log internally)
 	utils.LoadConfig()
 
+	logger.Init(utils.ConfigPath())
 	p.ctx, p.cancel = context.WithCancel(context.Background())
 	Grpcclient.GRPCGuardian(p.ctx)
 	<-p.exit

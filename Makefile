@@ -21,9 +21,15 @@ linux: dist
 	@echo "✓  Built dist/$(APP)-linux-amd64"
 
 ## Generates resource.syso — Go picks this up automatically when building for Windows
-syso:
-	goversioninfo -o resource.syso -platform-specific=true versioninfo.json
+GOVERSIONINFO := $(shell go env GOPATH)/bin/goversioninfo
+
+syso: $(GOVERSIONINFO)
+	$(GOVERSIONINFO) -o resource.syso -platform-specific=true versioninfo.json
 	@echo "✓  Generated resource.syso"
+
+$(GOVERSIONINFO):
+	@echo "→  Installing goversioninfo..."
+	go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
 
 windows: dist syso
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc \
