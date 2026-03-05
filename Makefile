@@ -13,7 +13,7 @@ LDFLAGS := -ldflags "\
 
 .PHONY: all linux windows clean tidy syso
 
-all: linux windows
+all: linux installer
 
 linux: dist
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 \
