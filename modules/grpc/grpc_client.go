@@ -75,7 +75,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				utils.LogMemUsage()
 				resultPb := utils.ToProtoProdutos(result)
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
@@ -104,8 +103,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				log.Println("Passando", isLast, len(result))
-				utils.LogMemUsage()
 				resultPb := utils.ToProtoClientes(result)
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
@@ -142,7 +139,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 						end = len(result)
 					}
 					resultPb := utils.ToProtoCategorias(result[i:end])
-					utils.LogMemUsage()
 
 					c.SendMessage(&agentpb.AgentMessage{
 						AgentId: viper.GetString("api.token"),
@@ -174,7 +170,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 				isLast := len(result) < batchSize
 				log.Println("Passando", isLast, len(result))
-				utils.LogMemUsage()
 				resultPb := utils.ToProtoVendas(result)
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
@@ -211,7 +206,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 						end = len(result)
 					}
 					resultPb := utils.ToProtoVendedores(result[i:end])
-					utils.LogMemUsage()
 
 					c.SendMessage(&agentpb.AgentMessage{
 						AgentId: viper.GetString("api.token"),
@@ -242,8 +236,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				log.Println("Passando", isLast, len(result))
-				utils.LogMemUsage()
 				resultPb := utils.ToProtoFinanceiro(result)
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
@@ -278,8 +270,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 				isLast := len(result) < batchSize
 				log.Println("Passando", isLast, len(result))
-
-				utils.LogMemUsage()
 
 				resultPb, err := utils.ToProtoGenecric(result)
 				if err != nil {
