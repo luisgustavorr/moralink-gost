@@ -23,8 +23,12 @@ func connectFirebird(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils
 		Financeiros: StreamFinanceirosFirebird,
 		Generic:     StreamGenericFirebird,
 	}
+	db_name := connInfo["database"].(string)
+	if db_name[0:1] != "/" {
+		db_name = "/" + db_name
+	}
 	psqlInfo := fmt.Sprintf("%s:%s@%s:%s%s?column_name_to_lower=true",
-		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
+		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), db_name)
 	sqlDB, err := sqlx.Open("firebirdsql", psqlInfo)
 	if err != nil {
 		return dI, fmt.Errorf("erro ao abrir conexão com Firebird: %v", err)
