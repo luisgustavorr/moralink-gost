@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"time"
 
 	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/shopspring/decimal"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -136,10 +138,74 @@ type ConnInfo struct {
 	DB       *DbInfos
 }
 
+func sanitizeValue(v any) any {
+	if v == nil {
+		return nil
+	}
+	switch val := v.(type) {
+	// Already supported by structpb
+	case bool, float64, string:
+		return val
+	// Numeric types — convert to float64
+	case float32:
+		return float64(val)
+	case int:
+		return float64(val)
+	case int8:
+		return float64(val)
+	case int16:
+		return float64(val)
+	case int32:
+		return float64(val)
+	case int64:
+		return float64(val)
+	case uint:
+		return float64(val)
+	case uint8:
+		return float64(val)
+	case uint16:
+		return float64(val)
+	case uint32:
+		return float64(val)
+	case uint64:
+		return float64(val)
+	// decimal.Decimal from firebirdsql / shopspring
+	case decimal.Decimal:
+		f, _ := val.Float64()
+		return f
+	// Time — convert to ISO string
+	case time.Time:
+		return val.Format(time.RFC3339)
+	// []byte — convert to string
+	case []byte:
+		return string(val)
+	// Nested map
+	case map[string]any:
+		out := make(map[string]any, len(val))
+		for k, v2 := range val {
+			out[k] = sanitizeValue(v2)
+		}
+		return out
+	// Nested slice
+	case []any:
+		out := make([]any, len(val))
+		for i, v2 := range val {
+			out[i] = sanitizeValue(v2)
+		}
+		return out
+	// Fallback — stringify anything else
+	default:
+		return fmt.Sprintf("%v", val)
+	}
+}
 func ToProtoGenecric(list []map[string]interface{}) (*structpb.ListValue, error) {
 	raw := make([]any, 0, len(list))
 	for _, row := range list {
-		raw = append(raw, row)
+		sanitized := make(map[string]any, len(row))
+		for k, v := range row {
+			sanitized[k] = sanitizeValue(v)
+		}
+		raw = append(raw, sanitized)
 	}
 	return structpb.NewList(raw)
 }

@@ -3,3 +3,4 @@
 dist/
 *.syso
 *.log
+build_n_release.fish

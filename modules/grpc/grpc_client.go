@@ -273,7 +273,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				resultPb, err := utils.ToProtoGenecric(result)
 				if err != nil {
-					log.Println("ERRO NO GENERIC :", err)
+					log.Println("ERRO NO PROTO GENERIC :", err)
 				}
 
 				log.Println("Bid :", msg.BatchId)
