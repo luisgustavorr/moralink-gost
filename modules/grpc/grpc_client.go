@@ -414,6 +414,6 @@ func GRPCGuardian(ctx context.Context) {
 		if err != nil {
 			log.Println("⛔ -> grpc disconnected error:", err, viper.GetString("api.token"), viper.GetString("api.user"))
 		}
-		time.Sleep(10 * time.Minute)
+		time.Sleep(1 * time.Minute)
 	}
 }
