@@ -36,10 +36,28 @@ windows: dist syso
 	go build $(LDFLAGS) -o dist/$(APP)-windows-amd64.exe .
 	@echo "✓  Built dist/$(APP)-windows-amd64.exe"
 
+sign:
+	@test -f "$(CERT_PATH)" || (echo "❌ CERT_PATH not set or file missing" && exit 1)
+	osslsigncode sign \
+		-pkcs12  "$(CERT_PATH)" \
+		-pass    "$(CERT_PASSWORD)" \
+		-n       "MoraLink GOst" \
+		-i       "https://orbis.com.br" \
+		-t       "http://timestamp.digicert.com" \
+		-in      "$(FILE)" \
+		-out     "$(FILE).signed"
+	mv "$(FILE).signed" "$(FILE)"
+	@echo "✓  Signed $(FILE)"
+
+## Build installer and sign everything
+release: windows installer
+	$(MAKE) sign FILE=dist/$(APP)-windows-amd64.exe
+	$(MAKE) sign FILE=dist/moralink-setup.exe
+	@echo "✓  Release ready"
 installer: windows
 	@echo "→  Building Windows installer..."
 	cd build_assets && makensis installer.nsi
-	@echo "✓  Built dist/moralink-gost-setup.exe"
+	@echo "✓  Built dist/moralink-setup.exe"
 
 install-scheduler:
 	./dist/$(APP)-linux-amd64 --install-scheduler
