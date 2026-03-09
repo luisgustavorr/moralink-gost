@@ -23,7 +23,7 @@ func connectFirebird(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils
 		Financeiros: StreamFinanceirosFirebird,
 		Generic:     StreamGenericFirebird,
 	}
-	psqlInfo := fmt.Sprintf("%s:%s@%s:%s%s",
+	psqlInfo := fmt.Sprintf("%s:%s@%s:%s%s?column_name_to_lower=true",
 		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
 	sqlDB, err := sqlx.Open("firebirdsql", psqlInfo)
 	if err != nil {
