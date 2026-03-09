@@ -30,7 +30,7 @@ type Asset struct {
 var githubToken string
 
 func Configure(token string) {
-	log.Println("Getting token from make", token)
+	log.Println("Getting token from make", token != "")
 	githubToken = token
 }
 func serviceExecutablePath() string {
