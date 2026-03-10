@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	commandManagers "MoraLinkGOst/modules/command_managers"
@@ -70,6 +71,10 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		case 0:
 			log.Println("Produtos...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
+			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				return
+			}
 			err := dbConn.Queries.Products(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.ProdutoRow) error {
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -92,12 +97,16 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			})
 			log.Println("error", err)
 			if err != nil {
-
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 1:
 			log.Println("Clientes...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
+			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				return
+			}
 			err := dbConn.Queries.Clientes(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.ClienteRow) error {
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -120,11 +129,15 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			})
 			log.Println("error", err)
 			if err != nil {
-
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 2:
 			result, err := dbConn.Queries.Categorias(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				return
+			}
 			if err == nil {
 				if len(result) == 0 {
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -133,7 +146,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					log.Println("devolver resultado", len(result))
 					end := i + batchSize
 					isLast := len(result) < batchSize
-					log.Println("Passando")
 					if end > len(result) {
 						log.Println("Último ? ")
 						end = len(result)
@@ -159,17 +171,21 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
 			} else {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 3:
 			log.Println("Vendas...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
+			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				return
+			}
 			err := dbConn.Queries.Vendas(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.VendaRow) error {
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				log.Println("Passando", isLast, len(result))
 				resultPb := utils.ToProtoVendas(result)
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
@@ -187,11 +203,15 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			})
 			log.Println("error", err)
 			if err != nil {
-
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 4:
 			result, err := dbConn.Queries.Vendedores(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				return
+			}
 			if err == nil {
 				if len(result) == 0 {
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -200,7 +220,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					log.Println("devolver resultado", len(result))
 					end := i + batchSize
 					isLast := len(result) < batchSize
-					log.Println("Passando")
 					if end > len(result) {
 						log.Println("Último ? ")
 						end = len(result)
@@ -226,12 +245,17 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
 			} else {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 5:
 			log.Println("Financeiro...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
-			err := dbConn.Queries.Financeiros(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []utils.FinanceiroRow) error {
+			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				return
+			}
+			err := dbConn.Queries.Financeiros(msg.Payload.GetQueryRequest().GetQuery(), dbConn.DB, batchSize, func(result []utils.FinanceiroRow) error {
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
@@ -253,7 +277,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			})
 			log.Println("error", err)
 			if err != nil {
-
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 6:
@@ -269,7 +293,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				isLast := len(result) < batchSize
-				log.Println("Passando", isLast, len(result))
 
 				resultPb, err := utils.ToProtoGenecric(result)
 				if err != nil {
