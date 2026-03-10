@@ -17,6 +17,21 @@ enum MessageType {
   HEARTBEAT = 5;
   ACK = 6;
   COMMAND = 7;
+    TRACE = 8;  
+}
+enum TraceStep {
+  GOST_QUERY_RECEIVED  = 0;  
+  GOST_DB_EXECUTED     = 1;  
+  GOST_RESULT_SENT     = 2;  
+}
+message TraceEvent {
+ string batch_id = 1;
+ TraceStep step =2;
+ int64 timestamp =3;
+ int32 duration_ms =4;
+ bool success = 5;
+ string error = 6; 
+
 }
 enum Db_type{
   MYSQL =0;
