@@ -70,7 +70,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		tableAskedFor := msg.GetTable()
 		switch tableAskedFor {
 		case 0:
-			log.Println("Produtos...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -96,13 +95,11 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			log.Println("error", err)
 			if err != nil {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 1:
-			log.Println("Clientes...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -128,7 +125,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			log.Println("error", err)
 			if err != nil {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
@@ -148,7 +144,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					end := i + batchSize
 					isLast := len(result) < batchSize
 					if end > len(result) {
-						log.Println("Último ? ")
 						end = len(result)
 					}
 					resultPb := utils.ToProtoCategorias(result[i:end])
@@ -170,13 +165,11 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				}
 
-				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
 			} else {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 3:
-			log.Println("Vendas...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -202,7 +195,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			log.Println("error", err)
 			if err != nil {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
@@ -244,13 +236,11 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				}
 
-				log.Println("Query para ", agentpb.Table_name[int32(msg.GetTable())], " retornando ", len(result))
 			} else {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		case 5:
-			log.Println("Financeiro...")
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
@@ -276,7 +266,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					},
 				})
 			})
-			log.Println("error", err)
 			if err != nil {
 				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
@@ -317,7 +306,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				})
 
 			})
-
 			if err != nil {
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
