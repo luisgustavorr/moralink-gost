@@ -32,7 +32,6 @@ func emergencyLog(msg string) {
 	fmt.Fprintf(f, "[%s] %s\n", time.Now().Format(time.RFC3339), msg)
 }
 func (p *Program) run() {
-	fmt.Println("Teste ")
 	emergencyLog("run() called")
 
 	exe, err := os.Executable()
