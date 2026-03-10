@@ -67,6 +67,7 @@ func LoadConfig() {
 			// First run: create default config
 			viper.Set("server.grpc_port", 50051)
 			viper.Set("api.user", "teste_disparo_shark")
+			viper.Set("api.mode", "prod")
 			viper.Set("api.token", "4d99239abe64126085c2da40d2eb6b83ed57f3ca")
 			configFile := filepath.Join(cfgDir, "config.yaml")
 			if err := viper.WriteConfigAs(configFile); err != nil {

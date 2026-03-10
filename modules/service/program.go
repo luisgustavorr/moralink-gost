@@ -32,24 +32,23 @@ func emergencyLog(msg string) {
 	fmt.Fprintf(f, "[%s] %s\n", time.Now().Format(time.RFC3339), msg)
 }
 func (p *Program) run() {
-	emergencyLog("run() called")
+	// emergencyLog("run() called")
 
 	exe, err := os.Executable()
-	emergencyLog(fmt.Sprintf("exe=%s err=%v", exe, err))
+	// emergencyLog(fmt.Sprintf("exe=%s err=%v", exe, err))
 
 	if err == nil {
 		logger.Init(filepath.Dir(exe))
 	}
-	emergencyLog("logger.Init(exe dir) done")
-
+	// emergencyLog("logger.Init(exe dir) done")
 	utils.LoadConfig()
-	emergencyLog(fmt.Sprintf("LoadConfig done, ConfigPath=%s", utils.ConfigPath()))
+	// emergencyLog(fmt.Sprintf("LoadConfig done, ConfigPath=%s", utils.ConfigPath()))
 
 	logger.Init(utils.ConfigPath())
-	emergencyLog("logger.Init(ConfigPath) done")
+	// emergencyLog("logger.Init(ConfigPath) done")
 
 	p.ctx, p.cancel = context.WithCancel(context.Background())
-	emergencyLog("starting GRPCGuardian")
+	// emergencyLog("starting GRPCGuardian")
 
 	Grpcclient.GRPCGuardian(p.ctx)
 	<-p.exit

@@ -47,7 +47,6 @@ func main() {
 	}
 
 	prg := &Service.Program{}
-
 	svc, err := service.New(prg, svcConfig)
 	if err != nil {
 		log.Fatal(err)

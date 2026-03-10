@@ -9,6 +9,7 @@ import (
 
 	commandManagers "MoraLinkGOst/modules/command_managers"
 	dbmanagers "MoraLinkGOst/modules/db_managers"
+	"MoraLinkGOst/modules/logger"
 	"MoraLinkGOst/modules/proto/agentpb"
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"MoraLinkGOst/modules/utils"
@@ -43,9 +44,9 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 	case pb.MessageType_ACK:
 		ackReturn := msg.Payload.GetAckReturn()
 		if ackReturn.Status == 1 {
-			log.Println("✅ 🔐 ACK APPROVED")
+			logger.Debug("✅ 🔐 ACK APPROVED")
 		} else {
-			log.Println("❌ 🔐 ACK DISAPPROVED")
+			logger.Debug("❌ 🔐 ACK DISAPPROVED")
 		}
 		connectedUser := msg.Payload.GetAckReturn().ConnectedUser
 		db_info, err := utils.ParseDBConfig(connectedUser.ConfigJson)
@@ -143,7 +144,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				for i := 0; i < len(result); i += batchSize {
-					log.Println("devolver resultado", len(result))
+					logger.Debug("devolver resultado", len(result))
 					end := i + batchSize
 					isLast := len(result) < batchSize
 					if end > len(result) {
@@ -217,7 +218,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
 				for i := 0; i < len(result); i += batchSize {
-					log.Println("devolver resultado", len(result))
+					logger.Debug("devolver resultado", len(result))
 					end := i + batchSize
 					isLast := len(result) < batchSize
 					if end > len(result) {
@@ -288,7 +289,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 			}
 			err := dbConn.Queries.Generic(msg.Payload.GetQueryRequest().Query, dbConn.DB, batchSize, func(result []map[string]interface{}) error {
-				log.Println("devolver resultado", len(result))
+				logger.Debug("devolver resultado", len(result))
 				if len(result) == 0 {
 					return c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				}
@@ -299,7 +300,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					log.Println("ERRO NO PROTO GENERIC :", err)
 				}
 
-				log.Println("Bid :", msg.BatchId)
+				logger.Debug("Bid :", msg.BatchId)
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
 					Type:    agentpb.MessageType_RESULT,
@@ -338,7 +339,7 @@ func buildEmptyMimicReturn(table pb.Table, batchId string) *agentpb.AgentMessage
 	}
 }
 func (c *Client) Run(ctx context.Context) error {
-	log.Println("✅ 🌐 Grpc started")
+	logger.Debug("✅ 🌐 Grpc started")
 	conn, err := grpc.DialContext(
 		ctx,
 		c.addr,
@@ -414,7 +415,7 @@ func GRPCGuardian(ctx context.Context) {
 	if os.Getenv("dev") == "1" {
 		host = "localhost:50051"
 	}
-	log.Println("✅ 🛡️  Guardian started, search connection at : ", host, utils.Version)
+	logger.Debug("✅ 🛡️  Guardian started, search connection at : ", host, utils.Version)
 
 	for {
 		select {

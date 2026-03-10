@@ -1,6 +1,7 @@
 package dbmanagers
 
 import (
+	"MoraLinkGOst/modules/logger"
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"MoraLinkGOst/modules/utils"
 	"log"
@@ -11,7 +12,7 @@ var OnStartupError string = ""
 // DecideWhoActs is the organizer, the one that get the db type and return which connection will be used to handle the connection
 func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbInfos, error) {
 	var err error
-	log.Printf("✅ ❔ Using %s connection \n", pb.DbType_name[int32(dType)])
+	logger.Debugf("✅ ❔ Using %s connection \n", pb.DbType_name[int32(dType)])
 
 	var db = &utils.DbInfos{
 		Type: dType,
@@ -52,7 +53,7 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 
 	}
 	if err == nil {
-		log.Printf("✅ 💽 Connected to %s Database \n", pb.DbType_name[int32(dType)])
+		logger.Debugf("✅ 💽 Connected to %s Database \n", pb.DbType_name[int32(dType)])
 
 	} else {
 		OnStartupError = err.Error()
