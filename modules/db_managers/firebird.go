@@ -149,7 +149,6 @@ func StreamVendasFirebird(query string, db *sqlx.DB, batchSize int, cb func([]ut
 		if row.DatasVencimentoRaw != nil {
 			json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
 		}
-		log.Println(utils.JsonViewInterface(row.DatasVencimento))
 		batch = append(batch, row)
 
 		if len(batch) == batchSize {
