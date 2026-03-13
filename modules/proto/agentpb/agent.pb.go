@@ -647,6 +647,7 @@ type AgentPayload struct {
 	//	*AgentPayload_Erros
 	//	*AgentPayload_AckReturn
 	//	*AgentPayload_Command
+	//	*AgentPayload_QueryTrace
 	Data          isAgentPayload_Data `protobuf_oneof:"data"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -788,6 +789,15 @@ func (x *AgentPayload) GetCommand() *Commands {
 	return nil
 }
 
+func (x *AgentPayload) GetQueryTrace() *TraceEvent {
+	if x != nil {
+		if x, ok := x.Data.(*AgentPayload_QueryTrace); ok {
+			return x.QueryTrace
+		}
+	}
+	return nil
+}
+
 type isAgentPayload_Data interface {
 	isAgentPayload_Data()
 }
@@ -836,6 +846,10 @@ type AgentPayload_Command struct {
 	Command *Commands `protobuf:"bytes,11,opt,name=command,proto3,oneof"`
 }
 
+type AgentPayload_QueryTrace struct {
+	QueryTrace *TraceEvent `protobuf:"bytes,12,opt,name=query_trace,json=queryTrace,proto3,oneof"`
+}
+
 func (*AgentPayload_Produtos) isAgentPayload_Data() {}
 
 func (*AgentPayload_Vendas) isAgentPayload_Data() {}
@@ -857,6 +871,8 @@ func (*AgentPayload_Erros) isAgentPayload_Data() {}
 func (*AgentPayload_AckReturn) isAgentPayload_Data() {}
 
 func (*AgentPayload_Command) isAgentPayload_Data() {}
+
+func (*AgentPayload_QueryTrace) isAgentPayload_Data() {}
 
 type Query struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2382,7 +2398,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\apayload\x18\x06 \x01(\v2\x13.agent.AgentPayloadR\apayload\x12\"\n" +
 	"\x05table\x18\a \x01(\x0e2\f.agent.TableR\x05table\x12\x16\n" +
 	"\x06isLast\x18\b \x01(\bR\x06isLast\x12\x18\n" +
-	"\aisEmpty\x18\t \x01(\bR\aisEmpty\"\xbf\x04\n" +
+	"\aisEmpty\x18\t \x01(\bR\aisEmpty\"\xf5\x04\n" +
 	"\fAgentPayload\x12-\n" +
 	"\bprodutos\x18\x01 \x01(\v2\x0f.agent.ProdutosH\x00R\bprodutos\x12'\n" +
 	"\x06vendas\x18\x02 \x01(\v2\r.agent.VendasH\x00R\x06vendas\x12-\n" +
@@ -2400,7 +2416,9 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
 	"ack_return\x18\n" +
 	" \x01(\v2\x10.agent.ACKReturnH\x00R\tackReturn\x12+\n" +
-	"\acommand\x18\v \x01(\v2\x0f.agent.CommandsH\x00R\acommandB\x06\n" +
+	"\acommand\x18\v \x01(\v2\x0f.agent.CommandsH\x00R\acommand\x124\n" +
+	"\vquery_trace\x18\f \x01(\v2\x11.agent.TraceEventH\x00R\n" +
+	"queryTraceB\x06\n" +
 	"\x04data\";\n" +
 	"\x05Query\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x1c\n" +
@@ -2655,26 +2673,27 @@ var file_modules_proto_agent_proto_depIdxs = []int32{
 	13, // 14: agent.AgentPayload.erros:type_name -> agent.Erros
 	11, // 15: agent.AgentPayload.ack_return:type_name -> agent.ACKReturn
 	7,  // 16: agent.AgentPayload.command:type_name -> agent.Commands
-	5,  // 17: agent.ACKReturn.status:type_name -> agent.ConnectStatus
-	12, // 18: agent.ACKReturn.connected_user:type_name -> agent.ConnectedUser
-	2,  // 19: agent.ConnectedUser.db_type:type_name -> agent.Db_type
-	14, // 20: agent.Erros.error:type_name -> agent.Error
-	16, // 21: agent.Produtos.items:type_name -> agent.Produto
-	18, // 22: agent.Clientes.items:type_name -> agent.Cliente
-	20, // 23: agent.Categorias.items:type_name -> agent.Categoria
-	22, // 24: agent.Vendedores.items:type_name -> agent.Vendedor
-	24, // 25: agent.Vendas.items:type_name -> agent.Venda
-	25, // 26: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
-	26, // 27: agent.Venda.datas_vencimento:type_name -> agent.Datas_vencimento
-	28, // 28: agent.Financeiros.items:type_name -> agent.Financeiro
-	29, // 29: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_cobranca
-	8,  // 30: agent.AgentService.Connect:input_type -> agent.AgentMessage
-	8,  // 31: agent.AgentService.Connect:output_type -> agent.AgentMessage
-	31, // [31:32] is the sub-list for method output_type
-	30, // [30:31] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	6,  // 17: agent.AgentPayload.query_trace:type_name -> agent.TraceEvent
+	5,  // 18: agent.ACKReturn.status:type_name -> agent.ConnectStatus
+	12, // 19: agent.ACKReturn.connected_user:type_name -> agent.ConnectedUser
+	2,  // 20: agent.ConnectedUser.db_type:type_name -> agent.Db_type
+	14, // 21: agent.Erros.error:type_name -> agent.Error
+	16, // 22: agent.Produtos.items:type_name -> agent.Produto
+	18, // 23: agent.Clientes.items:type_name -> agent.Cliente
+	20, // 24: agent.Categorias.items:type_name -> agent.Categoria
+	22, // 25: agent.Vendedores.items:type_name -> agent.Vendedor
+	24, // 26: agent.Vendas.items:type_name -> agent.Venda
+	25, // 27: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
+	26, // 28: agent.Venda.datas_vencimento:type_name -> agent.Datas_vencimento
+	28, // 29: agent.Financeiros.items:type_name -> agent.Financeiro
+	29, // 30: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_cobranca
+	8,  // 31: agent.AgentService.Connect:input_type -> agent.AgentMessage
+	8,  // 32: agent.AgentService.Connect:output_type -> agent.AgentMessage
+	32, // [32:33] is the sub-list for method output_type
+	31, // [31:32] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_modules_proto_agent_proto_init() }
@@ -2698,6 +2717,7 @@ func file_modules_proto_agent_proto_init() {
 		(*AgentPayload_Erros)(nil),
 		(*AgentPayload_AckReturn)(nil),
 		(*AgentPayload_Command)(nil),
+		(*AgentPayload_QueryTrace)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

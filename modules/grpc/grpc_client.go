@@ -2,6 +2,7 @@ package Grpcclient
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -65,6 +66,8 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 	case pb.MessageType_HEARTBEAT:
 		log.Println("heartbeat received")
 	case pb.MessageType_QUERY:
+		runned := 0
+		c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_QUERY_RECEIVED)
 		dbConn := utils.Conn.DB
 		batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 		tableAskedFor := msg.GetTable()
@@ -81,11 +84,18 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoProdutos(result)
+				if runned == 0 {
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+				}
+				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
 					Type:    agentpb.MessageType_RESULT,
-					Table:   tableAskedFor,
-					IsLast:  isLast,
+					BatchId: msg.GetBatchId(),
+
+					Table:  tableAskedFor,
+					IsLast: isLast,
+
 					Payload: &pb.AgentPayload{
 						Data: &pb.AgentPayload_Produtos{
 							Produtos: &pb.Produtos{
@@ -111,11 +121,17 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoClientes(result)
+				if runned == 0 {
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+				}
+				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
 					Type:    agentpb.MessageType_RESULT,
 					Table:   tableAskedFor,
 					IsLast:  isLast,
+					BatchId: msg.GetBatchId(),
+
 					Payload: &pb.AgentPayload{
 						Data: &pb.AgentPayload_Clientes{
 							Clientes: &pb.Clientes{
@@ -147,12 +163,17 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 						end = len(result)
 					}
 					resultPb := utils.ToProtoCategorias(result[i:end])
-
+					if runned == 0 {
+						c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+					}
+					runned++
 					c.SendMessage(&agentpb.AgentMessage{
 						AgentId: viper.GetString("api.token"),
 						Type:    agentpb.MessageType_RESULT,
 						Table:   tableAskedFor,
-						IsLast:  isLast,
+						BatchId: msg.GetBatchId(),
+
+						IsLast: isLast,
 						Payload: &pb.AgentPayload{
 							Data: &pb.AgentPayload_Categorias{
 								Categorias: &pb.Categorias{
@@ -181,11 +202,17 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoVendas(result)
+				if runned == 0 {
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+				}
+				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
 					Type:    agentpb.MessageType_RESULT,
 					Table:   tableAskedFor,
 					IsLast:  isLast,
+					BatchId: msg.GetBatchId(),
+
 					Payload: &pb.AgentPayload{
 						Data: &pb.AgentPayload_Vendas{
 							Vendas: &pb.Vendas{
@@ -218,12 +245,17 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 						end = len(result)
 					}
 					resultPb := utils.ToProtoVendedores(result[i:end])
-
+					if runned == 0 {
+						c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+					}
+					runned++
 					c.SendMessage(&agentpb.AgentMessage{
 						AgentId: viper.GetString("api.token"),
 						Type:    agentpb.MessageType_RESULT,
 						Table:   tableAskedFor,
-						IsLast:  isLast,
+						BatchId: msg.GetBatchId(),
+
+						IsLast: isLast,
 						Payload: &pb.AgentPayload{
 							Data: &pb.AgentPayload_Vendedores{
 								Vendedores: &pb.Vendedores{
@@ -252,11 +284,17 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoFinanceiro(result)
+				if runned == 0 {
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+				}
+				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
 					Type:    agentpb.MessageType_RESULT,
 					Table:   tableAskedFor,
-					IsLast:  isLast,
+					BatchId: msg.GetBatchId(),
+
+					IsLast: isLast,
 					Payload: &pb.AgentPayload{
 						Data: &pb.AgentPayload_Financeiros{
 							Financeiros: &pb.Financeiros{
@@ -290,6 +328,10 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				}
 
 				logger.Debug("Bid :", msg.BatchId)
+				if runned == 0 {
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+				}
+				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
 					AgentId: viper.GetString("api.token"),
 					Type:    agentpb.MessageType_RESULT,
@@ -373,8 +415,29 @@ func (c *Client) Run(ctx context.Context) error {
 	}
 }
 
+func (c *Client) SendTrace(batch_id string, step pb.TraceStep) error {
+	err := c.stream.Send(&pb.AgentMessage{
+		AgentId: viper.GetString("api.token"),
+		Type:    pb.MessageType_TRACE,
+		Payload: &pb.AgentPayload{Data: &pb.AgentPayload_QueryTrace{
+			QueryTrace: &pb.TraceEvent{
+				BatchId:    batch_id,
+				Step:       step,
+				Timestamp:  time.Now().UnixMilli(),
+				DurationMs: 0,
+				Success:    true,
+			},
+		},
+		},
+	})
+	return err
+}
 func (c *Client) SendMessage(msg *pb.AgentMessage) error {
 	msg.Version = c.version
+	fmt.Println("sHOULD ? ", msg.GetBatchId() != "" && msg.IsLast)
+	if msg.GetBatchId() != "" && msg.IsLast {
+		c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_RESULT_SENT)
+	}
 	err := c.stream.Send(msg)
 	return err
 }

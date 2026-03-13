@@ -75,11 +75,12 @@ message AgentPayload {
     Categorias categorias =4;
     Vendedores vendedores =5;
     Financeiros financeiros = 6;
-      google.protobuf.ListValue generic_return = 7;
+    google.protobuf.ListValue generic_return = 7;
     Query query_request =8;
     Erros    erros    = 9;
     ACKReturn ack_return =10;
     Commands command = 11;
+    TraceEvent query_trace =12;
   }
 }
 
