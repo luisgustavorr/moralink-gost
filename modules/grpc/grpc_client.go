@@ -2,7 +2,6 @@ package Grpcclient
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -67,7 +66,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		log.Println("heartbeat received")
 	case pb.MessageType_QUERY:
 		runned := 0
-		c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_QUERY_RECEIVED)
+		c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_QUERY_RECEIVED, true, "Query was received, and will be executed soon")
 		dbConn := utils.Conn.DB
 		batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 		tableAskedFor := msg.GetTable()
@@ -85,7 +84,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoProdutos(result)
 				if runned == 0 {
-					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
 				}
 				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -122,7 +121,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoClientes(result)
 				if runned == 0 {
-					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
 				}
 				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -164,7 +163,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					}
 					resultPb := utils.ToProtoCategorias(result[i:end])
 					if runned == 0 {
-						c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+						c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
 					}
 					runned++
 					c.SendMessage(&agentpb.AgentMessage{
@@ -203,7 +202,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoVendas(result)
 				if runned == 0 {
-					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
 				}
 				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -246,7 +245,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 					}
 					resultPb := utils.ToProtoVendedores(result[i:end])
 					if runned == 0 {
-						c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+						c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
 					}
 					runned++
 					c.SendMessage(&agentpb.AgentMessage{
@@ -285,7 +284,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 				isLast := len(result) < batchSize
 				resultPb := utils.ToProtoFinanceiro(result)
 				if runned == 0 {
-					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
 				}
 				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -329,7 +328,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 				logger.Debug("Bid :", msg.BatchId)
 				if runned == 0 {
-					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED)
+					c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
 				}
 				runned++
 				return c.SendMessage(&agentpb.AgentMessage{
@@ -415,7 +414,7 @@ func (c *Client) Run(ctx context.Context) error {
 	}
 }
 
-func (c *Client) SendTrace(batch_id string, step pb.TraceStep) error {
+func (c *Client) SendTrace(batch_id string, step pb.TraceStep, success bool, message string) error {
 	err := c.stream.Send(&pb.AgentMessage{
 		AgentId: viper.GetString("api.token"),
 		Type:    pb.MessageType_TRACE,
@@ -426,6 +425,7 @@ func (c *Client) SendTrace(batch_id string, step pb.TraceStep) error {
 				Timestamp:  time.Now().UnixMilli(),
 				DurationMs: 0,
 				Success:    true,
+				Message:    message,
 			},
 		},
 		},
@@ -434,9 +434,8 @@ func (c *Client) SendTrace(batch_id string, step pb.TraceStep) error {
 }
 func (c *Client) SendMessage(msg *pb.AgentMessage) error {
 	msg.Version = c.version
-	fmt.Println("sHOULD ? ", msg.GetBatchId() != "" && msg.IsLast)
 	if msg.GetBatchId() != "" && msg.IsLast {
-		c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_RESULT_SENT)
+		c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_RESULT_SENT, true, "Result sent from GOst to MoraLinkOnline")
 	}
 	err := c.stream.Send(msg)
 	return err

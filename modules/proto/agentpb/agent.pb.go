@@ -358,6 +358,7 @@ type TraceEvent struct {
 	DurationMs    int32                  `protobuf:"varint,4,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
 	Success       bool                   `protobuf:"varint,5,opt,name=success,proto3" json:"success,omitempty"`
 	Error         string                 `protobuf:"bytes,6,opt,name=error,proto3" json:"error,omitempty"`
+	Message       string                 `protobuf:"bytes,7,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -430,6 +431,13 @@ func (x *TraceEvent) GetSuccess() bool {
 func (x *TraceEvent) GetError() string {
 	if x != nil {
 		return x.Error
+	}
+	return ""
+}
+
+func (x *TraceEvent) GetMessage() string {
+	if x != nil {
+		return x.Message
 	}
 	return ""
 }
@@ -2373,7 +2381,7 @@ var File_modules_proto_agent_proto protoreflect.FileDescriptor
 
 const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
-	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\xbc\x01\n" +
+	"\x19modules/proto/agent.proto\x12\x05agent\x1a\x1cgoogle/protobuf/struct.proto\"\xd6\x01\n" +
 	"\n" +
 	"TraceEvent\x12\x19\n" +
 	"\bbatch_id\x18\x01 \x01(\tR\abatchId\x12$\n" +
@@ -2382,7 +2390,8 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\vduration_ms\x18\x04 \x01(\x05R\n" +
 	"durationMs\x12\x18\n" +
 	"\asuccess\x18\x05 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x06 \x01(\tR\x05error\"\x88\x01\n" +
+	"\x05error\x18\x06 \x01(\tR\x05error\x12\x18\n" +
+	"\amessage\x18\a \x01(\tR\amessage\"\x88\x01\n" +
 	"\bCommands\x12\"\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x0e.agent.CommandR\x04type\x121\n" +
 	"\n" +
