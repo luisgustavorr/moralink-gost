@@ -5,3 +5,4 @@ dist/
 *.log
 build_n_release.fish
 *.pfx
+scratch.json

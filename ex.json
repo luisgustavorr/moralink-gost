@@ -1,0 +1,32 @@
+ {
+    "descricao": "ACESSO REMOTO - CONFIGURAÇÃO",
+    "codigo": "37",
+    "codigoBarras": "123456789",
+    "unidade": {
+      "id": 1,
+      "descricao": "UNID"
+    },
+    "categoriaProduto": {
+      "id": 4,
+      "descricao": "INFORMÁTICA"
+    },
+    "pesavel": false,
+    "fracionavel": false,
+    "preco00": 90,
+    "preco01": 81,
+    "preco02": 0,
+    "preco03": 0,
+    "preco04": 0,
+    "preco05": 0,
+    "precoFormula": 0,
+    "tipoProduto": 9,
+    "categoriaReceita": null,
+    "categoriaDespesa": null,
+    "controlarEstoque": false,
+    "controlarLote": false,
+    "controlarNumeroSerie": false,
+    "controlarGrade": false,
+    "multiplo": 0,
+    "id": 37,
+    "uriImagem": ""
+  }

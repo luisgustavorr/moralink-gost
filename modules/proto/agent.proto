@@ -42,6 +42,9 @@ enum Db_type{
   MYSQL_OLD =4;
 
 }
+enum API_owner {
+  FRONTSYS = 0 ;
+}
 // desc: Which Command was requested
 enum Command {
    RESTART_APP =0;
@@ -102,13 +105,41 @@ message ACKReturn {
   ConnectStatus status =1;
   ConnectedUser connected_user=2;
 
+
 }
+/* API CONNECTION */
+message BodyGetToken {
+  string token = 1;
+  string token_type = 2;
+}
+message BodyGetTokenTranslatedKeys {
+  string token = 1;
+  string token_type = 2;
+}
+message APITokenGetter {
+  string raw_token = 1;
+  string url_token =2;
+  int32 refreshIn =3;
+  BodyGetToken get_token_body =4;
+  BodyGetTokenTranslatedKeys get_token_response_keys =5;
+  repeated string customKeys =6;
+  repeated string customValues =7;
+}
+/* API CONNECTION */
+
 message ConnectedUser {
-  Db_type db_type =1;
-  bool use_api =2;
-  string config_json=3;
-  string domainws=4;
-  string cronjob =5;
+  oneof db_type {
+  Db_type db_conn =1;
+  API_owner API_conn= 2;
+  }
+  bool use_api =3;
+  oneof config_json{
+  string db_config_json=4;
+  APITokenGetter api_token_getter=5;
+  }
+  string domainws=6;
+  string cronjob =7;
+  string token_query = 8;
 }
 enum ConnectStatus {
   REJECTED = 0;

@@ -17,11 +17,11 @@ func ExecCommand(c *pb.Commands) {
 		addInfo := c.GetAckReturn()
 		if addInfo != nil {
 			connectedUser := addInfo.ConnectedUser
-			db_info, err := utils.ParseDBConfig(connectedUser.ConfigJson)
+			db_info, err := utils.ParseDBConfig(connectedUser.GetDbConfigJson())
 			if err != nil {
 				log.Println(err)
 			}
-			db, err := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
+			db, err := dbmanagers.DecideWhoActs(connectedUser.GetDbConn(), db_info)
 			utils.Conn.DB = db
 			if err != nil {
 				log.Println("⚠️ 🔗 Tunnel connected - DB not working")

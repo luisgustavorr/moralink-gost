@@ -11,7 +11,9 @@ require (
 	github.com/kardianos/service v1.2.4
 	github.com/lib/pq v1.11.1
 	github.com/microsoft/go-mssqldb v1.9.6
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nakagami/firebirdsql v0.9.15
+	github.com/shopspring/decimal v1.4.0
 	github.com/spf13/viper v1.21.0
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
@@ -33,7 +35,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect

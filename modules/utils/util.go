@@ -522,3 +522,12 @@ func LogMemUsage() {
 	runtime.ReadMemStats(&m)
 	log.Printf("🩺 💾 Memória: %.2fMB\n", float64(m.Alloc)/1024.0/1024.0)
 }
+
+func Contains(slice []string, element string) bool {
+	for _, v := range slice {
+		if v == element {
+			return true
+		}
+	}
+	return false
+}

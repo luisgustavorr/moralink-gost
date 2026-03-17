@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	apimanagers "MoraLinkGOst/modules/api_managers"
 	commandManagers "MoraLinkGOst/modules/command_managers"
 	dbmanagers "MoraLinkGOst/modules/db_managers"
 	"MoraLinkGOst/modules/logger"
@@ -49,11 +50,19 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 			logger.Debug("❌ 🔐 ACK DISAPPROVED")
 		}
 		connectedUser := msg.Payload.GetAckReturn().ConnectedUser
-		db_info, err := utils.ParseDBConfig(connectedUser.ConfigJson)
-		if err != nil {
-			log.Println(err)
+		var db_info = map[string]interface{}{}
+		var err error
+		var db *utils.DbInfos
+		if connectedUser.UseApi {
+			db, err = apimanagers.DecideWhoActs(connectedUser.GetAPIConn(), connectedUser.GetApiTokenGetter())
+		} else {
+			db_info, err = utils.ParseDBConfig(connectedUser.GetDbConfigJson())
+			if err != nil {
+				log.Println(err)
+			}
+			db, err = dbmanagers.DecideWhoActs(connectedUser.GetDbConn(), db_info)
+
 		}
-		db, err := dbmanagers.DecideWhoActs(connectedUser.DbType, db_info)
 		utils.Conn.DB = db
 		if err != nil {
 			log.Println("⚠️ 🔗 Tunnel connected - DB not working")
