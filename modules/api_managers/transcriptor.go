@@ -4,8 +4,10 @@ import (
 	"MoraLinkGOst/modules/utils"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -19,7 +21,13 @@ const (
 	DiscPercent
 	DiscValue
 	Coalesce
+	Format_date
 )
+
+type DateFormater struct {
+	RawTemplate       string `json:"raw"`
+	FormattedTemplate string `json:"dst"`
+}
 
 var OperationNameMap = map[Operation]OperationName{
 	Fetch:       "fetch",
@@ -27,6 +35,7 @@ var OperationNameMap = map[Operation]OperationName{
 	DiscPercent: "disc_percent",
 	DiscValue:   "disc_value",
 	Coalesce:    "coalesce",
+	Format_date: "format_date",
 }
 var OperationUintMap = map[OperationName]Operation{
 	"fetch":        0,
@@ -34,6 +43,7 @@ var OperationUintMap = map[OperationName]Operation{
 	"disc_percent": 2,
 	"disc_value":   3,
 	"coalesce":     4,
+	"format_date":  5,
 }
 
 func (o Operation) String() OperationName {
@@ -43,24 +53,63 @@ func (o OperationName) Uint8() Operation {
 	return OperationUintMap[o]
 }
 
+type Id struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type Transcriptor struct {
+	Id_1   Id          `json:"id_1"`
+	Id_2   Id          `json:"id_2"`
+	Id_3   Id          `json:"id_3"`
 	Fields []FieldRule `json:"fields"`
 }
+type ObjectBuilder struct {
+	Fields []FieldRule `json:"fields"`
+}
+type SrcBuildJson struct {
+	GetFrom       string        `json:"get_from"`
+	ObjectBuilder ObjectBuilder `json:"object_builder"`
+}
+type PaymentDateCalc struct {
+	Src        string       `json:"src"`
+	FormatDate DateFormater `json:"format_date"` // define the duration value based on 'custom_ids' table
+
+}
+type SrcPaymentStatus struct {
+	Expire PaymentDateCalc `json:"expire"`
+	Paid   PaymentDateCalc `json:"paid"`
+}
 type FieldRule struct {
-	Src           string              `json:"src"`
-	SrcList       []string            `json:"src_list"`      // work as a coalesce
-	SrcRawValue   string              `json:"src_raw_value"` // work as a coalesce
-	Dst           string              `json:"dst"`
-	Op            string              `json:"op"`             // "", "path", "expr", "fetch"
-	Method        string              `json:"method"`         // for fetch
-	Extract       string              `json:"extract"`        // dot-path into the fetch response
-	Alias         string              `json:"alias"`          // "src_key->dst_key,..." for fetch
-	Nullif        string              `json:"nullif"`         // consider value as null if = as this value
-	DurationRules map[string][]string `json:"duration_rules"` // consider value as null if = as this value
+	Src              string              `json:"src"`
+	SrcList          []string            `json:"src_list"`           // work as a coalesce
+	SrcRawValue      string              `json:"src_raw_value"`      // get the value as final result
+	SrcBuildJson     *SrcBuildJson       `json:"src_object_builder"` // build a map[string]any
+	SrcPaymentStatus *SrcPaymentStatus   `json:"src_payment_status"` // build a map[string]any
+	Dst              string              `json:"dst"`
+	Op               string              `json:"op"`             // "", "path", "expr", "fetch"
+	Method           string              `json:"method"`         // for fetch
+	Extract          string              `json:"extract"`        // dot-path into the fetch response
+	Alias            string              `json:"alias"`          // "src_key->dst_key,..." for fetch
+	Nullif           string              `json:"nullif"`         // consider value as null if = as this value
+	DurationRules    map[string][]string `json:"duration_rules"` // define the duration value based on 'custom_ids' table
+	FormatDate       DateFormater        `json:"format_date"`    // define the duration value based on 'custom_ids' table
 }
 
 type TransformFunc func(val any, row map[string]any) any
 
+func ResolveDynamicId(id string) string {
+	if strings.Contains(id, "days_ago") {
+		dInfo := strings.Split(id, "!")
+		daysAgo, _ := strconv.Atoi(dInfo[1])
+		daysAgo = daysAgo * -24
+		format := dInfo[2]
+		now := time.Now()
+		now = now.Add(time.Duration(daysAgo) * time.Hour)
+		return now.Format(format)
+	}
+	return id
+}
 func ResolvePath(data map[string]any, path string) any {
 	parts := strings.Split(path, ".")
 	var current any = data
@@ -91,65 +140,238 @@ func JsonToTranscriptor(j []byte) (Transcriptor, error) {
 func getSrcValueAsString(s string, m map[string]any) string {
 	return utils.ToString(m[s])
 }
-func Transcribe(mps []map[string]any, t Transcriptor) []map[string]any {
-	fullMap := []map[string]any{}
-	for _, m := range mps {
-		transcribedMap := map[string]any{}
-		for _, f := range t.Fields {
-			if f.SrcRawValue != "" {
-				transcribedMap[f.Dst] = f.SrcRawValue
+func getDate(base string, raw string) time.Time {
+	parsed, _ := time.Parse(raw, base)
+	return parsed
+}
+func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any {
+	parts := strings.Split(path, ".")
+	var result = []map[string]any{}
+
+	if path == "" {
+		result = append(result, data)
+		return result
+	}
+	var current any = data
+	for _, part := range parts {
+		switch v := current.(type) {
+		case []map[string]any:
+			return v
+		case []any:
+			idx, err := strconv.Atoi(part)
+			if err != nil || idx >= len(v) {
+				return nil
+			}
+			current = v[idx]
+		case map[string]any:
+			result = append(result, data)
+			return result
+		default:
+			result = append(result, data)
+			return result
+		}
+	}
+	return result
+}
+func Transcribe(m map[string]any, t Transcriptor) map[string]any {
+	transcribedMap := map[string]any{}
+	for _, f := range t.Fields {
+		if f.SrcPaymentStatus != nil {
+			rawPaidDate := ResolvePath(m, f.SrcPaymentStatus.Paid.Src)
+			rawExpireDate := ResolvePath(m, f.SrcPaymentStatus.Expire.Src)
+			expireDate := getDate(utils.ToString(rawExpireDate), f.SrcPaymentStatus.Expire.FormatDate.RawTemplate)
+			paga := true
+			now := time.Now()
+			if rawExpireDate == nil {
+				transcribedMap[f.Dst] = "criada"
 				continue
 			}
-			if len(f.SrcList) >= 1 {
-				for _, s := range f.SrcList {
-					if getSrcValueAsString(f.Src, m) == "" && getSrcValueAsString(s, m) != "" {
-						if f.Nullif != "" && getSrcValueAsString(s, m) == f.Nullif {
-							continue
-						}
-						f.Src = s
-					}
+			if rawPaidDate == nil {
+				paga = false
+			} else {
+				paga = true
+			}
+			if paga {
+				transcribedMap[f.Dst] = "paga"
+				continue
+			} else {
+				if now.Before(expireDate) {
+					transcribedMap[f.Dst] = "criada"
+				} else {
+					transcribedMap[f.Dst] = "vencida"
 				}
 			}
-			switch f.Op {
-			case "calc_duration":
-				id_categoria := ResolvePath(m, f.Src)
-				if f.DurationRules != nil {
-					durationSelected := "0"
-					for duration, v := range f.DurationRules {
-						if utils.Contains(v, utils.ToString(id_categoria)) {
-							durationSelected = duration
-						}
+			// fmt.Println(expireDate.Format("2006-01-02"), paidDate.Format("2006-01-02"), ResolvePath(m, f.SrcPaymentStatus.Paid.Src), paidDate)
+			continue
+		}
+		if f.SrcBuildJson != nil {
+
+			subT := Transcriptor{
+				Fields: f.SrcBuildJson.ObjectBuilder.Fields,
+			}
+			whereToSearch := ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
+			result := []map[string]any{}
+			for _, v := range whereToSearch {
+				result = append(result, Transcribe(v, subT))
+			}
+			transcribedMap[f.Dst] = result
+			continue
+
+		}
+		if f.SrcRawValue != "" {
+			transcribedMap[f.Dst] = f.SrcRawValue
+			continue
+		}
+		if len(f.SrcList) >= 1 {
+			for _, s := range f.SrcList {
+				if utils.ToString(ResolvePath(m, f.Src)) == "" && utils.ToString(ResolvePath(m, s)) != "" {
+					if f.Nullif != "" && utils.ToString(ResolvePath(m, s)) == f.Nullif {
+						continue
 					}
-					transcribedMap[f.Dst] = durationSelected
+					f.Src = s
 				}
-			case "extract":
-				transcribedMap[f.Dst] = ResolvePath(m, f.Src)
-			default:
-				transcribedMap[f.Dst] = getSrcValueAsString(f.Src, m)
 			}
 		}
-		fullMap = append(fullMap, transcribedMap)
+		switch f.Op {
+		// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
+		case "format_date":
+			input := utils.ToString(ResolvePath(m, f.Src))
+			parsed := getDate(input, f.FormatDate.RawTemplate)
+			output := parsed.Format(f.FormatDate.FormattedTemplate)
+			transcribedMap[f.Dst] = output
+		case "calc_duration":
+			id_categoria := ResolvePath(m, f.Src)
+			if f.DurationRules != nil {
+				durationSelected := "0"
+				for duration, v := range f.DurationRules {
+					if utils.Contains(v, utils.ToString(id_categoria)) {
+						durationSelected = duration
+					}
+				}
+				transcribedMap[f.Dst] = durationSelected
+			}
+		case "extract":
+			transcribedMap[f.Dst] = ResolvePath(m, f.Src)
+		default:
+			transcribedMap[f.Dst] = m[f.Src]
+		}
 	}
-	// fmt.Println(utils.JsonViewInterface(fullMap))
-	return fullMap
+	// fmt.Println(utils.JsonViewInterface(transcribedMap))
+	return transcribedMap
 }
 
-func TranscribeMapToProdutoRow(t []map[string]any) ([]utils.ProdutoRow, error) {
-	result := make([]utils.ProdutoRow, 0, len(t))
-	for _, v := range t {
-		var p utils.ProdutoRow
-		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-			Result:           &p,
-			TagName:          "db", // uses your existing `db:"..."` tags
-			WeaklyTypedInput: true, // "1" → bool, "3.14" → float32, etc.
-		})
-		if err != nil {
-			return nil, err
-		}
-		if err := decoder.Decode(v); err != nil {
-			return nil, err
-		}
-		result = append(result, p)
+func TranscribeMapToProdutoRow(v map[string]any) (utils.ProdutoRow, error) {
+	var p utils.ProdutoRow
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &p,
+		TagName:          "db",
+		WeaklyTypedInput: true,
+	})
+	if err != nil {
+		return p, err
 	}
-	return result, nil
+	if err := decoder.Decode(v); err != nil {
+		return p, err
+	}
+	return p, err
+}
+func TranscribeMapToClienteRow(v map[string]any) (utils.ClienteRow, error) {
+	var p utils.ClienteRow
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &p,
+		TagName:          "db",
+		WeaklyTypedInput: true,
+	})
+	if err != nil {
+		return p, err
+	}
+	if err := decoder.Decode(v); err != nil {
+		return p, err
+	}
+	return p, err
+}
+func TranscribeMapToCategoriaRow(v map[string]any) (utils.CategoriaRow, error) {
+	var p utils.CategoriaRow
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &p,
+		TagName:          "db",
+		WeaklyTypedInput: true,
+	})
+	if err != nil {
+		return p, err
+	}
+	if err := decoder.Decode(v); err != nil {
+		return p, err
+	}
+	return p, err
+}
+func TranscribeMapToVendaRow(v map[string]any) (utils.VendaRow, error) {
+	var p utils.VendaRow
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &p,
+		TagName:          "db",
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			jsonMarshalHook(),
+			mapstructure.StringToTimeDurationHookFunc(),
+		),
+	})
+	if err != nil {
+		return p, err
+	}
+	if err := decoder.Decode(v); err != nil {
+		return p, err
+	}
+	return p, err
+}
+func TranscribeMapToVendedorRow(v map[string]any) (utils.VendedorRow, error) {
+	var p utils.VendedorRow
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &p,
+		TagName:          "db",
+		WeaklyTypedInput: true,
+	})
+	if err != nil {
+		return p, err
+	}
+	if err := decoder.Decode(v); err != nil {
+		return p, err
+	}
+	return p, err
+}
+func TranscribeMapToFinanceiroRow(v map[string]any) (utils.FinanceiroRow, error) {
+	var p utils.FinanceiroRow
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &p,
+		TagName:          "db",
+		WeaklyTypedInput: true,
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			jsonMarshalHook(),
+			mapstructure.StringToTimeDurationHookFunc(),
+		),
+	})
+	if err != nil {
+		return p, err
+	}
+	if err := decoder.Decode(v); err != nil {
+		return p, err
+	}
+	return p, err
+}
+
+func jsonMarshalHook() mapstructure.DecodeHookFuncType {
+	return func(from reflect.Type, to reflect.Type, v any) (any, error) {
+		byteSlice := reflect.TypeOf([]byte{})
+		if to != byteSlice {
+			return v, nil
+		}
+		if from.Kind() == reflect.String || from == byteSlice {
+			return v, nil
+		}
+		b, err := json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("jsonMarshalHook: failed to marshal %v: %w", from, err)
+		}
+		return b, nil
+	}
 }

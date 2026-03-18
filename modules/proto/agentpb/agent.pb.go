@@ -2487,7 +2487,7 @@ type Financeiro struct {
 	ValorParcela       float32                `protobuf:"fixed32,6,opt,name=valor_parcela,json=valorParcela,proto3" json:"valor_parcela,omitempty"`
 	DataVencimento     string                 `protobuf:"bytes,7,opt,name=data_vencimento,json=dataVencimento,proto3" json:"data_vencimento,omitempty"`
 	DataPersonalizadas bool                   `protobuf:"varint,8,opt,name=data_personalizadas,json=dataPersonalizadas,proto3" json:"data_personalizadas,omitempty"`
-	InfosCobranca      []*InfosCobranca       `protobuf:"bytes,9,rep,name=infos_cobranca,json=infosCobranca,proto3" json:"infos_cobranca,omitempty"`
+	ParcelasCobrancas  []*InfosCobranca       `protobuf:"bytes,9,rep,name=parcelas_cobrancas,json=parcelasCobrancas,proto3" json:"parcelas_cobrancas,omitempty"`
 	Recorrente         bool                   `protobuf:"varint,10,opt,name=recorrente,proto3" json:"recorrente,omitempty"`
 	Venda              string                 `protobuf:"bytes,11,opt,name=venda,proto3" json:"venda,omitempty"`
 	Media              string                 `protobuf:"bytes,12,opt,name=media,proto3" json:"media,omitempty"`
@@ -2583,9 +2583,9 @@ func (x *Financeiro) GetDataPersonalizadas() bool {
 	return false
 }
 
-func (x *Financeiro) GetInfosCobranca() []*InfosCobranca {
+func (x *Financeiro) GetParcelasCobrancas() []*InfosCobranca {
 	if x != nil {
-		return x.InfosCobranca
+		return x.ParcelasCobrancas
 	}
 	return nil
 }
@@ -2632,6 +2632,7 @@ type InfosCobranca struct {
 	DataVencimento string                 `protobuf:"bytes,3,opt,name=data_vencimento,json=dataVencimento,proto3" json:"data_vencimento,omitempty"`
 	DataCriacao    string                 `protobuf:"bytes,4,opt,name=data_criacao,json=dataCriacao,proto3" json:"data_criacao,omitempty"`
 	Status         string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	IdBoleto       string                 `protobuf:"bytes,6,opt,name=id_boleto,json=idBoleto,proto3" json:"id_boleto,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -2697,6 +2698,13 @@ func (x *InfosCobranca) GetDataCriacao() string {
 func (x *InfosCobranca) GetStatus() string {
 	if x != nil {
 		return x.Status
+	}
+	return ""
+}
+
+func (x *InfosCobranca) GetIdBoleto() string {
+	if x != nil {
+		return x.IdBoleto
 	}
 	return ""
 }
@@ -2893,7 +2901,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x10Datas_vencimento\x12'\n" +
 	"\x0fdata_vencimento\x18\x01 \x01(\tR\x0edataVencimento\"6\n" +
 	"\vFinanceiros\x12'\n" +
-	"\x05items\x18\x01 \x03(\v2\x11.agent.FinanceiroR\x05items\"\xe2\x03\n" +
+	"\x05items\x18\x01 \x03(\v2\x11.agent.FinanceiroR\x05items\"\xe9\x03\n" +
 	"\n" +
 	"Financeiro\x12\x1d\n" +
 	"\n" +
@@ -2905,8 +2913,8 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\bparcelas\x18\x05 \x01(\x05R\bparcelas\x12#\n" +
 	"\rvalor_parcela\x18\x06 \x01(\x02R\fvalorParcela\x12'\n" +
 	"\x0fdata_vencimento\x18\a \x01(\tR\x0edataVencimento\x12/\n" +
-	"\x13data_personalizadas\x18\b \x01(\bR\x12dataPersonalizadas\x12<\n" +
-	"\x0einfos_cobranca\x18\t \x03(\v2\x15.agent.Infos_cobrancaR\rinfosCobranca\x12\x1e\n" +
+	"\x13data_personalizadas\x18\b \x01(\bR\x12dataPersonalizadas\x12C\n" +
+	"\x12parcelas_cobrancas\x18\t \x03(\v2\x14.agent.InfosCobrancaR\x11parcelasCobrancas\x12\x1e\n" +
 	"\n" +
 	"recorrente\x18\n" +
 	" \x01(\bR\n" +
@@ -2914,14 +2922,15 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x05venda\x18\v \x01(\tR\x05venda\x12\x14\n" +
 	"\x05media\x18\f \x01(\tR\x05media\x12'\n" +
 	"\x0ftitulo_cobranca\x18\r \x01(\tR\x0etituloCobranca\x12\x14\n" +
-	"\x05ativo\x18\x0e \x01(\bR\x05ativo\"\xb8\x01\n" +
-	"\x0eInfos_cobranca\x12\x1d\n" +
+	"\x05ativo\x18\x0e \x01(\bR\x05ativo\"\xd4\x01\n" +
+	"\rInfosCobranca\x12\x1d\n" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\x12#\n" +
 	"\rvalor_parcela\x18\x02 \x01(\x02R\fvalorParcela\x12'\n" +
 	"\x0fdata_vencimento\x18\x03 \x01(\tR\x0edataVencimento\x12!\n" +
 	"\fdata_criacao\x18\x04 \x01(\tR\vdataCriacao\x12\x16\n" +
-	"\x06status\x18\x05 \x01(\tR\x06status*w\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1b\n" +
+	"\tid_boleto\x18\x06 \x01(\tR\bidBoleto*w\n" +
 	"\vMessageType\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\t\n" +
 	"\x05HELLO\x10\x01\x12\t\n" +
@@ -3014,7 +3023,7 @@ var file_modules_proto_agent_proto_goTypes = []any{
 	(*DatasVencimento)(nil),            // 30: agent.Datas_vencimento
 	(*Financeiros)(nil),                // 31: agent.Financeiros
 	(*Financeiro)(nil),                 // 32: agent.Financeiro
-	(*InfosCobranca)(nil),              // 33: agent.Infos_cobranca
+	(*InfosCobranca)(nil),              // 33: agent.InfosCobranca
 	(*structpb.ListValue)(nil),         // 34: google.protobuf.ListValue
 }
 var file_modules_proto_agent_proto_depIdxs = []int32{
@@ -3052,7 +3061,7 @@ var file_modules_proto_agent_proto_depIdxs = []int32{
 	29, // 31: agent.Venda.produtos_venda:type_name -> agent.Produtos_vendas
 	30, // 32: agent.Venda.datas_vencimento:type_name -> agent.Datas_vencimento
 	32, // 33: agent.Financeiros.items:type_name -> agent.Financeiro
-	33, // 34: agent.Financeiro.infos_cobranca:type_name -> agent.Infos_cobranca
+	33, // 34: agent.Financeiro.parcelas_cobrancas:type_name -> agent.InfosCobranca
 	9,  // 35: agent.AgentService.Connect:input_type -> agent.AgentMessage
 	9,  // 36: agent.AgentService.Connect:output_type -> agent.AgentMessage
 	36, // [36:37] is the sub-list for method output_type

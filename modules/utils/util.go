@@ -106,6 +106,7 @@ type FinanceiroRow struct {
 	Media              *string            `db:"media"`
 	TituloCobranca     *string            `db:"titulo_cobranca"`
 	Ativo              *bool              `db:"ativo"`
+	IdBoleto           *string            `db:"id_boleto"`
 }
 type InfoCobrancaRow struct {
 	IdExterno      any     `json:"id_externo"`
@@ -113,6 +114,7 @@ type InfoCobrancaRow struct {
 	DataVencimento string  `json:"data_vencimento"`
 	DataCriacao    string  `json:"data_criacao"`
 	Status         string  `json:"status"`
+	IdBoleto       string  `json:"id_boleto"`
 }
 
 type QueriesFunctions struct {
@@ -423,7 +425,18 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 		if r.DataPersonalizadas != nil {
 			financeiro.DataPersonalizadas = *r.DataPersonalizadas
 		}
+		if r.InfosCobrancaRaw != nil && r.InfosCobranca == nil {
+			ic := []InfoCobrancaRow{}
+			err := json.Unmarshal(*r.InfosCobrancaRaw, &ic)
+			if err != nil {
+				fmt.Println("ERROR on toproto financeiro :", err)
+			} else {
+				r.InfosCobranca = &ic
+			}
+		}
 		if r.InfosCobranca != nil {
+
+			fmt.Println(JsonViewInterface(r.InfosCobranca))
 			infosC := []*pb.InfosCobranca{}
 			for _, v := range *r.InfosCobranca {
 				infosC = append(infosC, &pb.InfosCobranca{
@@ -432,9 +445,10 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 					DataVencimento: v.DataVencimento,
 					DataCriacao:    v.DataCriacao,
 					Status:         v.Status,
+					IdBoleto:       v.IdBoleto,
 				})
 			}
-			financeiro.InfosCobranca = infosC
+			financeiro.ParcelasCobrancas = infosC
 		}
 		if r.Recorrente != nil {
 			financeiro.Recorrente = *r.Recorrente

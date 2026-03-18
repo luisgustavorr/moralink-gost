@@ -270,18 +270,20 @@ message Financeiro {
   float valor_parcela=6;
   string data_vencimento =7; 
   bool data_personalizadas =8;
-  repeated Infos_cobranca infos_cobranca =9;
+  repeated InfosCobranca parcelas_cobrancas =9;
   bool recorrente =10;
   string venda =11;
   string media =12;
   string titulo_cobranca=13;
   bool ativo =14;
 }
-message Infos_cobranca {
+message InfosCobranca {
   string id_externo =1;
   float valor_parcela =2;
   string data_vencimento =3;
   string data_criacao =4;
   string status =5;
+  string id_boleto =6;
+
 }
 // vendedores ---
