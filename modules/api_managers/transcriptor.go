@@ -22,6 +22,7 @@ const (
 	DiscValue
 	Coalesce
 	Format_date
+	Case
 )
 
 type DateFormater struct {
@@ -36,6 +37,7 @@ var OperationNameMap = map[Operation]OperationName{
 	DiscValue:   "disc_value",
 	Coalesce:    "coalesce",
 	Format_date: "format_date",
+	Case:        "case",
 }
 var OperationUintMap = map[OperationName]Operation{
 	"fetch":        0,
@@ -44,6 +46,7 @@ var OperationUintMap = map[OperationName]Operation{
 	"disc_value":   3,
 	"coalesce":     4,
 	"format_date":  5,
+	"case":         6,
 }
 
 func (o Operation) String() OperationName {
@@ -62,6 +65,7 @@ type Transcriptor struct {
 	Id_1   Id          `json:"id_1"`
 	Id_2   Id          `json:"id_2"`
 	Id_3   Id          `json:"id_3"`
+	Url    string      `json:"url"`
 	Fields []FieldRule `json:"fields"`
 }
 type ObjectBuilder struct {
@@ -80,6 +84,14 @@ type SrcPaymentStatus struct {
 	Expire PaymentDateCalc `json:"expire"`
 	Paid   PaymentDateCalc `json:"paid"`
 }
+type Conditions struct {
+	When string `json:"when"`
+	Then string `json:"then"`
+}
+type CaseRule struct {
+	Conditions []Conditions `json:"conditions"`
+	Default    string       `json:"default"`
+}
 type FieldRule struct {
 	Src              string              `json:"src"`
 	SrcList          []string            `json:"src_list"`           // work as a coalesce
@@ -94,6 +106,7 @@ type FieldRule struct {
 	Nullif           string              `json:"nullif"`         // consider value as null if = as this value
 	DurationRules    map[string][]string `json:"duration_rules"` // define the duration value based on 'custom_ids' table
 	FormatDate       DateFormater        `json:"format_date"`    // define the duration value based on 'custom_ids' table
+	Case             CaseRule            `json:"case"`
 }
 
 type TransformFunc func(val any, row map[string]any) any
@@ -234,8 +247,26 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		}
 		switch f.Op {
 		// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
+		case "case":
+			fmt.Println("PEGANDO CASE")
+			result := f.Case.Default
+			matched := false
+			for _, v := range f.Case.Conditions {
+				fmt.Println(v.When, ResolvePath(m, f.Src))
+				if v.When == ResolvePath(m, f.Src) && !matched {
+					fmt.Println("Deu match ! ", v.Then)
+					result = v.Then
+					matched = true
+				}
+			}
+			fmt.Println("Result", result)
+			transcribedMap[f.Dst] = result
 		case "format_date":
 			input := utils.ToString(ResolvePath(m, f.Src))
+			if input == "" {
+				transcribedMap[f.Dst] = ""
+				continue
+			}
 			parsed := getDate(input, f.FormatDate.RawTemplate)
 			output := parsed.Format(f.FormatDate.FormattedTemplate)
 			transcribedMap[f.Dst] = output

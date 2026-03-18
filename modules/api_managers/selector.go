@@ -25,7 +25,6 @@ func Request(infos requestInfo, customKeys []string, customValues []string) (bod
 	method := infos.method
 
 	payload := strings.NewReader(infos.payload)
-	fmt.Println(url, method, infos.token)
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
 	if err != nil {

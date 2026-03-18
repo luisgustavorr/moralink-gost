@@ -39,104 +39,21 @@ func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, e
 	}
 	ClientToken = t.Token
 	API_TokenGetter = c
-	// 	StreamCobrancasFrontsys(`{
-	//   "id_1": {
-	// 	"key":"?dataInicio=",
-	// 	"value":"days_ago!10!02/01/2006"
-	//   },
-	//   "fields": [
-	//     {
-	//       "src": "idParcelaReceita",
-	//       "dst": "id_externo"
-	//     },
-	//     {
-	//       "src": "cliente.id",
-	//       "dst": "cliente",
-	//       "op": "extract"
-	//     },
-	//     {
-	//       "src_payment_status": {
-	//         "expire": {
-	//           "src": "vencimento",
-	//           "format_date": {
-	//             "raw": "02/01/2006",
-	//             "dst": "2006-01-02"
-	//           }
-	//         },
-	//         "paid":{
-	//           "src": "recebimento",
-	//           "format_date": {
-	//             "raw": "02/01/2006",
-	//             "dst": "2006-01-02"
-	//           }
-	//         }
-	//       },
-	//       "dst": "status"
-	//     },
-	//     {
-	//       "src": "valorAtualizado",
-	//       "dst": "valor_total"
-	//     },
-	//     {
-	//       "src": "movimento.quantParcelas",
-	//       "dst": "parcelas"
-	//     },
-	//     {
-	//       "src": "valorAtualizado",
-	//       "dst": "valor_parcela"
-	//     },
-	// 	   {
-	//       "src_raw_value": "1",
-	//       "dst": "ativo"
-	//     },
-	//     {
-	//       "src": "vencimento",
-	//       "dst": "data_vencimento",
-	//       "op": "format_date",
-	//       "format_date": {
-	//         "raw": "02/01/2006",
-	//         "dst": "2006-01-02"
-	//       }
-	//     },
-	//     {
-	//       "src_raw_value": "0",
-	//       "dst": "data_personalizadas"
-	//     },
-	//     {
-	//       "src_object_builder": {
-	//         "get_from": "cliente",
-	//         "object_builder": {
-	//           "fields": [
-	//             {
-	//               "src": "vencimento",
-	//               "dst": "data_vencimento"
-	//             },
-	//             {
-	//               "src": "valorAtualizado",
-	//               "dst": "valor_parcela"
-	//             },
-	//             {
-	//               "src": "linkBoleto",
-	//               "dst": "id_boleto"
-	//             },
-	//             {
-	//               "src_raw_value": "ativo",
-	//               "dst": "status"
-	//             }
-	//           ]
-	//         }
-	//       },
-	//       "dst": "infos_cobranca",
-	//       "op": "build_object"
-	//     }
-	//   ]
-	// }`, nil, 500, func(vr []utils.FinanceiroRow) error { return nil })
+
 	return dI, nil
 }
 
 func StreamProdutosFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb func([]utils.ProdutoRow) error) error {
+	t, err := JsonToTranscriptor([]byte(transcriptor))
+	if err != nil {
+		fmt.Println(err)
+	}
+	url := "http://server.frontsys.com.br:8081/produto/"
+	if t.Url != "" {
+		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value)
+	}
 	r, err := Request(requestInfo{
-		url:    "http://server.frontsys.com.br:8081/produto/",
+		url:    url,
 		token:  ClientToken,
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
@@ -147,10 +64,6 @@ func StreamProdutosFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb f
 	err = json.Unmarshal(r, &genMap)
 	if err != nil {
 		fmt.Println("Error unmarshall err :", err)
-	}
-	t, err := JsonToTranscriptor([]byte(transcriptor))
-	if err != nil {
-		fmt.Println(err)
 	}
 	batch := make([]utils.ProdutoRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
@@ -202,7 +115,6 @@ func StreamClientesFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb f
 			fmt.Println("Erro transcribe to row", err)
 			continue
 		}
-		fmt.Println(utils.JsonViewInterface(row))
 		batch = append(batch, row)
 		if len(batch) == batchSize {
 
