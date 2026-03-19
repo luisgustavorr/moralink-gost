@@ -34,7 +34,6 @@ func Request(infos requestInfo, customKeys []string, customValues []string) (bod
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", infos.token)
 	for i, v := range customKeys {
-		fmt.Println(v, customValues[i])
 		req.Header.Add(v, customValues[i])
 	}
 	res, err := client.Do(req)

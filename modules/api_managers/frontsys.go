@@ -14,7 +14,6 @@ var ClientToken string
 var API_TokenGetter *pb.APITokenGetter
 
 func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, error) {
-	fmt.Println("API DA FRONTSYS", c.UrlToken)
 	r, err := Request(requestInfo{
 		url:    c.UrlToken,
 		token:  fmt.Sprintf("%s %s", c.GetTokenBody.TokenType, c.RawToken),
@@ -29,6 +28,7 @@ func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, e
 		Categorias:  GetCategoriasFrontsys,
 		Vendedores:  GetVendedoresFrontsys,
 		Financeiros: StreamCobrancasFrontsys,
+		Vendas:      StreamVendasFrontsys,
 		Generic:     StreamGenericFrontsys,
 	}
 	t := tokenReturn{}
@@ -207,6 +207,7 @@ func GetVendedoresFrontsys(transcriptor string, db *sqlx.DB) ([]utils.VendedorRo
 }
 
 func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
+	return fmt.Errorf("Vendas not available yet for Frontsys")
 	t, err := JsonToTranscriptor([]byte(transcriptor))
 	if err != nil {
 		fmt.Println(err)
@@ -225,6 +226,7 @@ func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 	if err != nil {
 		fmt.Println("Error unmarshall err :", err)
 	}
+
 	batch := make([]utils.VendaRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
 		row, err := TranscribeMapToVendaRow(Transcribe(m, t))
@@ -263,7 +265,6 @@ func StreamCobrancasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 	if err != nil {
-		fmt.Println(string(r))
 		fmt.Println("ERROR stream produtos frontsys :", err.Error(), string(r))
 	}
 	genMap := []map[string]any{}
@@ -278,7 +279,6 @@ func StreamCobrancasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb
 			fmt.Println("Erro transcribe to row", err)
 			continue
 		}
-		fmt.Println(utils.JsonViewInterface(row))
 		batch = append(batch, row)
 		if len(batch) == batchSize {
 

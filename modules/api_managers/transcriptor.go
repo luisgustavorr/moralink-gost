@@ -248,18 +248,14 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		switch f.Op {
 		// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
 		case "case":
-			fmt.Println("PEGANDO CASE")
 			result := f.Case.Default
 			matched := false
 			for _, v := range f.Case.Conditions {
-				fmt.Println(v.When, ResolvePath(m, f.Src))
 				if v.When == ResolvePath(m, f.Src) && !matched {
-					fmt.Println("Deu match ! ", v.Then)
 					result = v.Then
 					matched = true
 				}
 			}
-			fmt.Println("Result", result)
 			transcribedMap[f.Dst] = result
 		case "format_date":
 			input := utils.ToString(ResolvePath(m, f.Src))
