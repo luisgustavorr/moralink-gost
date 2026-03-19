@@ -436,7 +436,6 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 		}
 		if r.InfosCobranca != nil {
 
-			fmt.Println(JsonViewInterface(r.InfosCobranca))
 			infosC := []*pb.InfosCobranca{}
 			for _, v := range *r.InfosCobranca {
 				infosC = append(infosC, &pb.InfosCobranca{
