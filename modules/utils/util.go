@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 	"time"
 
 	"encoding/json"
@@ -146,13 +147,16 @@ func sanitizeValue(v any) any {
 	}
 	switch val := v.(type) {
 	// Already supported by structpb
-	case bool, float64, string:
+	case bool, float64:
 		return val
-	// Numeric types — convert to float64
+		// Numeric types — convert to float64
+	case string:
+		return strings.ToValidUTF8(val, "?") // 👈 sanitize strings
 	case float32:
 		return float64(val)
 	case int:
 		return float64(val)
+
 	case int8:
 		return float64(val)
 	case int16:
@@ -178,9 +182,9 @@ func sanitizeValue(v any) any {
 	// Time — convert to ISO string
 	case time.Time:
 		return val.Format(time.RFC3339)
-	// []byte — convert to string
+		// []byte — convert to string
 	case []byte:
-		return string(val)
+		return strings.ToValidUTF8(string(val), "?")
 	// Nested map
 	case map[string]any:
 		out := make(map[string]any, len(val))
