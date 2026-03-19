@@ -23,7 +23,7 @@ func connectMysql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.Db
 		Financeiros: StreamFinanceirosMySql,
 		Generic:     StreamGenericMySql,
 	}
-	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=True&loc=Local",
 		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
 
 	log.Println(psqlInfo)
