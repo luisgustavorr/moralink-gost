@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"encoding/json"
 
@@ -141,6 +142,12 @@ type ConnInfo struct {
 	DB       *DbInfos
 }
 
+func sanitizeUTF8(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+	return strings.ToValidUTF8(s, "")
+}
 func sanitizeValue(v any) any {
 	if v == nil {
 		return nil
@@ -221,46 +228,46 @@ func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {
 	for _, r := range rows {
 		cliente := &pb.Cliente{}
 		if r.IdExterno != nil {
-			cliente.IdExterno = *r.IdExterno
+			cliente.IdExterno = sanitizeUTF8(*r.IdExterno)
 		}
 		if r.Nome != nil {
-			cliente.Nome = *r.Nome
+			cliente.Nome = sanitizeUTF8(*r.Nome)
 		}
 		if r.Referencia != nil {
-			cliente.Referencia = *r.Referencia
+			cliente.Referencia = sanitizeUTF8(*r.Referencia)
 		}
 		if r.Whatsapp != nil {
-			cliente.Whatsapp = *r.Whatsapp
+			cliente.Whatsapp = sanitizeUTF8(*r.Whatsapp)
 		}
 		if r.Email != nil {
-			cliente.Email = *r.Email
+			cliente.Email = sanitizeUTF8(*r.Email)
 		}
 		if r.Aniversario != nil {
-			cliente.Aniversario = *r.Aniversario
+			cliente.Aniversario = sanitizeUTF8(*r.Aniversario)
 		}
 		if r.PjOuPf != nil {
-			cliente.PjOuPf = *r.PjOuPf
+			cliente.PjOuPf = sanitizeUTF8(*r.PjOuPf)
 		}
 		if r.CpfCnpj != nil {
-			cliente.CpfCnpj = *r.CpfCnpj
+			cliente.CpfCnpj = sanitizeUTF8(*r.CpfCnpj)
 		}
 		if r.Endereco != nil {
-			cliente.Endereco = *r.Endereco
+			cliente.Endereco = sanitizeUTF8(*r.Endereco)
 		}
 		if r.Num != nil {
-			cliente.Num = *r.Num
+			cliente.Num = sanitizeUTF8(*r.Num)
 		}
 		if r.Bairro != nil {
-			cliente.Bairro = *r.Bairro
+			cliente.Bairro = sanitizeUTF8(*r.Bairro)
 		}
 		if r.Cidade != nil {
-			cliente.Cidade = *r.Cidade
+			cliente.Cidade = sanitizeUTF8(*r.Cidade)
 		}
 		if r.Idade != nil {
 			cliente.Idade = *r.Idade
 		}
 		if r.Sexo != nil {
-			cliente.Sexo = *r.Sexo
+			cliente.Sexo = sanitizeUTF8(*r.Sexo)
 		}
 		if r.VendedorId != nil {
 			cliente.VendedorId = *r.VendedorId
@@ -278,7 +285,7 @@ func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 			produto.IdExterno = *r.IdExterno
 		}
 		if r.Nome != nil {
-			produto.Nome = *r.Nome
+			produto.Nome = sanitizeUTF8(*r.Nome)
 		}
 		if r.Codigo != nil {
 			produto.Codigo = *r.Codigo
@@ -299,10 +306,10 @@ func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 			produto.Categoria = *r.Categoria
 		}
 		if r.NomeCategoria != nil {
-			produto.NomeCategoria = *r.NomeCategoria
+			produto.NomeCategoria = sanitizeUTF8(*r.NomeCategoria)
 		}
 		if r.Descricao != nil {
-			produto.Descricao = *r.Descricao
+			produto.Descricao = sanitizeUTF8(*r.Descricao)
 		}
 		if r.Estoque != nil {
 			produto.Estoque = *r.Estoque
@@ -314,7 +321,7 @@ func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 			produto.Ativo = *r.Ativo
 		}
 		if r.Complemento != nil {
-			produto.Complemento = *r.Complemento
+			produto.Complemento = sanitizeUTF8(*r.Complemento)
 		}
 		out = append(out, produto)
 	}
@@ -382,7 +389,7 @@ func ToProtoVendas(rows []VendaRow) []*pb.Venda {
 			venda.ProdutosVenda = prodVenda
 		}
 		if r.Observacao != nil {
-			venda.Observacao = *r.Observacao
+			venda.Observacao = sanitizeUTF8(*r.Observacao)
 		}
 		if r.DatasVencimento != nil {
 			datas := []*pb.DatasVencimento{}
@@ -463,7 +470,7 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 			financeiro.Media = *r.DataVencimento
 		}
 		if r.TituloCobranca != nil {
-			financeiro.TituloCobranca = *r.TituloCobranca
+			financeiro.TituloCobranca = sanitizeUTF8(*r.TituloCobranca)
 		}
 		if r.Ativo != nil {
 			financeiro.Ativo = *r.Ativo
@@ -483,7 +490,7 @@ func ToProtoCategorias(rows []CategoriaRow) []*pb.Categoria {
 			categoria.IdExterno = *r.IdExterno
 		}
 		if r.Nome != nil {
-			categoria.Nome = *r.Nome
+			categoria.Nome = sanitizeUTF8(*r.Nome)
 		}
 		out = append(out, categoria)
 	}
@@ -497,7 +504,7 @@ func ToProtoVendedores(rows []VendedorRow) []*pb.Vendedor {
 			vendedor.IdExterno = *r.IdExterno
 		}
 		if r.Nome != nil {
-			vendedor.Nome = *r.Nome
+			vendedor.Nome = sanitizeUTF8(*r.Nome)
 		}
 		if r.Codigo != nil {
 			vendedor.Codigo = *r.Codigo
