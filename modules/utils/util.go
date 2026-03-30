@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -228,7 +229,7 @@ func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {
 	for _, r := range rows {
 		cliente := &pb.Cliente{}
 		if r.IdExterno != nil {
-			cliente.IdExterno = sanitizeUTF8(*r.IdExterno)
+			cliente.IdExterno = ToStringNumeric(*r.IdExterno)
 		}
 		if r.Nome != nil {
 			cliente.Nome = sanitizeUTF8(*r.Nome)
@@ -277,18 +278,39 @@ func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {
 
 	return out
 }
+func ToStringNumeric(val interface{}) string {
+	if val == nil {
+		return ""
+	}
+	switch v := val.(type) {
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', 0, 32)
+	case float64:
+		return strconv.FormatFloat(v, 'f', 0, 64)
+	case string:
+		// already a string, but might still be "7.89611210788e+12"
+		if strings.ContainsAny(v, "eE") {
+			if f, err := strconv.ParseFloat(v, 64); err == nil {
+				return strconv.FormatFloat(f, 'f', 0, 64)
+			}
+		}
+		return v
+	default:
+		return fmt.Sprintf("%v", val)
+	}
+}
 func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 	out := make([]*pb.Produto, 0, len(rows))
 	for _, r := range rows {
 		produto := &pb.Produto{}
 		if r.IdExterno != nil {
-			produto.IdExterno = *r.IdExterno
+			produto.IdExterno = ToStringNumeric(*r.IdExterno)
 		}
 		if r.Nome != nil {
 			produto.Nome = sanitizeUTF8(*r.Nome)
 		}
 		if r.Codigo != nil {
-			produto.Codigo = *r.Codigo
+			produto.Codigo = ToStringNumeric(*r.Codigo)
 		}
 		if r.Valor != nil {
 			produto.Valor = *r.Valor
@@ -303,7 +325,7 @@ func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 			produto.Comissao = *r.Comissao
 		}
 		if r.Categoria != nil {
-			produto.Categoria = *r.Categoria
+			produto.Categoria = ToStringNumeric(*r.Categoria)
 		}
 		if r.NomeCategoria != nil {
 			produto.NomeCategoria = sanitizeUTF8(*r.NomeCategoria)
@@ -333,16 +355,16 @@ func ToProtoVendas(rows []VendaRow) []*pb.Venda {
 	for _, r := range rows {
 		venda := &pb.Venda{}
 		if r.IdExterno != nil {
-			venda.IdExterno = *r.IdExterno
+			venda.IdExterno = ToStringNumeric(*r.IdExterno)
 		}
 		if r.Empresa != nil {
 			venda.Empresa = *r.Empresa
 		}
 		if r.Cliente != nil {
-			venda.Cliente = *r.Cliente
+			venda.Cliente = ToStringNumeric(*r.Cliente)
 		}
 		if r.Vendedor != nil {
-			venda.Vendedor = *r.Vendedor
+			venda.Vendedor = ToStringNumeric(*r.Vendedor)
 		}
 		if r.DataCompra != nil {
 			venda.DataCompra = *r.DataCompra
@@ -381,7 +403,7 @@ func ToProtoVendas(rows []VendaRow) []*pb.Venda {
 			prodVenda := []*pb.ProdutosVendas{}
 			for _, v := range *r.ProdutosVenda {
 				prodVenda = append(prodVenda, &pb.ProdutosVendas{
-					ProdutoId:     ToString(v.IdProduto),
+					ProdutoId:     ToStringNumeric(v.IdProduto),
 					Quantidade:    ToString(v.Quantidade),
 					ValorUnitario: ToString(v.ValorUnit),
 				})
@@ -410,10 +432,10 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 	for _, r := range rows {
 		financeiro := &pb.Financeiro{}
 		if r.IdExterno != nil {
-			financeiro.IdExterno = *r.IdExterno
+			financeiro.IdExterno = ToStringNumeric(*r.IdExterno)
 		}
 		if r.Cliente != nil {
-			financeiro.Cliente = *r.Cliente
+			financeiro.Cliente = ToStringNumeric(*r.Cliente)
 		}
 		if r.Status != nil {
 			financeiro.Status = *r.Status
@@ -450,7 +472,7 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 			infosC := []*pb.InfosCobranca{}
 			for _, v := range *r.InfosCobranca {
 				infosC = append(infosC, &pb.InfosCobranca{
-					IdExterno:      ToString(v.IdExterno),
+					IdExterno:      ToStringNumeric(v.IdExterno),
 					ValorParcela:   v.ValorParcela,
 					DataVencimento: v.DataVencimento,
 					DataCriacao:    v.DataCriacao,
@@ -464,7 +486,7 @@ func ToProtoFinanceiro(rows []FinanceiroRow) []*pb.Financeiro {
 			financeiro.Recorrente = *r.Recorrente
 		}
 		if r.Venda != nil {
-			financeiro.Venda = *r.Venda
+			financeiro.Venda = ToStringNumeric(*r.Venda)
 		}
 		if r.Media != nil {
 			financeiro.Media = *r.DataVencimento
@@ -487,7 +509,7 @@ func ToProtoCategorias(rows []CategoriaRow) []*pb.Categoria {
 	for _, r := range rows {
 		categoria := &pb.Categoria{}
 		if r.IdExterno != nil {
-			categoria.IdExterno = *r.IdExterno
+			categoria.IdExterno = ToStringNumeric(*r.IdExterno)
 		}
 		if r.Nome != nil {
 			categoria.Nome = sanitizeUTF8(*r.Nome)
@@ -501,7 +523,7 @@ func ToProtoVendedores(rows []VendedorRow) []*pb.Vendedor {
 	for _, r := range rows {
 		vendedor := &pb.Vendedor{}
 		if r.IdExterno != nil {
-			vendedor.IdExterno = *r.IdExterno
+			vendedor.IdExterno = ToStringNumeric(*r.IdExterno)
 		}
 		if r.Nome != nil {
 			vendedor.Nome = sanitizeUTF8(*r.Nome)
