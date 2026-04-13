@@ -2,7 +2,6 @@ package Grpcclient
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -54,7 +53,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		var db_info = map[string]interface{}{}
 		var err error
 		var db *utils.DbInfos
-		fmt.Println(connectedUser.GetDbConfigJson())
+
 		if connectedUser.UseApi {
 			db, err = apimanagers.DecideWhoActs(connectedUser.GetAPIConn(), connectedUser.GetApiTokenGetter())
 		} else {

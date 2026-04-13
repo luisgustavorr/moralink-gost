@@ -50,13 +50,19 @@ enum Command {
    RESTART_APP =0;
    RESTART_DB =1;
    UPDATE_APP =2;
+   CONFIGURE   = 3; 
 }
 message Commands {
   Command type = 1;
   oneof addInfo {
 ACKReturn ack_return =2;
 string version = 3;
+    ConfigurePayload configure = 4;  // new
   }
+}
+message ConfigurePayload {
+  string token = 1;
+  string user  = 2;
 }
 message AgentMessage {
   string agent_id = 1;

@@ -6,6 +6,9 @@ import (
 	"MoraLinkGOst/modules/updater"
 	"MoraLinkGOst/modules/utils"
 	"log"
+	"path/filepath"
+
+	"github.com/spf13/viper"
 )
 
 func ExecCommand(c *pb.Commands) {
@@ -42,6 +45,17 @@ func ExecCommand(c *pb.Commands) {
 				log.Println("❌ Update failed:", err.Error())
 			}
 		}()
+	case pb.Command_CONFIGURE:
+		cfgDir := utils.ConfigPath()
+		configSet := c.GetConfigure()
+		viper.Set("api.user", configSet.User)
+		viper.Set("api.mode", "prod")
+		viper.Set("api.token", configSet.Token)
+		configFile := filepath.Join(cfgDir, "config.yaml")
+		if err := viper.WriteConfigAs(configFile); err != nil {
+			log.Fatalf("failed to write default config to %s: %v", configFile, err)
+		}
+		RestartSelf()
 	}
 
 }

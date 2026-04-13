@@ -66,9 +66,9 @@ func LoadConfig() {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// First run: create default config
 			viper.Set("server.grpc_port", 50051)
-			viper.Set("api.user", "teste_disparo_shark")
+			viper.Set("api.user", "default")
 			viper.Set("api.mode", "prod")
-			viper.Set("api.token", "4d99239abe64126085c2da40d2eb6b83ed57f3ca")
+			viper.Set("api.token", "1234567")
 			configFile := filepath.Join(cfgDir, "config.yaml")
 			if err := viper.WriteConfigAs(configFile); err != nil {
 				log.Fatalf("failed to write default config to %s: %v", configFile, err)
