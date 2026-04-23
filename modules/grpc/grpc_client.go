@@ -378,7 +378,8 @@ func buildEmptyMimicReturn(table pb.Table, batchId string) *agentpb.AgentMessage
 	}
 }
 func (c *Client) Run(ctx context.Context) error {
-	logger.Debug("✅ 🌐 Grpc started")
+	logger.Debug("✅ 🌐 Grpc started v3")
+
 	conn, err := grpc.DialContext(
 		ctx,
 		c.addr,
@@ -386,17 +387,24 @@ func (c *Client) Run(ctx context.Context) error {
 		grpc.WithBlock(),
 	)
 	if err != nil {
+		logger.Debug("Grpc err :", err)
+
 		return err
 	}
 	defer conn.Close()
+	logger.Debug("Grpc passed 1")
 
 	client := pb.NewAgentServiceClient(conn)
 
 	stream, err := client.Connect(ctx)
 	if err != nil {
 		log.Println(err)
+		logger.Debug("Grpc err 2 :", err)
+
 		return err
 	}
+	logger.Debug("Grpc passed 2")
+
 	c.stream = stream
 	// Send HELLO
 	message := &pb.AgentMessage{
@@ -405,15 +413,20 @@ func (c *Client) Run(ctx context.Context) error {
 		Type:    pb.MessageType_HELLO,
 		Version: c.version,
 	}
+	logger.Debug("Grpc passed 3")
 
 	c.SendMessage(message)
 
 	if err != nil {
+		logger.Debug("Grpc err 3 :", err)
+
 		log.Println(err)
 		return err
 	}
 
 	// Receive loop
+	logger.Debug("Grpc passed 4")
+
 	for {
 		in, err := stream.Recv()
 		if err != nil {
