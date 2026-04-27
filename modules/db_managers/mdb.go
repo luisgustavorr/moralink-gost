@@ -6,15 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
 	"strings"
 	"time"
 
+	_ "github.com/alexbrainman/odbc"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/microsoft/go-mssqldb"
 )
 
-func connectMdb(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
+func connectMDB(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
 	dI.Queries = utils.QueriesFunctions{
 		Products:    StreamProdutosMdb,
 		Clientes:    StreamClientesMdb,
@@ -24,32 +23,40 @@ func connectMdb(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbIn
 		Financeiros: StreamFinanceirosMdb,
 		Generic:     StreamGenericMdb,
 	}
-	password := url.QueryEscape(connInfo["password"].(string))
-	dsn := fmt.Sprintf("sqlserver://%s:%s@%s:%s?database=%s",
-		connInfo["user"].(string),
-		password,
-		connInfo["server"].(string),
-		utils.ToString(connInfo["port"]),
-		connInfo["database"].(string),
-	)
-	sqlDB, err := sqlx.Open("sqlserver", dsn)
+
+	dbPath := utils.ToString(connInfo["database"])
+	password := utils.ToString(connInfo["password"])
+	user := utils.ToString(connInfo["user"])
+
+	var dsn string
+	if password != "" {
+		dsn = fmt.Sprintf(
+			`Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s;UID=%s;PWD=%s;`,
+			dbPath, user, password,
+		)
+	} else {
+		dsn = fmt.Sprintf(
+			`Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s;SystemDB=%s;ExtendedAnsiSQL=1;`,
+			dbPath, dbPath,
+		)
+	}
+
+	sqlDB, err := sqlx.Open("odbc", dsn)
 	if err != nil {
-		return dI, fmt.Errorf("erro ao abrir conexão com sqlserver: %v", err)
+		return dI, fmt.Errorf("erro ao abrir MDB: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := sqlDB.PingContext(ctx); err != nil {
-		return dI, fmt.Errorf("ping ao banco de dados falhou: %v", err)
+		return dI, fmt.Errorf("ping MDB falhou: %v", err)
 	}
 
-	sqlDB.SetMaxOpenConns(5)
-	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetMaxOpenConns(1) // Access doesn't handle concurrent connections well
+	sqlDB.SetMaxIdleConns(1)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
-	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
 	dI.DB = sqlDB
-
 	return dI, nil
 }
 
