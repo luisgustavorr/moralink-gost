@@ -39,7 +39,13 @@ func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, e
 	}
 	ClientToken = t.Token
 	API_TokenGetter = c
-
+	// fileContent, err := os.ReadFile("scratch.json")
+	// if err != nil {
+	// 	log.Fatalf("Failed to read file: %v", err)
+	// }
+	// StreamVendasFrontsys(string(fileContent), dI.DB, 5000, func(vr []utils.VendaRow) error {
+	// 	return nil
+	// })
 	return dI, nil
 }
 
@@ -207,13 +213,12 @@ func GetVendedoresFrontsys(transcriptor string, db *sqlx.DB) ([]utils.VendedorRo
 }
 
 func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
-	return fmt.Errorf("Vendas not available yet for Frontsys")
 	t, err := JsonToTranscriptor([]byte(transcriptor))
 	if err != nil {
 		fmt.Println(err)
 	}
 	r, err := Request(requestInfo{
-		url:    "http://server.frontsys.com.br:8081/receita/empresa/" + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + "/",
+		url:    "http://server.frontsys.com.br:8081/receita/empresa/" + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + "/" + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + "/",
 		token:  ClientToken,
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
@@ -223,6 +228,7 @@ func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 	}
 	genMap := []map[string]any{}
 	err = json.Unmarshal(r, &genMap)
+	fmt.Println(string(r))
 	if err != nil {
 		fmt.Println("Error unmarshall err :", err)
 	}

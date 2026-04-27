@@ -60,13 +60,17 @@ type Id struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
-
+type IndividualDetails struct {
+	Url       string    `json:"url"`
+	KeyGetter FieldRule `json:"key_getter"`
+}
 type Transcriptor struct {
-	Id_1   Id          `json:"id_1"`
-	Id_2   Id          `json:"id_2"`
-	Id_3   Id          `json:"id_3"`
-	Url    string      `json:"url"`
-	Fields []FieldRule `json:"fields"`
+	Id_1              Id                 `json:"id_1"`
+	Id_2              Id                 `json:"id_2"`
+	Id_3              Id                 `json:"id_3"`
+	Url               string             `json:"url"`
+	Fields            []FieldRule        `json:"fields"`
+	IndividualDetails *IndividualDetails `json:"individual_detail"`
 }
 type ObjectBuilder struct {
 	Fields []FieldRule `json:"fields"`
@@ -107,6 +111,7 @@ type FieldRule struct {
 	DurationRules    map[string][]string `json:"duration_rules"` // define the duration value based on 'custom_ids' table
 	FormatDate       DateFormater        `json:"format_date"`    // define the duration value based on 'custom_ids' table
 	Case             CaseRule            `json:"case"`
+	SwitchToDetails  bool                `json:"switch_to_details"`
 }
 
 type TransformFunc func(val any, row map[string]any) any
@@ -165,8 +170,11 @@ func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any
 		result = append(result, data)
 		return result
 	}
+	fmt.Println("GET FROM PATH :", parts)
 	var current any = data
 	for _, part := range parts {
+		// fmt.Println("Current :", utils.JsonViewInterface(current))
+		fmt.Printf("%T\n", current)
 		switch v := current.(type) {
 		case []map[string]any:
 			return v
@@ -177,8 +185,28 @@ func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any
 			}
 			current = v[idx]
 		case map[string]any:
-			result = append(result, data)
-			return result
+			if v[part] != nil {
+
+				current = v[part]
+
+				switch v := current.(type) {
+				case []any:
+					for _, v := range v {
+
+						if newMap, ok := v.(map[string]any); ok {
+							result = append(result, newMap)
+						}
+					}
+					return result
+
+				}
+			} else {
+				fmt.Println("Interface 2")
+
+				result = append(result, data)
+				return result
+			}
+
 		default:
 			result = append(result, data)
 			return result
@@ -187,8 +215,28 @@ func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any
 	return result
 }
 func Transcribe(m map[string]any, t Transcriptor) map[string]any {
+	individualDetails := map[string]any{}
+	if t.IndividualDetails != nil {
+		rawUrl := t.IndividualDetails.Url
+		id := ResolvePath(m, t.IndividualDetails.KeyGetter.Src)
+		url := strings.ReplaceAll(rawUrl, t.IndividualDetails.KeyGetter.Dst, utils.ToString(id))
+		fmt.Println(rawUrl, id, t.IndividualDetails.KeyGetter, url, ClientToken)
+		r, err := Request(requestInfo{
+			url:    url,
+			token:  ClientToken,
+			method: "GET",
+		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
+		if err != nil {
+			fmt.Println("Error extra", err)
+		} else {
+			json.Unmarshal(r, &individualDetails)
+		}
+	}
 	transcribedMap := map[string]any{}
 	for _, f := range t.Fields {
+		if f.SwitchToDetails {
+			m = individualDetails
+		}
 		if f.SrcPaymentStatus != nil {
 			rawPaidDate := ResolvePath(m, f.SrcPaymentStatus.Paid.Src)
 			rawExpireDate := ResolvePath(m, f.SrcPaymentStatus.Expire.Src)
@@ -218,11 +266,12 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 			continue
 		}
 		if f.SrcBuildJson != nil {
-
 			subT := Transcriptor{
 				Fields: f.SrcBuildJson.ObjectBuilder.Fields,
 			}
 			whereToSearch := ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
+			fmt.Println("JSON AQUI", utils.JsonViewInterface(whereToSearch))
+
 			result := []map[string]any{}
 			for _, v := range whereToSearch {
 				result = append(result, Transcribe(v, subT))
@@ -278,12 +327,13 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 				transcribedMap[f.Dst] = durationSelected
 			}
 		case "extract":
+
 			transcribedMap[f.Dst] = ResolvePath(m, f.Src)
 		default:
 			transcribedMap[f.Dst] = m[f.Src]
 		}
 	}
-	// fmt.Println(utils.JsonViewInterface(transcribedMap))
+	fmt.Println(utils.JsonViewInterface(transcribedMap))
 	return transcribedMap
 }
 
