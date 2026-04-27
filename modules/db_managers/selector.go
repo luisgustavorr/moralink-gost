@@ -50,6 +50,11 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 			log.Println("Error mysql old : ", err)
 
 		}
+	case 5:
+		db, err = connectMdb(connInfo, db)
+		if err != nil {
+			log.Println("Error mdb old : ", err)
+		}
 
 	}
 	if err == nil {
