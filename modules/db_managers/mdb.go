@@ -13,6 +13,19 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+func buildMDBDSN(dbPath, user, password string) string {
+	base := fmt.Sprintf(`DBQ=%s;`, dbPath)
+
+	if password != "" {
+		base += fmt.Sprintf(`UID=%s;PWD=%s;`, user, password)
+	} else {
+		base += `Uid=Admin;Pwd=;`
+	}
+
+	// try newer driver first, caller should retry with old if this fails
+	return `Driver={Microsoft Access Driver (*.mdb, *.accdb)};` + base
+}
+
 func connectMDB(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
 	dI.Queries = utils.QueriesFunctions{
 		Products:    StreamProdutosMdb,
@@ -28,31 +41,39 @@ func connectMDB(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbIn
 	password := utils.ToString(connInfo["password"])
 	user := utils.ToString(connInfo["user"])
 
-	var dsn string
-	if password != "" {
-		dsn = fmt.Sprintf(
-			`Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s;UID=%s;PWD=%s;`,
-			dbPath, user, password,
-		)
-	} else {
-		dsn = fmt.Sprintf(
-			`Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=%s;SystemDB=%s;ExtendedAnsiSQL=1;`,
-			dbPath, dbPath,
-		)
+	drivers := []string{
+		`Driver={Microsoft Access Driver (*.mdb, *.accdb)}`,
+		`Driver={Microsoft Access Driver (*.mdb)}`,
+		`Driver={Driver do Microsoft Access (*.mdb)}`, // pt-BR name on that machine
 	}
+	var sqlDB *sqlx.DB
+	var lastErr error
 
-	sqlDB, err := sqlx.Open("odbc", dsn)
-	if err != nil {
-		return dI, fmt.Errorf("erro ao abrir MDB: %v", err)
+	for _, driver := range drivers {
+		var dsn string
+		if password != "" {
+			dsn = fmt.Sprintf(`%s;DBQ=%s;UID=%s;PWD=%s;`, driver, dbPath, user, password)
+		} else {
+			dsn = fmt.Sprintf(`%s;DBQ=%s;Uid=Admin;Pwd=;`, driver, dbPath)
+		}
+
+		sqlDB, lastErr = sqlx.Open("odbc", dsn)
+		if lastErr != nil {
+			continue
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		lastErr = sqlDB.PingContext(ctx)
+		cancel()
+
+		if lastErr == nil {
+			break // found a working driver
+		}
+		sqlDB.Close()
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := sqlDB.PingContext(ctx); err != nil {
-		return dI, fmt.Errorf("ping MDB falhou: %v", err)
+	if lastErr != nil {
+		return dI, fmt.Errorf("ping MDB falhou: %v — instale o Microsoft Access Database Engine: https://www.microsoft.com/en-us/download/details.aspx?id=54920", lastErr)
 	}
-
 	sqlDB.SetMaxOpenConns(1) // Access doesn't handle concurrent connections well
 	sqlDB.SetMaxIdleConns(1)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)

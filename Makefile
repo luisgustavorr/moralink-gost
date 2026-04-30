@@ -36,6 +36,11 @@ windows: dist syso
 	go build $(LDFLAGS) -o dist/$(APP)-windows-amd64.exe .
 	@echo "✓  Built dist/$(APP)-windows-amd64.exe"
 
+windows32: dist syso
+	GOOS=windows GOARCH=386 CGO_ENABLED=1 CC=i686-w64-mingw32-gcc \
+	go build $(LDFLAGS) -o dist/$(APP)-windows-386.exe .
+	@echo "✓  Built dist/$(APP)-windows-386.exe"
+
 sign:
 	@test -f "$(CERT_PATH)" || (echo "❌ CERT_PATH not set or file missing" && exit 1)
 	osslsigncode sign \
@@ -54,10 +59,13 @@ release: windows installer
 	$(MAKE) sign FILE=dist/$(APP)-windows-amd64.exe
 	$(MAKE) sign FILE=dist/moralink-setup.exe
 	@echo "✓  Release ready"
-installer: windows
-	@echo "→  Building Windows installer..."
+	
+installer: windows windows32
+	@echo "→  Building Windows installers..."
 	cd build_assets && makensis installer.nsi
-	@echo "✓  Built dist/moralink-setup.exe"
+	cd build_assets && makensis installer32.nsi
+	@echo "✓  Built dist/moralink-setup.exe and dist/moralink-setup-x86.exe"
+	
 
 install-scheduler:
 	./dist/$(APP)-linux-amd64 --install-scheduler
