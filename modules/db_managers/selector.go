@@ -55,6 +55,11 @@ func DecideWhoActs(dType pb.DbType, connInfo map[string]interface{}) (*utils.DbI
 		if err != nil {
 			log.Println("Error mdb old : ", err)
 		}
+	case 6:
+		db, err = connectParadox(connInfo, db)
+		if err != nil {
+			log.Println("Error mdb old : ", err)
+		}
 
 	}
 	if err == nil {

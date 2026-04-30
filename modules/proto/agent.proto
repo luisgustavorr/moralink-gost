@@ -41,6 +41,7 @@ enum Db_type{
   MSSQL=3;
   MYSQL_OLD =4;
   MDB =5;
+  PARADOX =6;
 
 }
 enum API_owner {
