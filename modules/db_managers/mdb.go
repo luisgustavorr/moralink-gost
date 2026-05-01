@@ -284,7 +284,17 @@ func StreamFinanceirosMdb(query string, db *sqlx.DB, batchSize int, cb func([]ut
 }
 func StreamGenericMdb(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
-
+	if query == "getTables" {
+		tables, err := GetParadoxTables(map[string]interface{}{"database": CurrentDBPath})
+		if err != nil {
+			return err
+		}
+		m := []map[string]interface{}{}
+		for _, v := range tables {
+			m = append(m, map[string]interface{}{"nome": v})
+		}
+		return cb(m)
+	}
 	if db == nil {
 		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
 	}

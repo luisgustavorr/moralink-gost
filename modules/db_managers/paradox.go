@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -13,18 +15,24 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func buildParadoxDSN(dbPath, user, password string) (primary string, fallback string) {
-	base := fmt.Sprintf(`DBQ=%s;DriverID=538;`, dbPath)
+func buildParadoxDSN(dbPath, user, password string) []string {
+	base := fmt.Sprintf(`DBQ=%s;DriverID=538;FIL=Paradox 5.X;`, dbPath)
 
 	if password != "" {
 		base += fmt.Sprintf(`UID=%s;PWD=%s;`, user, password)
 	} else {
 		base += `Uid=Admin;Pwd=;`
 	}
-	primary = `Driver={Microsoft Paradox Driver (*.db )};` + base + `FIL=Paradox 5.X;`
-	fallback = `Driver={Microsoft Paradox-Treiber (*.db )};` + base + `FIL=Paradox 5.X;`
-	return primary, fallback
+
+	// All three variants found in the wild — Portuguese, English, German
+	return []string{
+		`Driver={Driver do Microsoft Paradox (*.db )};` + base,
+		`Driver={Microsoft Paradox Driver (*.db )};` + base,
+		`Driver={Microsoft Paradox-Treiber (*.db )};` + base,
+	}
 }
+
+var CurrentDBPath = ""
 
 func connectParadox(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
 	dI.Queries = utils.QueriesFunctions{
@@ -38,37 +46,37 @@ func connectParadox(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.
 	}
 
 	dbPath := utils.ToString(connInfo["database"])
+	CurrentDBPath = dbPath
 	password := utils.ToString(connInfo["password"])
 	user := utils.ToString(connInfo["user"])
 
-	primary, fallback := buildParadoxDSN(dbPath, user, password)
-
-	sqlDB, err := sqlx.Open("odbc", primary)
-	if err != nil {
-		sqlDB, err = sqlx.Open("odbc", fallback)
-		if err != nil {
-			return dI, fmt.Errorf("erro ao abrir Paradox (tentou ambos drivers): %v", err)
-		}
-	}
+	dsns := buildParadoxDSN(dbPath, user, password)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := sqlDB.PingContext(ctx); err != nil {
-		// try fallback on ping failure too — Open() doesn't actually connect
-		sqlDB2, err2 := sqlx.Open("odbc", fallback)
-		if err2 == nil {
-			if pingErr := sqlDB2.PingContext(ctx); pingErr == nil {
-				sqlDB.Close()
-				sqlDB = sqlDB2
-				err = nil
-			}
-		}
+	var sqlDB *sqlx.DB
+	var lastErr error
+
+	for _, dsn := range dsns {
+		db, err := sqlx.Open("odbc", dsn)
 		if err != nil {
-			return dI, fmt.Errorf("ping Paradox falhou: %v. DSN usado: %s", err, primary)
+			lastErr = err
+			continue
 		}
+		if err := db.PingContext(ctx); err != nil {
+			db.Close()
+			lastErr = err
+			continue
+		}
+		sqlDB = db
+		break
 	}
-	// Same as MDB — Paradox doesn't handle concurrency well
+
+	if sqlDB == nil {
+		return dI, fmt.Errorf("erro ao conectar Paradox (tentou %d drivers): %v", len(dsns), lastErr)
+	}
+
 	sqlDB.SetMaxOpenConns(1)
 	sqlDB.SetMaxIdleConns(1)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
@@ -277,12 +285,47 @@ func StreamFinanceirosParadox(query string, db *sqlx.DB, batchSize int, cb func(
 
 	return nil
 }
+
+func GetParadoxTables(connInfo map[string]interface{}) ([]string, error) {
+	dbPath := utils.ToString(connInfo["database"])
+
+	entries, err := os.ReadDir(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao ler diretório Paradox '%s': %v", dbPath, err)
+	}
+
+	tables := []string{}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		// Paradox table files are .db, ignore index files (.px, .x01, .y01 etc)
+		if strings.EqualFold(filepath.Ext(name), ".db") {
+			// strip extension to get table name
+			tableName := strings.TrimSuffix(name, filepath.Ext(name))
+			tables = append(tables, tableName)
+		}
+	}
+	return tables, nil
+}
 func StreamGenericParadox(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
-
+	if query == "getTables" && CurrentDBPath != "" {
+		tables, err := GetParadoxTables(map[string]interface{}{"database": CurrentDBPath})
+		if err != nil {
+			return err
+		}
+		m := []map[string]interface{}{}
+		for _, v := range tables {
+			m = append(m, map[string]interface{}{"nome": v})
+		}
+		return cb(m)
+	}
 	if db == nil {
 		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
 	}
+
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err
