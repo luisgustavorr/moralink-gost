@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -30,6 +32,8 @@ func buildParadoxDSN(dbPath, user, password string) []string {
 	}
 }
 
+var CurrentDBPath = ""
+
 func connectParadox(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
 	dI.Queries = utils.QueriesFunctions{
 		Products:    StreamProdutosParadox,
@@ -42,6 +46,7 @@ func connectParadox(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.
 	}
 
 	dbPath := utils.ToString(connInfo["database"])
+	CurrentDBPath = dbPath
 	password := utils.ToString(connInfo["password"])
 	user := utils.ToString(connInfo["user"])
 
@@ -280,12 +285,47 @@ func StreamFinanceirosParadox(query string, db *sqlx.DB, batchSize int, cb func(
 
 	return nil
 }
+
+func GetParadoxTables(connInfo map[string]interface{}) ([]string, error) {
+	dbPath := utils.ToString(connInfo["database"])
+
+	entries, err := os.ReadDir(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao ler diretório Paradox '%s': %v", dbPath, err)
+	}
+
+	tables := []string{}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		// Paradox table files are .db, ignore index files (.px, .x01, .y01 etc)
+		if strings.EqualFold(filepath.Ext(name), ".db") {
+			// strip extension to get table name
+			tableName := strings.TrimSuffix(name, filepath.Ext(name))
+			tables = append(tables, tableName)
+		}
+	}
+	return tables, nil
+}
 func StreamGenericParadox(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
 	query = strings.ReplaceAll(query, `\`, "")
-
+	if query == "getTables" && CurrentDBPath != "" {
+		tables, err := GetParadoxTables(map[string]interface{}{"database": CurrentDBPath})
+		if err != nil {
+			return err
+		}
+		m := []map[string]interface{}{}
+		for _, v := range tables {
+			m = append(m, map[string]interface{}{"nome": v})
+		}
+		return cb(m)
+	}
 	if db == nil {
 		return fmt.Errorf("DB is not connected ... Error : '%s'", OnStartupError)
 	}
+
 	rows, err := db.Queryx(query)
 	if err != nil {
 		return err
