@@ -13,17 +13,21 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func buildParadoxDSN(dbPath, user, password string) (primary string, fallback string) {
-	base := fmt.Sprintf(`DBQ=%s;DriverID=538;`, dbPath)
+func buildParadoxDSN(dbPath, user, password string) []string {
+	base := fmt.Sprintf(`DBQ=%s;DriverID=538;FIL=Paradox 5.X;`, dbPath)
 
 	if password != "" {
 		base += fmt.Sprintf(`UID=%s;PWD=%s;`, user, password)
 	} else {
 		base += `Uid=Admin;Pwd=;`
 	}
-	primary = `Driver={Microsoft Paradox Driver (*.db )};` + base + `FIL=Paradox 5.X;`
-	fallback = `Driver={Microsoft Paradox-Treiber (*.db )};` + base + `FIL=Paradox 5.X;`
-	return primary, fallback
+
+	// All three variants found in the wild — Portuguese, English, German
+	return []string{
+		`Driver={Driver do Microsoft Paradox (*.db )};` + base,
+		`Driver={Microsoft Paradox Driver (*.db )};` + base,
+		`Driver={Microsoft Paradox-Treiber (*.db )};` + base,
+	}
 }
 
 func connectParadox(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.DbInfos, error) {
@@ -41,34 +45,33 @@ func connectParadox(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.
 	password := utils.ToString(connInfo["password"])
 	user := utils.ToString(connInfo["user"])
 
-	primary, fallback := buildParadoxDSN(dbPath, user, password)
-
-	sqlDB, err := sqlx.Open("odbc", primary)
-	if err != nil {
-		sqlDB, err = sqlx.Open("odbc", fallback)
-		if err != nil {
-			return dI, fmt.Errorf("erro ao abrir Paradox (tentou ambos drivers): %v", err)
-		}
-	}
+	dsns := buildParadoxDSN(dbPath, user, password)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := sqlDB.PingContext(ctx); err != nil {
-		// try fallback on ping failure too — Open() doesn't actually connect
-		sqlDB2, err2 := sqlx.Open("odbc", fallback)
-		if err2 == nil {
-			if pingErr := sqlDB2.PingContext(ctx); pingErr == nil {
-				sqlDB.Close()
-				sqlDB = sqlDB2
-				err = nil
-			}
-		}
+	var sqlDB *sqlx.DB
+	var lastErr error
+
+	for _, dsn := range dsns {
+		db, err := sqlx.Open("odbc", dsn)
 		if err != nil {
-			return dI, fmt.Errorf("ping Paradox falhou: %v. DSN usado: %s", err, primary)
+			lastErr = err
+			continue
 		}
+		if err := db.PingContext(ctx); err != nil {
+			db.Close()
+			lastErr = err
+			continue
+		}
+		sqlDB = db
+		break
 	}
-	// Same as MDB — Paradox doesn't handle concurrency well
+
+	if sqlDB == nil {
+		return dI, fmt.Errorf("erro ao conectar Paradox (tentou %d drivers): %v", len(dsns), lastErr)
+	}
+
 	sqlDB.SetMaxOpenConns(1)
 	sqlDB.SetMaxIdleConns(1)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
