@@ -15,12 +15,12 @@
   "StringFileInfo": {
     "CompanyName":      "ORBIS SOLUCOES TECNOLOGICAS",
     "FileDescription":  "MoraLink GOst - Integração com o SharkBusiness",
-    "FileVersion":      "0.0.2",
+    "FileVersion":      "0.0.3",
     "InternalName":     "moralink-gost",
     "LegalCopyright":   "© ORBIS SOLUCOES TECNOLOGICAS",
     "OriginalFilename": "moralink-gost.exe",
     "ProductName":      "MoraLink",
-    "ProductVersion":   "0.0.5"
+    "ProductVersion":   "0.0.8"
   },
   "VarFileInfo": {
     "Translation": {
