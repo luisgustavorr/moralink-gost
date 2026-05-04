@@ -61,6 +61,8 @@ If the connection drops, a guardian goroutine automatically retries every minute
 | PostgreSQL | `lib/pq` |
 | Firebird | `nakagami/firebirdsql` |
 | MSSQL | `microsoft/go-mssqldb` |
+| Microsoft Access | `github.com/alexbrainman/odbc` |
+| Paradox | `github.com/alexbrainman/odbc` |
 
 For clients using external APIs instead of a local DB, the **API Managers** handle fetching, field mapping, and transcription (see [API Managers](#api-managers) below).
 
@@ -193,7 +195,7 @@ For clients whose data source is an external API rather than a local database, G
 
 Each integration (e.g. FrontSys) implements the same `QueriesFunctions` interface as the DB drivers, so the rest of the system treats them identically.
 
-The field mapping between the external API's response format and MoraLink's internal schema is defined in a JSON config stored in the server — no code changes needed to onboard a new integration. See **[MAPPER_DSL.md](./MAPPER_DSL.md)** for the full reference.
+The field mapping between the external API's response format and MoraLink's internal schema is defined in a JSON config stored in the server — no code changes needed to onboard a new integration. See **[MAPPER_DSL.md](./modules/api_managers/MAPPER_DSL.md)** for the full reference.
 
 ---
 
