@@ -39,13 +39,7 @@ func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, e
 	}
 	ClientToken = t.Token
 	API_TokenGetter = c
-	// fileContent, err := os.ReadFile("scratch.json")
-	// if err != nil {
-	// 	log.Fatalf("Failed to read file: %v", err)
-	// }
-	// StreamVendasFrontsys(string(fileContent), dI.DB, 5000, func(vr []utils.VendaRow) error {
-	// 	return nil
-	// })
+
 	return dI, nil
 }
 
@@ -54,7 +48,7 @@ func StreamProdutosFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb f
 	if err != nil {
 		fmt.Println(err)
 	}
-	url := "http://server.frontsys.com.br:8081/produto/"
+	url := t.Url
 	if t.Url != "" {
 		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value)
 	}
@@ -97,8 +91,12 @@ func StreamProdutosFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb f
 	return err
 }
 func StreamClientesFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
+	t, err := JsonToTranscriptor([]byte(transcriptor))
+	if err != nil {
+		fmt.Println(err)
+	}
 	r, err := Request(requestInfo{
-		url:    "http://server.frontsys.com.br:8081/pessoa/cliente",
+		url:    t.Url,
 		token:  ClientToken,
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
@@ -110,10 +108,7 @@ func StreamClientesFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb f
 	if err != nil {
 		fmt.Println("Error unmarshall err :", err)
 	}
-	t, err := JsonToTranscriptor([]byte(transcriptor))
-	if err != nil {
-		fmt.Println(err)
-	}
+
 	batch := make([]utils.ClienteRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
 		row, err := TranscribeMapToClienteRow(Transcribe(m, t))
@@ -144,9 +139,12 @@ func StreamGenericFrontsys(query string, db *sqlx.DB, batchSize int, cb func([]m
 	return fmt.Errorf("API client does not support generic queries")
 }
 func GetCategoriasFrontsys(transcriptor string, db *sqlx.DB) ([]utils.CategoriaRow, error) {
-
+	t, err := JsonToTranscriptor([]byte(transcriptor))
+	if err != nil {
+		fmt.Println(err)
+	}
 	r, err := Request(requestInfo{
-		url:    "http://server.frontsys.com.br:8081/categoriaproduto/",
+		url:    t.Url,
 		token:  ClientToken,
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
@@ -159,10 +157,7 @@ func GetCategoriasFrontsys(transcriptor string, db *sqlx.DB) ([]utils.CategoriaR
 	if err != nil {
 		fmt.Println("Error unmarshall err :", err)
 	}
-	t, err := JsonToTranscriptor([]byte(transcriptor))
-	if err != nil {
-		fmt.Println(err)
-	}
+
 	result := []utils.CategoriaRow{}
 
 	for _, m := range genMap {
@@ -183,7 +178,7 @@ func GetVendedoresFrontsys(transcriptor string, db *sqlx.DB) ([]utils.VendedorRo
 		fmt.Println(err)
 	}
 	r, err := Request(requestInfo{
-		url:    "http://server.frontsys.com.br:8081/vendedor/empresa/" + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value),
+		url:    t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value),
 		token:  ClientToken,
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
@@ -218,7 +213,7 @@ func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 		fmt.Println(err)
 	}
 	r, err := Request(requestInfo{
-		url:    "http://server.frontsys.com.br:8081/receita/empresa/" + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + "/" + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + "/",
+		url:    t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + "/" + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + "/",
 		token:  ClientToken,
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
@@ -266,7 +261,7 @@ func StreamCobrancasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb
 		fmt.Println(err)
 	}
 	r, err := Request(requestInfo{
-		url:    "http://server.frontsys.com.br:8081/contareceber/" + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value),
+		url:    t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value),
 		token:  ClientToken,
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
