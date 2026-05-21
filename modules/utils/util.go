@@ -282,22 +282,29 @@ func ToStringNumeric(val interface{}) string {
 	if val == nil {
 		return ""
 	}
+	var result string
 	switch v := val.(type) {
 	case float32:
-		return strconv.FormatFloat(float64(v), 'f', 0, 32)
+		result = strconv.FormatFloat(float64(v), 'f', 0, 32)
 	case float64:
-		return strconv.FormatFloat(v, 'f', 0, 64)
+		result = strconv.FormatFloat(v, 'f', 0, 64)
 	case string:
-		// already a string, but might still be "7.89611210788e+12"
 		if strings.ContainsAny(v, "eE") {
 			if f, err := strconv.ParseFloat(v, 64); err == nil {
-				return strconv.FormatFloat(f, 'f', 0, 64)
+				result = strconv.FormatFloat(f, 'f', 0, 64)
+			} else {
+				result = v
 			}
+		} else {
+			result = v
 		}
-		return v
 	default:
-		return fmt.Sprintf("%v", val)
+		result = fmt.Sprintf("%v", val)
 	}
+	if !utf8.ValidString(result) {
+		return strings.ToValidUTF8(result, "")
+	}
+	return result
 }
 func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 	out := make([]*pb.Produto, 0, len(rows))

@@ -23,7 +23,7 @@ func connectMysql(connInfo map[string]interface{}, dI *utils.DbInfos) (*utils.Db
 		Financeiros: StreamFinanceirosMySql,
 		Generic:     StreamGenericMySql,
 	}
-	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=True&loc=Local&allowOldPasswords=1",
+	psqlInfo := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
 		connInfo["user"].(string), connInfo["password"].(string), connInfo["host"].(string), connInfo["port"].(string), connInfo["database"].(string))
 
 	log.Println(psqlInfo)
@@ -267,7 +267,7 @@ func StreamGenericMySql(query string, db *sqlx.DB, batchSize int, cb func([]map[
 		for k, v := range row {
 			switch t := v.(type) {
 			case []byte:
-				row[k] = string(t)
+				row[k] = strings.ToValidUTF8(string(t), "")
 			case time.Time:
 				row[k] = t.Format(time.RFC3339)
 			}
