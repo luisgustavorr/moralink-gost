@@ -19,9 +19,6 @@ type tokenReturn struct {
 	Token string
 }
 
-var ClientToken string
-var API_TokenGetter *pb.APITokenGetter
-
 func Request(infos requestInfo, customKeys []string, customValues []string) (bodyResp []byte, reasonFailed error) {
 
 	url := infos.url
@@ -35,8 +32,6 @@ func Request(infos requestInfo, customKeys []string, customValues []string) (bod
 		return
 	}
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("User-Agent", "insomnia/2023.5.8")
-
 	req.Header.Add("Authorization", infos.token)
 	for i, v := range customKeys {
 		req.Header.Add(v, customValues[i])
@@ -60,8 +55,6 @@ func DecideWhoActs(ao pb.APIOwner, c *pb.APITokenGetter) (*utils.DbInfos, error)
 	switch ao {
 	case pb.APIOwner_FRONTSYS:
 		connectFrontsys(c, db)
-	case pb.APIOwner_TRAY:
-		connectTray(c, db)
 	}
 	return db, nil
 }

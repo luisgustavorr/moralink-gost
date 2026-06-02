@@ -10,6 +10,9 @@ import (
 	"fmt"
 )
 
+var ClientToken string
+var API_TokenGetter *pb.APITokenGetter
+
 func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, error) {
 	r, err := Request(requestInfo{
 		url:    c.UrlToken,
@@ -17,7 +20,7 @@ func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, e
 		method: "GET",
 	}, c.CustomKeys, c.CustomValues)
 	if err != nil {
-		fmt.Println("Error request", err)
+		fmt.Println(err)
 	}
 	dI.Queries = utils.QueriesFunctions{
 		Products:    StreamProdutosFrontsys,
@@ -31,7 +34,7 @@ func connectFrontsys(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, e
 	t := tokenReturn{}
 	err = json.Unmarshal(r, &t)
 	if err != nil {
-		fmt.Println("Error unmarshalling", err)
+		fmt.Println(err)
 		return dI, err
 	}
 	ClientToken = t.Token
@@ -215,10 +218,12 @@ func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 		method: "GET",
 	}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 	if err != nil {
+		fmt.Println(string(r))
 		fmt.Println("ERROR stream produtos frontsys :", err.Error(), string(r))
 	}
 	genMap := []map[string]any{}
 	err = json.Unmarshal(r, &genMap)
+	fmt.Println(string(r))
 	if err != nil {
 		fmt.Println("Error unmarshall err :", err)
 	}
@@ -231,12 +236,6 @@ func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 			continue
 		}
 		// fmt.Println(utils.JsonViewInterface(row))
-		if row.ProdutosVendaRaw != nil {
-			json.Unmarshal(*row.ProdutosVendaRaw, &row.ProdutosVenda)
-		}
-		if row.DatasVencimentoRaw != nil {
-			json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
-		}
 		batch = append(batch, row)
 		if len(batch) == batchSize {
 

@@ -63,7 +63,6 @@ type Id struct {
 type IndividualDetails struct {
 	Url       string    `json:"url"`
 	KeyGetter FieldRule `json:"key_getter"`
-	Id_1      *Id       `json:"id_1"`
 }
 type Transcriptor struct {
 	Id_1              Id                 `json:"id_1"`
@@ -127,9 +126,6 @@ func ResolveDynamicId(id string) string {
 		now = now.Add(time.Duration(daysAgo) * time.Hour)
 		return now.Format(format)
 	}
-	if strings.Contains(id, "token") {
-		return strings.ReplaceAll(id, "token", ClientToken)
-	}
 	return id
 }
 func ResolvePath(data map[string]any, path string) any {
@@ -174,10 +170,11 @@ func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any
 		result = append(result, data)
 		return result
 	}
+	fmt.Println("GET FROM PATH :", parts)
 	var current any = data
 	for _, part := range parts {
 		// fmt.Println("Current :", utils.JsonViewInterface(current))
-		// fmt.Printf("%T\n", current)
+		fmt.Printf("%T\n", current)
 		switch v := current.(type) {
 		case []map[string]any:
 			return v
@@ -223,10 +220,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		rawUrl := t.IndividualDetails.Url
 		id := ResolvePath(m, t.IndividualDetails.KeyGetter.Src)
 		url := strings.ReplaceAll(rawUrl, t.IndividualDetails.KeyGetter.Dst, utils.ToString(id))
-		if t.IndividualDetails.Id_1 != nil {
-			url = url + t.IndividualDetails.Id_1.Key + ResolveDynamicId(t.IndividualDetails.Id_1.Value)
-		}
-		// fmt.Println(rawUrl, id, t.IndividualDetails.KeyGetter, url, ClientToken)
+		fmt.Println(rawUrl, id, t.IndividualDetails.KeyGetter, url, ClientToken)
 		r, err := Request(requestInfo{
 			url:    url,
 			token:  ClientToken,
@@ -276,7 +270,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 				Fields: f.SrcBuildJson.ObjectBuilder.Fields,
 			}
 			whereToSearch := ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
-			// fmt.Println("JSON AQUI", utils.JsonViewInterface(whereToSearch))
+			fmt.Println("JSON AQUI", utils.JsonViewInterface(whereToSearch))
 
 			result := []map[string]any{}
 			for _, v := range whereToSearch {
@@ -339,6 +333,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 			transcribedMap[f.Dst] = m[f.Src]
 		}
 	}
+	fmt.Println(utils.JsonViewInterface(transcribedMap))
 	return transcribedMap
 }
 
