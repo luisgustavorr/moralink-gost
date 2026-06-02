@@ -46,6 +46,7 @@ enum Db_type{
 }
 enum API_owner {
   FRONTSYS = 0 ;
+  TRAY = 1;
 }
 // desc: Which Command was requested
 enum Command {

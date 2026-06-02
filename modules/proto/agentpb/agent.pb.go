@@ -203,15 +203,18 @@ type APIOwner int32
 
 const (
 	APIOwner_FRONTSYS APIOwner = 0
+	APIOwner_TRAY     APIOwner = 1
 )
 
 // Enum value maps for APIOwner.
 var (
 	APIOwner_name = map[int32]string{
 		0: "FRONTSYS",
+		1: "TRAY",
 	}
 	APIOwner_value = map[string]int32{
 		"FRONTSYS": 0,
+		"TRAY":     1,
 	}
 )
 
@@ -3035,9 +3038,10 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x05MSSQL\x10\x03\x12\r\n" +
 	"\tMYSQL_OLD\x10\x04\x12\a\n" +
 	"\x03MDB\x10\x05\x12\v\n" +
-	"\aPARADOX\x10\x06*\x19\n" +
+	"\aPARADOX\x10\x06*#\n" +
 	"\tAPI_owner\x12\f\n" +
-	"\bFRONTSYS\x10\x00*I\n" +
+	"\bFRONTSYS\x10\x00\x12\b\n" +
+	"\x04TRAY\x10\x01*I\n" +
 	"\aCommand\x12\x0f\n" +
 	"\vRESTART_APP\x10\x00\x12\x0e\n" +
 	"\n" +
