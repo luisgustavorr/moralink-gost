@@ -57,7 +57,7 @@ func StreamProdutosTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 	}
 	url := t.Url
 	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value)
+		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
 	}
 	theresMore := true
 	page := 0
@@ -99,13 +99,12 @@ func StreamProdutosTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 				batch = batch[:0] // reuse backing array
 			}
 		}
-		time.Sleep(500 * time.Millisecond)
 		if !theresMore {
+
 			return cb(batch)
 		}
-		if len(batch) == 0 {
-			return cb(batch)
-		}
+
+		time.Sleep(400 * time.Millisecond)
 
 	}
 	if len(batch) > 0 {
@@ -120,7 +119,7 @@ func StreamClientesTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 	}
 	url := t.Url
 	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value)
+		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
 	}
 	theresMore := true
 	page := 0
@@ -164,13 +163,12 @@ func StreamClientesTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 			}
 
 		}
-		time.Sleep(500 * time.Millisecond)
 		if !theresMore {
 			return cb(batch)
 		}
-		if len(batch) == 0 {
-			return cb(batch)
-		}
+
+		time.Sleep(400 * time.Millisecond)
+
 	}
 	if len(batch) > 0 {
 		return cb(batch)
@@ -188,7 +186,7 @@ func GetCategoriasTray(transcriptor string, db *sqlx.DB) ([]utils.CategoriaRow, 
 	}
 	url := t.Url
 	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value)
+		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
 	}
 	theresMore := true
 	page := 0
@@ -220,7 +218,7 @@ func GetCategoriasTray(transcriptor string, db *sqlx.DB) ([]utils.CategoriaRow, 
 
 			}
 		}
-
+		time.Sleep(400 * time.Millisecond)
 	}
 	result := []utils.CategoriaRow{}
 
@@ -243,7 +241,7 @@ func GetVendedoresTray(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, e
 	}
 	url := t.Url
 	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value)
+		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
 	}
 	theresMore := true
 	page := 0
@@ -275,6 +273,7 @@ func GetVendedoresTray(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, e
 
 			}
 		}
+		time.Sleep(400 * time.Millisecond)
 	}
 	result := []utils.VendedorRow{}
 	for _, m := range genMap {
@@ -298,7 +297,7 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 	}
 	url := t.Url
 	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value)
+		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
 	}
 	theresMore := true
 	page := 0
@@ -344,12 +343,12 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 			}
 
 		}
-		if len(batch) == 0 {
-			return cb(batch)
-		}
+
 		if !theresMore {
 			return cb(batch)
 		}
+		time.Sleep(400 * time.Millisecond)
+
 	}
 	if len(batch) > 0 {
 		return cb(batch)
