@@ -226,6 +226,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		if t.IndividualDetails.Id_1 != nil {
 			url = url + t.IndividualDetails.Id_1.Key + ResolveDynamicId(t.IndividualDetails.Id_1.Value)
 		}
+		time.Sleep(400 * time.Millisecond)
 		// fmt.Println(rawUrl, id, t.IndividualDetails.KeyGetter, url, ClientToken)
 		r, err := Request(requestInfo{
 			url:    url,
