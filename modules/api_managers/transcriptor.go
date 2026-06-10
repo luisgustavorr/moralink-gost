@@ -78,6 +78,7 @@ type Transcriptor struct {
 	Url               string             `json:"url"`
 	Fields            []FieldRule        `json:"fields"`
 	IndividualDetails *IndividualDetails `json:"individual_detail"`
+	Union             *[]Transcriptor    `json:"union"`
 }
 type ObjectBuilder struct {
 	Fields []FieldRule `json:"fields"`

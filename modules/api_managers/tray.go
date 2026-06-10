@@ -113,65 +113,74 @@ func StreamProdutosTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 	return err
 }
 func StreamClientesTray(transcriptor string, d *sqlx.DB, batchSize int, cb func([]utils.ClienteRow) error) error {
-	t, err := JsonToTranscriptor([]byte(transcriptor))
+	tr, err := JsonToTranscriptor([]byte(transcriptor))
 	if err != nil {
 		fmt.Println(err)
 	}
-	url := t.Url
-	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
+	transcriptors := []Transcriptor{tr}
+	if tr.Union != nil {
+		transcriptors = append(transcriptors, *tr.Union...)
 	}
-	theresMore := true
-	page := 0
-	batch := make([]utils.ClienteRow, 0, batchSize) // create a recyclable batc
+	for i, t := range transcriptors {
+		url := t.Url
+		if t.Url != "" {
+			url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
+		}
+		theresMore := true
+		page := 0
+		batch := make([]utils.ClienteRow, 0, batchSize) // create a recyclable batc
 
-	for theresMore {
-		page += 1
-		r, err := Request(requestInfo{
-			url:    fmt.Sprintf("%s&page=%d", url, page),
-			method: "GET",
-		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
-		if err != nil {
-			fmt.Println("ERROR stream clientes Tray :", err.Error())
-		}
-		genMap := map[string]any{}
-		err = json.Unmarshal(r, &genMap)
-		if err != nil {
-			fmt.Println("Error unmarshall err :", err)
-		}
-		clients := genMap["Customers"].([]any)
-		if len(clients) == 0 {
-			theresMore = false
-		}
-		// fmt.Println(fmt.Sprintf("%s&page=%d", url, page), len(clients))
-
-		for _, m := range clients {
-			row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), t))
+		for theresMore {
+			page += 1
+			r, err := Request(requestInfo{
+				url:    fmt.Sprintf("%s&page=%d", url, page),
+				method: "GET",
+			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 			if err != nil {
-				fmt.Println("Erro transcribe to row", err)
-				continue
+				fmt.Println("ERROR stream clientes Tray :", err.Error())
 			}
-			// fmt.Println("adding batch", page, len(batch))
+			genMap := map[string]any{}
+			err = json.Unmarshal(r, &genMap)
+			if err != nil {
+				fmt.Println("Error unmarshall err :", err)
+			}
+			clients, ok := genMap["Customers"].([]any)
+			if len(clients) == 0 || !ok {
+				theresMore = false
+			}
+			// fmt.Println(fmt.Sprintf("%s&page=%d", url, page), len(clients))
 
-			batch = append(batch, row)
-			if len(batch) == batchSize {
-
-				if err := cb(batch); err != nil {
-					return err
+			for _, m := range clients {
+				row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), t))
+				if err != nil {
+					fmt.Println("Erro transcribe to row", err)
+					continue
 				}
-				batch = batch[:0] // reuse backing array
+				// fmt.Println("adding batch", page, len(batch))
+
+				batch = append(batch, row)
+				if len(batch) == batchSize {
+
+					if err := cb(batch); err != nil {
+						return err
+					}
+					batch = batch[:0] // reuse backing array
+				}
+
 			}
+			if !theresMore {
+				if i == len(transcriptors)-1 {
+					return cb(batch)
+
+				}
+			}
+
+			time.Sleep(400 * time.Millisecond)
 
 		}
-		if !theresMore {
+		if len(batch) > 0 {
 			return cb(batch)
 		}
-
-		time.Sleep(400 * time.Millisecond)
-
-	}
-	if len(batch) > 0 {
-		return cb(batch)
 	}
 
 	return err
@@ -291,67 +300,77 @@ func GetVendedoresTray(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, e
 }
 
 func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([]utils.VendaRow) error) error {
-	t, err := JsonToTranscriptor([]byte(transcriptor))
+	tr, err := JsonToTranscriptor([]byte(transcriptor))
 	if err != nil {
 		fmt.Println(err)
 	}
-	url := t.Url
-	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
+	transcriptors := []Transcriptor{tr}
+	if tr.Union != nil {
+		transcriptors = append(transcriptors, *tr.Union...)
 	}
-	theresMore := true
-	page := 0
-	batch := make([]utils.VendaRow, 0, batchSize) // create a recyclable batch
-	for theresMore {
-		page += 1
-		r, err := Request(requestInfo{
-			url:    fmt.Sprintf("%s&page=%d", url, page),
-			method: "GET",
-		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
+	for i, t := range transcriptors {
+		url := t.Url
+		if t.Url != "" {
+			url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
+		}
+		theresMore := true
+		page := 0
+		batch := make([]utils.VendaRow, 0, batchSize) // create a recyclable batch
+		for theresMore {
+			page += 1
+			r, err := Request(requestInfo{
+				url:    fmt.Sprintf("%s&page=%d", url, page),
+				method: "GET",
+			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 
-		if err != nil {
-			fmt.Println("ERROR stream produtos Tray :", err.Error(), string(r))
-		}
-		genMap := map[string]any{}
-		err = json.Unmarshal(r, &genMap)
-		if err != nil {
-			fmt.Println("Error unmarshall err :", err)
-		}
-		orders := genMap["Orders"].([]any)
-		if len(orders) == 0 {
-			theresMore = false
-		}
-		for _, m := range orders {
-			row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), t))
 			if err != nil {
-				fmt.Println("Erro transcribe to row", err)
-				continue
+				fmt.Println("ERROR stream produtos Tray :", err.Error(), string(r))
 			}
-			if row.ProdutosVendaRaw != nil {
-				json.Unmarshal(*row.ProdutosVendaRaw, &row.ProdutosVenda)
+			genMap := map[string]any{}
+			err = json.Unmarshal(r, &genMap)
+			if err != nil {
+				fmt.Println("Error unmarshall err :", err)
 			}
-			if row.DatasVencimentoRaw != nil {
-				json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
-			}
-			batch = append(batch, row)
-			if len(batch) == batchSize {
 
-				if err := cb(batch); err != nil {
-					return err
-				}
-				batch = batch[:0] // reuse backing array
+			orders, ok := genMap["Orders"].([]any)
+			if len(orders) == 0 || !ok {
+				theresMore = false
 			}
+			for _, m := range orders {
+				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), t))
+				if err != nil {
+					fmt.Println("Erro transcribe to row", err)
+					continue
+				}
+				if row.ProdutosVendaRaw != nil {
+					json.Unmarshal(*row.ProdutosVendaRaw, &row.ProdutosVenda)
+				}
+				if row.DatasVencimentoRaw != nil {
+					json.Unmarshal(*row.DatasVencimentoRaw, &row.DatasVencimento)
+				}
+				batch = append(batch, row)
+				if len(batch) == batchSize {
+
+					if err := cb(batch); err != nil {
+						return err
+					}
+					batch = batch[:0] // reuse backing array
+				}
+
+			}
+
+			if !theresMore {
+				if i == len(transcriptors)-1 {
+					return cb(batch)
+
+				}
+			}
+			time.Sleep(400 * time.Millisecond)
 
 		}
-
-		if !theresMore {
+		if len(batch) > 0 {
 			return cb(batch)
 		}
-		time.Sleep(400 * time.Millisecond)
-
-	}
-	if len(batch) > 0 {
-		return cb(batch)
 	}
 
 	return err
