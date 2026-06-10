@@ -121,6 +121,7 @@ func StreamClientesTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 	if tr.Union != nil {
 		transcriptors = append(transcriptors, *tr.Union...)
 	}
+	batch := make([]utils.ClienteRow, 0, batchSize) // create a recyclable batc
 	for i, t := range transcriptors {
 		url := t.Url
 		if t.Url != "" {
@@ -128,7 +129,6 @@ func StreamClientesTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 		}
 		theresMore := true
 		page := 0
-		batch := make([]utils.ClienteRow, 0, batchSize) // create a recyclable batc
 
 		for theresMore {
 			page += 1
@@ -308,6 +308,8 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 	if tr.Union != nil {
 		transcriptors = append(transcriptors, *tr.Union...)
 	}
+	batch := make([]utils.VendaRow, 0, batchSize) // create a recyclable batch
+
 	for i, t := range transcriptors {
 		url := t.Url
 		if t.Url != "" {
@@ -315,7 +317,6 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 		}
 		theresMore := true
 		page := 0
-		batch := make([]utils.VendaRow, 0, batchSize) // create a recyclable batch
 		for theresMore {
 			page += 1
 			r, err := Request(requestInfo{
