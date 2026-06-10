@@ -3,6 +3,7 @@ package apimanagers
 import (
 	pb "MoraLinkGOst/modules/proto/agentpb"
 	"MoraLinkGOst/modules/utils"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -178,11 +179,11 @@ func StreamClientesTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 			time.Sleep(400 * time.Millisecond)
 
 		}
-		if len(batch) > 0 {
-			return cb(batch)
-		}
-	}
 
+	}
+	if len(batch) > 0 {
+		return cb(batch)
+	}
 	return err
 }
 func StreamGenericTray(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error {
@@ -320,7 +321,7 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 		for theresMore {
 			page += 1
 			r, err := Request(requestInfo{
-				url:    fmt.Sprintf("%s&page=%d", url, page),
+				url:    strings.ReplaceAll(fmt.Sprintf("%s&page=%d", url, page), " ", "%20"),
 				method: "GET",
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 
@@ -332,11 +333,11 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 			if err != nil {
 				fmt.Println("Error unmarshall err :", err)
 			}
-
-			orders, ok := genMap["Orders"].([]any)
+			orders, ok := genMap[t.GetFrom].([]any)
 			if len(orders) == 0 || !ok {
 				theresMore = false
 			}
+
 			for _, m := range orders {
 				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), t))
 				if err != nil {
@@ -369,11 +370,11 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 			time.Sleep(400 * time.Millisecond)
 
 		}
-		if len(batch) > 0 {
-			return cb(batch)
-		}
-	}
 
+	}
+	if len(batch) > 0 {
+		return cb(batch)
+	}
 	return err
 }
 func StreamCobrancasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([]utils.FinanceiroRow) error) error {

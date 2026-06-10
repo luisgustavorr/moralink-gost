@@ -25,11 +25,13 @@ const (
 	Case
 	ToInt
 	ToFloat
+	DaysToNow
 )
 
 type DateFormater struct {
 	RawTemplate       string `json:"raw"`
 	FormattedTemplate string `json:"dst"`
+	TimezoneDiff      int    `json:"timezone_diff"`
 }
 
 var OperationNameMap = map[Operation]OperationName{
@@ -42,6 +44,7 @@ var OperationNameMap = map[Operation]OperationName{
 	Case:        "case",
 	ToInt:       "to_int",
 	ToFloat:     "to_float",
+	DaysToNow:   "days_to_now",
 }
 var OperationUintMap = map[OperationName]Operation{
 	"fetch":        0,
@@ -53,6 +56,7 @@ var OperationUintMap = map[OperationName]Operation{
 	"case":         6,
 	"to_int":       7,
 	"to_float":     8,
+	"days_to_now":  9,
 }
 
 func (o Operation) String() OperationName {
@@ -75,6 +79,7 @@ type Transcriptor struct {
 	Id_1              Id                 `json:"id_1"`
 	Id_2              Id                 `json:"id_2"`
 	Id_3              Id                 `json:"id_3"`
+	GetFrom           string             `json:"get_from"`
 	Url               string             `json:"url"`
 	Fields            []FieldRule        `json:"fields"`
 	IndividualDetails *IndividualDetails `json:"individual_detail"`
@@ -104,12 +109,17 @@ type CaseRule struct {
 	Conditions []Conditions `json:"conditions"`
 	Default    string       `json:"default"`
 }
+type ConcatRules struct {
+	Srcs      []string `json:"sources"`
+	Separator string   `json:"separator"`
+}
 type FieldRule struct {
 	Src              string              `json:"src"`
 	SrcList          []string            `json:"src_list"`           // work as a coalesce
 	SrcRawValue      string              `json:"src_raw_value"`      // get the value as final result
 	SrcBuildJson     *SrcBuildJson       `json:"src_object_builder"` // build a map[string]any
 	SrcPaymentStatus *SrcPaymentStatus   `json:"src_payment_status"` // build a map[string]any
+	SrcConcat        *ConcatRules        `json:"src_concat"`         // concatenate multiples src into one value
 	Dst              string              `json:"dst"`
 	Op               string              `json:"op"`             // "", "path", "expr", "fetch"
 	Method           string              `json:"method"`         // for fetch
@@ -298,6 +308,18 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 			transcribedMap[f.Dst] = f.SrcRawValue
 			continue
 		}
+		if f.SrcConcat != nil {
+			if len(f.SrcConcat.Srcs) >= 1 {
+				strs := []string{}
+				for _, v := range f.SrcConcat.Srcs {
+					strs = append(strs, utils.ToString(ResolvePath(m, v)))
+				}
+
+				m["concatenated_value"] = strings.Join(strs, f.SrcConcat.Separator)
+				f.Src = "concatenated_value"
+			}
+		}
+
 		if len(f.SrcList) >= 1 {
 			for _, s := range f.SrcList {
 				if utils.ToString(ResolvePath(m, f.Src)) == "" && utils.ToString(ResolvePath(m, s)) != "" {
@@ -327,7 +349,8 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 				continue
 			}
 			parsed := getDate(input, f.FormatDate.RawTemplate)
-			output := parsed.Format(f.FormatDate.FormattedTemplate)
+			output := parsed.Add(time.Duration(f.FormatDate.TimezoneDiff) * time.Hour).Format(f.FormatDate.FormattedTemplate)
+
 			transcribedMap[f.Dst] = output
 		case "calc_duration":
 			id_categoria := ResolvePath(m, f.Src)
@@ -344,6 +367,14 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 			transcribedMap[f.Dst] = utils.ToInt(ResolvePath(m, f.Src))
 		case "to_float":
 			transcribedMap[f.Dst] = utils.ToFloat(ResolvePath(m, f.Src))
+		case "days_to_now":
+			input := utils.ToString(ResolvePath(m, f.Src))
+			if input == "" {
+				transcribedMap[f.Dst] = ""
+				continue
+			}
+			parsed := getDate(input, f.FormatDate.RawTemplate)
+			transcribedMap[f.Dst] = utils.CalendarDays(time.Now(), parsed) - 1
 		case "extract":
 			transcribedMap[f.Dst] = ResolvePath(m, f.Src)
 		default:

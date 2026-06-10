@@ -654,3 +654,13 @@ func Contains(slice []string, element string) bool {
 	}
 	return false
 }
+
+// CalendarDays returns the calendar difference between times (t2 - t1) as days.
+func CalendarDays(t2, t1 time.Time) int {
+	y, m, d := t2.Date()
+	t2Midnight := time.Date(y, m, d, 0, 0, 0, 0, t2.Location())
+	y, m, d = t1.In(t2.Location()).Date()
+	t1Midnight := time.Date(y, m, d, 0, 0, 0, 0, t2.Location())
+	days := t2Midnight.Sub(t1Midnight).Hours() / 24
+	return int(days)
+}

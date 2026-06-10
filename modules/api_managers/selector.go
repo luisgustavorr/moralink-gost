@@ -35,7 +35,7 @@ func Request(infos requestInfo, customKeys []string, customValues []string) (bod
 		return
 	}
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("User-Agent", "insomnia/2023.5.8")
+	req.Header.Add("User-Agent", "PostmanRuntime/7.49.1")
 
 	req.Header.Add("Authorization", infos.token)
 	for i, v := range customKeys {
