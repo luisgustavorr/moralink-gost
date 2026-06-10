@@ -250,6 +250,8 @@ The `op` field controls how the resolved `src` value is transformed before being
 | `build_object` | Build a nested JSON object using `src_object_builder` |
 | `calc_duration` | Map the resolved value to a duration string using `duration_rules` |
 | `case` | Conditional value mapping using `case.conditions` and `case.default` |
+| `to_int` | Convert string values to int values|
+| `to_float` | Convert string values to float values|
 
 > Operations `disc_percent`, `disc_value`, `coalesce`, and `fetch` appear in internal constants but are not implemented in the current transcription switch. Do not use them in configs.
 
@@ -339,6 +341,30 @@ Evaluates a list of conditions against the resolved `src` value and writes the f
 | `default` | Value written when no condition matches |
 
 Matching is done by strict string equality between `when` and the value returned by `ResolvePath(element, src)`. Only the first matching condition is applied.
+
+---
+
+## `to_int` / `to_float` 
+
+Recovers a string value and convert it to int/float.
+
+```json
+{
+  "src": "ProductsSold.quantity",
+  "dst": "quantidade",
+  "op": "to_int"
+}
+```
+or
+```json
+{
+  "src": "ProductsSold.price",
+  "dst": "valor_unitario",
+  "op": "to_float"
+}
+```
+
+The src field supports dot-path traversal (resolved via ResolvePath), so nested values work directly.
 
 ---
 

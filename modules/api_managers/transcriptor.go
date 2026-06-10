@@ -23,6 +23,8 @@ const (
 	Coalesce
 	Format_date
 	Case
+	ToInt
+	ToFloat
 )
 
 type DateFormater struct {
@@ -38,6 +40,8 @@ var OperationNameMap = map[Operation]OperationName{
 	Coalesce:    "coalesce",
 	Format_date: "format_date",
 	Case:        "case",
+	ToInt:       "to_int",
+	ToFloat:     "to_float",
 }
 var OperationUintMap = map[OperationName]Operation{
 	"fetch":        0,
@@ -47,6 +51,8 @@ var OperationUintMap = map[OperationName]Operation{
 	"coalesce":     4,
 	"format_date":  5,
 	"case":         6,
+	"to_int":       7,
+	"to_float":     8,
 }
 
 func (o Operation) String() OperationName {
@@ -333,8 +339,11 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 				}
 				transcribedMap[f.Dst] = durationSelected
 			}
+		case "to_int":
+			transcribedMap[f.Dst] = utils.ToInt(ResolvePath(m, f.Src))
+		case "to_float":
+			transcribedMap[f.Dst] = utils.ToFloat(ResolvePath(m, f.Src))
 		case "extract":
-
 			transcribedMap[f.Dst] = ResolvePath(m, f.Src)
 		default:
 			transcribedMap[f.Dst] = m[f.Src]

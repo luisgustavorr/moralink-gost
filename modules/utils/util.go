@@ -560,7 +560,77 @@ func ParseDBConfig(jsonStr string) (map[string]interface{}, error) {
 	err := json.Unmarshal([]byte(jsonStr), &cfg)
 	return cfg, err
 }
+func ToInt(v interface{}) int {
+	switch n := v.(type) {
+	case json.Number:
+		i, err := n.Int64()
+		if err != nil {
+			fmt.Println("❌ Error converting to int json.Number: ", err, "value:", n)
+			return 0
+		}
+		return int(i)
+	case string:
+		i, err := strconv.Atoi(n)
+		if err != nil {
+			f, err := strconv.ParseFloat(n, 64)
+			if err != nil {
+				fmt.Println("❌ Error converting string:", err, "value:", n)
+				return 0
+			}
+			return int(f)
+		}
+		return i
+	case float64:
+		return int(n)
+	case int:
+		return n
+	case int64:
+		return int(n)
+	case int32:
+		return int(n)
+	case int16:
+		return int(n)
+	case int8:
+		return int(n)
+	case uint:
+		return int(n)
+	case uint64:
+		return int(n)
+	case uint32:
+		return int(n)
+	case uint16:
+		return int(n)
+	case uint8:
+		return int(n)
+	default:
+		// fmt.Printf("❌ Unknown type (%T): %v\n", v, v)
+		return 0
+	}
+}
 
+// função para converter qualquer tipo para float64
+func ToFloat(val interface{}) float64 {
+	switch v := val.(type) {
+	case float64:
+		return v
+	case float32:
+		return float64(v)
+	case json.Number:
+		i, err := v.Float64()
+		if err != nil {
+			fmt.Println("❌ Error converting json.Number:", err, "value:", v)
+			return 0
+		}
+		return float64(i)
+	case string:
+		f, _ := strconv.ParseFloat(v, 64)
+		return f
+	default:
+		fmt.Printf("❌ Unknown type (%T): %v to value :\n", v, v)
+		fmt.Println(val)
+		return 0
+	}
+}
 func ToString(val interface{}) string {
 	if directConverted, ok := val.(string); ok {
 		return directConverted
