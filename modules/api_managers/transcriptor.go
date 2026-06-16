@@ -125,7 +125,7 @@ type FieldRule struct {
 	Method           string              `json:"method"`         // for fetch
 	Extract          string              `json:"extract"`        // dot-path into the fetch response
 	Alias            string              `json:"alias"`          // "src_key->dst_key,..." for fetch
-	Nullif           string              `json:"nullif"`         // consider value as null if = as this value
+	Nullif           *string             `json:"nullif"`         // consider value as null if = as this value
 	DurationRules    map[string][]string `json:"duration_rules"` // define the duration value based on 'custom_ids' table
 	FormatDate       DateFormater        `json:"format_date"`    // define the duration value based on 'custom_ids' table
 	Case             CaseRule            `json:"case"`
@@ -323,7 +323,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		if len(f.SrcList) >= 1 {
 			for _, s := range f.SrcList {
 				if utils.ToString(ResolvePath(m, f.Src)) == "" && utils.ToString(ResolvePath(m, s)) != "" {
-					if f.Nullif != "" && utils.ToString(ResolvePath(m, s)) == f.Nullif {
+					if f.Nullif != nil && utils.ToString(ResolvePath(m, s)) == *f.Nullif {
 						continue
 					}
 					f.Src = s
@@ -376,11 +376,16 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 			parsed := getDate(input, f.FormatDate.RawTemplate)
 			transcribedMap[f.Dst] = utils.CalendarDays(time.Now(), parsed) - 1
 		case "extract":
+			if f.Dst == "codigo" {
+				// fmt.Println("Codigo from : ", ResolvePath(m, f.Src), f.Src, utils.JsonViewInterface(m))
+
+			}
 			transcribedMap[f.Dst] = ResolvePath(m, f.Src)
 		default:
 			transcribedMap[f.Dst] = m[f.Src]
 		}
 	}
+	fmt.Println(utils.JsonViewInterface(transcribedMap))
 	return transcribedMap
 }
 
