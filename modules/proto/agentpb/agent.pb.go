@@ -202,8 +202,9 @@ func (DbType) EnumDescriptor() ([]byte, []int) {
 type APIOwner int32
 
 const (
-	APIOwner_FRONTSYS APIOwner = 0
-	APIOwner_TRAY     APIOwner = 1
+	APIOwner_FRONTSYS     APIOwner = 0
+	APIOwner_TRAY         APIOwner = 1
+	APIOwner_GESTAO_CLICK APIOwner = 2
 )
 
 // Enum value maps for APIOwner.
@@ -211,10 +212,12 @@ var (
 	APIOwner_name = map[int32]string{
 		0: "FRONTSYS",
 		1: "TRAY",
+		2: "GESTAO_CLICK",
 	}
 	APIOwner_value = map[string]int32{
-		"FRONTSYS": 0,
-		"TRAY":     1,
+		"FRONTSYS":     0,
+		"TRAY":         1,
+		"GESTAO_CLICK": 2,
 	}
 )
 
@@ -3038,10 +3041,11 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x05MSSQL\x10\x03\x12\r\n" +
 	"\tMYSQL_OLD\x10\x04\x12\a\n" +
 	"\x03MDB\x10\x05\x12\v\n" +
-	"\aPARADOX\x10\x06*#\n" +
+	"\aPARADOX\x10\x06*5\n" +
 	"\tAPI_owner\x12\f\n" +
 	"\bFRONTSYS\x10\x00\x12\b\n" +
-	"\x04TRAY\x10\x01*I\n" +
+	"\x04TRAY\x10\x01\x12\x10\n" +
+	"\fGESTAO_CLICK\x10\x02*I\n" +
 	"\aCommand\x12\x0f\n" +
 	"\vRESTART_APP\x10\x00\x12\x0e\n" +
 	"\n" +
