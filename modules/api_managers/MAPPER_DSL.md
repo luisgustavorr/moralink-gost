@@ -13,20 +13,24 @@ The document has the following top-level keys:
 ```json
 {
   "url": "...",
+  "get_from": "...",
   "id_1": { ... },
   "id_2": { ... },
   "id_3": { ... },
   "individual_detail": { ... },
-  "fields": [ ... ]
+  "fields": [ ... ],
+  "union": [ ... ]
 }
 ```
 
 | Key | Description |
 |-----|-------------|
 | `url` | Base URL for the API request |
+| `get_from` | Key used to extract the target array from the API response object (e.g. `"Orders"` picks `response["Orders"]`). Used by integrations like Tray where the response is a wrapper object rather than a bare array |
 | `id_N` | URL parameter injectors (dynamic query string values); `id_1`, `id_2`, and `id_3` are supported |
 | `individual_detail` | Optional config for a secondary per-record fetch (see [Individual Detail](#individual-detail-individual_detail)) |
 | `fields` | Ordered list of field mapping rules |
+| `union` | Optional array of additional `Transcriptor` configs processed in sequence after the main one, in the same streaming pass (see [Union](#union)) |
 
 ---
 
@@ -106,6 +110,7 @@ Each object in `fields` maps one value from the raw API response to one destinat
 | `src_list` | string[] | — | Coalesce — additional fallback keys tried after `src` |
 | `src_object_builder` | object | — | Build a nested JSON object (triggers `build_object` behaviour) |
 | `src_payment_status` | object | — | Resolve a payment status string (triggers payment status logic) |
+| `src_concat` | object | — | Concatenate multiple source fields into one value before applying `op` |
 | `nullif` | string | — | Treat the resolved value as empty if it equals this string |
 | `format_date` | object | — | Date format config when `op` is `format_date` |
 | `duration_rules` | object | — | Category-to-duration map when `op` is `calc_duration` |
@@ -170,7 +175,30 @@ Tries `src` first, then each key in `src_list` in order, and uses the first non-
 
 ---
 
-### 5. Payment status — `src_payment_status`
+### 5. Concatenation — `src_concat`
+
+Joins multiple source fields into a single string value, then uses the result as the effective `src` for the rest of the rule (including `op` and `src_list`). The merged value is stored temporarily under the key `"concatenated_value"` on the current element.
+
+```json
+{
+  "src_concat": {
+    "sources": ["firstName", "lastName"],
+    "separator": " "
+  },
+  "dst": "nome"
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `sources` | Ordered list of dot-paths to concatenate; each is resolved via `ResolvePath` so nested paths work |
+| `separator` | String inserted between each resolved value |
+
+> After concatenation, `src` is internally replaced with `"concatenated_value"`. Any `op` or `src_list` rules on the same field rule then operate on the merged string.
+
+---
+
+### 6. Payment status — `src_payment_status`
 
 Resolves a payment status string by inspecting two date fields: one for the expiry/due date and one for the paid date. The resolved value is one of three strings: `"paga"`, `"criada"`, or `"vencida"`.
 
@@ -207,7 +235,7 @@ Resolution logic:
 
 ---
 
-### 6. Object builder — `src_object_builder`
+### 7. Object builder — `src_object_builder`
 
 Builds a nested object (or array of objects) by running a recursive sub-transcriptor on the current element or on a sub-array within it. The result is JSON-serialised and stored in the destination field (which should map to a `*[]byte` column).
 
@@ -250,8 +278,9 @@ The `op` field controls how the resolved `src` value is transformed before being
 | `build_object` | Build a nested JSON object using `src_object_builder` |
 | `calc_duration` | Map the resolved value to a duration string using `duration_rules` |
 | `case` | Conditional value mapping using `case.conditions` and `case.default` |
-| `to_int` | Convert string values to int values|
-| `to_float` | Convert string values to float values|
+| `to_int` | Convert the resolved value to an integer |
+| `to_float` | Convert the resolved value to a float |
+| `days_to_now` | Parse a date from `format_date.raw` layout and output the number of calendar days between that date and today (result is an integer) |
 
 > Operations `disc_percent`, `disc_value`, `coalesce`, and `fetch` appear in internal constants but are not implemented in the current transcription switch. Do not use them in configs.
 
@@ -268,7 +297,8 @@ Parses a date string from one format and outputs it in another. Used as a standa
   "op": "format_date",
   "format_date": {
     "raw": "02/01/2006",
-    "dst": "2006-01-02"
+    "dst": "2006-01-02",
+    "timezone_diff": -3
   }
 }
 ```
@@ -277,6 +307,7 @@ Parses a date string from one format and outputs it in another. Used as a standa
 |----------|-------------|
 | `raw` | Input date format using Go time layout |
 | `dst` | Output date format using Go time layout |
+| `timezone_diff` | Integer hours added to the parsed time before formatting (e.g. `-3` for UTC-3). Defaults to `0` if omitted |
 
 If the source value is an empty string, an empty string is written to the destination without error.
 
@@ -344,27 +375,61 @@ Matching is done by strict string equality between `when` and the value returned
 
 ---
 
-## `to_int` / `to_float` 
+## `to_int` / `to_float`
 
-Recovers a string value and convert it to int/float.
+Converts the resolved `src` value to a numeric type. Both ops use `ResolvePath` so dot-paths work directly.
+
+```json
+{ "src": "ProductsSold.quantity", "dst": "quantidade", "op": "to_int" }
+```
+
+```json
+{ "src": "ProductsSold.price", "dst": "valor_unitario", "op": "to_float" }
+```
+
+Both handle strings, JSON numbers, and all native integer/float types. `to_float` also accepts `json.Number`. If conversion fails the result is `0`.
+
+---
+
+## `days_to_now`
+
+Parses a date string using `format_date.raw` and writes the number of calendar days between that date and today as an integer. The result is calculated as `today - parsed_date - 1`.
 
 ```json
 {
-  "src": "ProductsSold.quantity",
-  "dst": "quantidade",
-  "op": "to_int"
-}
-```
-or
-```json
-{
-  "src": "ProductsSold.price",
-  "dst": "valor_unitario",
-  "op": "to_float"
+  "src": "dataCompra",
+  "dst": "dias_desde_compra",
+  "op": "days_to_now",
+  "format_date": { "raw": "02/01/2006" }
 }
 ```
 
-The src field supports dot-path traversal (resolved via ResolvePath), so nested values work directly.
+`format_date.dst` is not used here (there is no output formatting — the result is always an integer). If the source value is empty, an empty string is written instead.
+
+---
+
+## Union
+
+The top-level `union` key holds an array of additional `Transcriptor` configs. When present, the integration function processes all transcriptors in sequence — the main one first, then each entry in `union` — within the same streaming batch. This lets you merge data from multiple API endpoints or filter by multiple status values into one result set.
+
+```json
+{
+  "url": "https://api.example.com/orders?status=approved",
+  "get_from": "Orders",
+  "id_1": { "key": "&token=", "value": "token" },
+  "fields": [ ... ],
+  "union": [
+    {
+      "url": "https://api.example.com/orders?status=pending",
+      "get_from": "Orders",
+      "id_1": { "key": "&token=", "value": "token" },
+      "fields": [ ... ]
+    }
+  ]
+}
+```
+
+> `union` is currently consumed by `StreamClientesTray` and `StreamVendasTray`. Other integrations that only read the main `Transcriptor` will ignore it.
 
 ---
 
@@ -449,8 +514,9 @@ For each element, `Transcribe` processes rules in array order. Within a single r
 2. `src_payment_status` — payment status logic; writes result and moves to next rule
 3. `src_object_builder` — object builder; writes result and moves to next rule
 4. `src_raw_value` — literal write; moves to next rule
-5. `src_list` coalesce — override `src` with the first non-empty fallback
-6. `op` switch — apply the chosen operation to the resolved `src`
+5. `src_concat` — concatenate sources into `"concatenated_value"`, replace `src` with that key
+6. `src_list` coalesce — override `src` with the first non-empty fallback
+7. `op` switch — apply the chosen operation to the resolved `src`
 
 ---
 

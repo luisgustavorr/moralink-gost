@@ -62,6 +62,8 @@ func DecideWhoActs(ao pb.APIOwner, c *pb.APITokenGetter) (*utils.DbInfos, error)
 		connectFrontsys(c, db)
 	case pb.APIOwner_TRAY:
 		connectTray(c, db)
+	case pb.APIOwner_GESTAO_CLICK:
+		connectGestaoClick(c, db)
 	}
 	return db, nil
 }
