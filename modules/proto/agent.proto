@@ -48,6 +48,7 @@ enum API_owner {
   FRONTSYS = 0 ;
   TRAY = 1;
   GESTAO_CLICK = 2;
+  TOOLSPHARMA= 3;
 }
 // desc: Which Command was requested
 enum Command {

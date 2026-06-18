@@ -4,6 +4,7 @@ import (
 	"MoraLinkGOst/modules/utils"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -12,58 +13,19 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type Operation uint8
-type OperationName string
+type DiscType uint8
 
 const (
-	Fetch Operation = iota
-	Expr
-	DiscPercent
-	DiscValue
-	Coalesce
-	Format_date
-	Case
-	ToInt
-	ToFloat
-	DaysToNow
+	DecimalPercentage DiscType = iota // 0.25
+	FixedValue                        //$5
+	Percentage                        // 25%
+	AlreadyDicounted                  //$15
 )
 
 type DateFormater struct {
 	RawTemplate       string `json:"raw"`
 	FormattedTemplate string `json:"dst"`
 	TimezoneDiff      int    `json:"timezone_diff"`
-}
-
-var OperationNameMap = map[Operation]OperationName{
-	Fetch:       "fetch",
-	Expr:        "expr",
-	DiscPercent: "disc_percent",
-	DiscValue:   "disc_value",
-	Coalesce:    "coalesce",
-	Format_date: "format_date",
-	Case:        "case",
-	ToInt:       "to_int",
-	ToFloat:     "to_float",
-	DaysToNow:   "days_to_now",
-}
-var OperationUintMap = map[OperationName]Operation{
-	"fetch":        0,
-	"expr":         1,
-	"disc_percent": 2,
-	"disc_value":   3,
-	"coalesce":     4,
-	"format_date":  5,
-	"case":         6,
-	"to_int":       7,
-	"to_float":     8,
-	"days_to_now":  9,
-}
-
-func (o Operation) String() OperationName {
-	return OperationNameMap[o]
-}
-func (o OperationName) Uint8() Operation {
-	return OperationUintMap[o]
 }
 
 type Id struct {
@@ -130,8 +92,18 @@ type FieldRule struct {
 	FormatDate       DateFormater        `json:"format_date"`    // define the duration value based on 'custom_ids' table
 	Case             CaseRule            `json:"case"`
 	SwitchToDetails  bool                `json:"switch_to_details"`
+	MinPriceRules    *MinPriceRules      `json:"min_price_rules"`
 }
-
+type MinPriceDiscount struct {
+	CondField string   `json:"cond_field"`
+	CondValue string   `json:"cond_value"`
+	DiscField string   `json:"disc_field"`
+	DiscType  DiscType `json:"disc_type"`
+}
+type MinPriceRules struct {
+	BaseField string             `json:"base_field"`
+	Discounts []MinPriceDiscount `json:"discounts"`
+}
 type TransformFunc func(val any, row map[string]any) any
 
 func ResolveDynamicId(id string) string {
@@ -181,6 +153,7 @@ func getSrcValueAsString(s string, m map[string]any) string {
 }
 func getDate(base string, raw string) time.Time {
 	parsed, _ := time.Parse(raw, base)
+	// fmt.Println(err)
 	return parsed
 }
 func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any {
@@ -221,7 +194,6 @@ func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any
 
 				}
 			} else {
-				fmt.Println("Interface 2")
 
 				result = append(result, data)
 				return result
@@ -330,6 +302,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 				}
 			}
 		}
+
 		switch f.Op {
 		// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
 		case "case":
@@ -381,6 +354,41 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 
 			}
 			transcribedMap[f.Dst] = ResolvePath(m, f.Src)
+		case "calc_min_price":
+			if f.MinPriceRules != nil {
+				baseValue := utils.ToFloat(ResolvePath(m, f.MinPriceRules.BaseField))
+				values := []float64{}
+				for _, discount := range f.MinPriceRules.Discounts {
+					if discount.CondField != "" && discount.CondValue != "" {
+						condValue := ResolvePath(m, discount.CondField)
+						if utils.ToString(condValue) != discount.CondValue {
+							continue
+						}
+					}
+					disc := utils.ToFloat(ResolvePath(m, discount.DiscField))
+					var value float64
+					switch discount.DiscType {
+					case 0:
+						value = baseValue * (1 - disc)
+					case 1:
+						value = baseValue - disc
+					case 2:
+						value = baseValue * (1 - (disc * 0.01))
+					case 3:
+						value = disc
+					}
+					if value > 0 {
+						values = append(values, value)
+					}
+				}
+				minVal := values[0]
+				for _, c := range values[1:] {
+					if c < minVal {
+						minVal = c
+					}
+				}
+				transcribedMap[f.Dst] = float32(math.Round(minVal*100) / 100)
+			}
 		default:
 			transcribedMap[f.Dst] = m[f.Src]
 		}

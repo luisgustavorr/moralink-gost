@@ -64,6 +64,8 @@ func DecideWhoActs(ao pb.APIOwner, c *pb.APITokenGetter) (*utils.DbInfos, error)
 		connectTray(c, db)
 	case pb.APIOwner_GESTAO_CLICK:
 		connectGestaoClick(c, db)
+	case pb.APIOwner_TOOLSPHARMA:
+		connectToolspharma(c, db)
 	}
 	return db, nil
 }
