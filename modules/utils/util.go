@@ -623,7 +623,11 @@ func ToFloat(val interface{}) float64 {
 		}
 		return float64(i)
 	case string:
-		f, _ := strconv.ParseFloat(v, 64)
+
+		f, err := strconv.ParseFloat(v, 64)
+		if strings.Contains(v, ",") && err != nil {
+			f, _ = strconv.ParseFloat(strings.ReplaceAll(v, ",", "."), 64)
+		}
 		return f
 	default:
 		fmt.Printf("❌ Unknown type (%T): %v to value :\n", v, v)
