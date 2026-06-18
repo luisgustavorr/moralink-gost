@@ -385,7 +385,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 			transcribedMap[f.Dst] = m[f.Src]
 		}
 	}
-	fmt.Println(utils.JsonViewInterface(transcribedMap))
+	// fmt.Println(utils.JsonViewInterface(transcribedMap))
 	return transcribedMap
 }
 
