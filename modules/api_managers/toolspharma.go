@@ -63,16 +63,17 @@ func StreamProdutosToolspharma(transcriptor string, d *sqlx.DB, batchSize int, c
 	batch := make([]utils.ProdutoRow, 0, batchSize) // create a recyclable batc
 	for i, t := range transcriptors {
 		url := t.Url
+
 		if t.Url != "" {
 			url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
 		}
 		theresMore := true
 		page := 0
-
+		// fmt.Println("URL : ", url, transcriptor)
 		for theresMore {
 			page += 1
 			r, err := Request(requestInfo{
-				url:    fmt.Sprintf("%s&pagina=%d", url, page),
+				url:    fmt.Sprintf("%s&Pagina=%d", url, page),
 				method: "GET",
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 			if err != nil {
@@ -83,7 +84,7 @@ func StreamProdutosToolspharma(transcriptor string, d *sqlx.DB, batchSize int, c
 			if err != nil {
 				fmt.Println("Error unmarshall err :", err)
 			}
-			clients, ok := genMap["data"].([]any)
+			clients, ok := genMap["list"].([]any)
 			if len(clients) == 0 || !ok {
 				theresMore = false
 			}
@@ -95,7 +96,6 @@ func StreamProdutosToolspharma(transcriptor string, d *sqlx.DB, batchSize int, c
 					fmt.Println("Erro transcribe to row", err)
 					continue
 				}
-				fmt.Println("adding batch", page, len(batch))
 
 				batch = append(batch, row)
 				if len(batch) == batchSize {
@@ -156,7 +156,7 @@ func StreamClientesToolspharma(transcriptor string, d *sqlx.DB, batchSize int, c
 			if err != nil {
 				fmt.Println("Error unmarshall err :", err)
 			}
-			clients, ok := genMap["data"].([]any)
+			clients, ok := genMap["list"].([]any)
 			if len(clients) == 0 || !ok {
 				theresMore = false
 			}
@@ -168,7 +168,6 @@ func StreamClientesToolspharma(transcriptor string, d *sqlx.DB, batchSize int, c
 					fmt.Println("Erro transcribe to row", err)
 					continue
 				}
-				fmt.Println("adding batch", page, len(batch))
 
 				batch = append(batch, row)
 				if len(batch) == batchSize {
@@ -223,7 +222,7 @@ func GetCategoriasToolspharma(transcriptor string, db *sqlx.DB) ([]utils.Categor
 		}
 		genMapParent := map[string]any{}
 		err = json.Unmarshal(r, &genMapParent)
-		localGenMap := genMapParent["data"].([]any)
+		localGenMap := genMapParent["list"].([]any)
 		if len(localGenMap) == 0 {
 			theresMore = false
 		}
@@ -279,7 +278,7 @@ func GetVendedoresToolspharma(transcriptor string, db *sqlx.DB) ([]utils.Vendedo
 		}
 		genMapParent := map[string]any{}
 		err = json.Unmarshal(r, &genMapParent)
-		localGenMap := genMapParent["data"].([]any)
+		localGenMap := genMapParent["list"].([]any)
 		if len(localGenMap) == 0 {
 			theresMore = false
 		}
