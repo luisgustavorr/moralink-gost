@@ -14,6 +14,7 @@ The document has the following top-level keys:
 {
   "url": "...",
   "get_from": "...",
+  "filters": [ ... ],
   "id_1": { ... },
   "id_2": { ... },
   "id_3": { ... },
@@ -31,6 +32,7 @@ The document has the following top-level keys:
 | `individual_detail` | Optional config for a secondary per-record fetch (see [Individual Detail](#individual-detail-individual_detail)) |
 | `fields` | Ordered list of field mapping rules |
 | `union` | Optional array of additional `Transcriptor` configs processed in sequence after the main one, in the same streaming pass (see [Union](#union)) |
+| `filters` | Optional array of `Filter` rules, checked before `Field` |
 
 ---
 
@@ -95,6 +97,29 @@ To use the individual detail response instead of the main element for a given fi
 
 ---
 
+## Filters (`filters`)
+
+When present, the mapper check if the value from each filter is fulfilled for every element before applying the `fields` rules. The filters are defined by their row value (`field`), if it should be equal or not (`should_be_equal`) and which value it should be equal to (`equal_to`).
+
+```json
+   "filters": [
+        {
+            "field": "Order.status",
+            "should_be_equal": false,
+            "equal_to": "CANCELADO"
+        }
+    ]
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `field` | string | Dot-path to the value that will be used on the comparison |
+| `should_be_equal` | bool | If the value recovered from `field` should be equal or distinct from the value of `equal_to` |
+| `equal_to` | string | Raw value that will be used on the comparison  |
+
+
+---
+
 ## Field Rules (`fields[]`)
 
 Each object in `fields` maps one value from the raw API response to one destination key in MoraLink's data model. Rules are applied in order.
@@ -116,6 +141,7 @@ Each object in `fields` maps one value from the raw API response to one destinat
 | `duration_rules` | object | — | Category-to-duration map when `op` is `calc_duration` |
 | `case` | object | — | Conditional value mapping when `op` is `case` |
 | `switch_to_details` | bool | — | Switch the data source to the individual detail response for this and all subsequent rules |
+| `min_price_rules` | object | — |  Get the lowest value from a list, while adhering to the conditions of each pricing rule |
 
 ---
 
@@ -263,6 +289,65 @@ Builds a nested object (or array of objects) by running a recursive sub-transcri
 | `object_builder.fields` | A full nested `fields` array — supports all the same rule types recursively |
 
 > `op: "build_object"` must be set alongside `src_object_builder` for the rule to be recognised.
+---
+### 8. Min Price — `min_price_rules`
+
+Search in a list of fields (`"discounts"`) to find the biggest discount, every discount will be applied on the base value from `"base_field"`. 
+
+```json
+ {
+            "dst": "valor",
+            "op": "calc_min_price",
+            "min_price_rules": {
+                "base_field": "precoVenda",
+                "discounts": [
+                    {
+                        "cond_field": "quantidadePromocaoPorQuantidade",
+                        "cond_value": "1",
+                        "disc_type": 2,
+                        "disc_field": "descontoPromocaoPorQuantidade"
+                    },
+                    {
+                        "disc_type": 2,
+                        "disc_field": "descontoCadastro"
+                    },
+                    {
+                        "disc_type":2,
+                        "disc_field": "descontoPromocaoAtiva"
+                    },
+                    {
+                        "disc_field": "valorPMC",
+                        "disc_type":3
+                    },
+                    {
+                        "disc_type":2,
+                        "cond_field": "quantidadePromocaoGrupoPreco",
+                        "cond_value": "1",
+                        "disc_field": "descontoPromocaoGrupoPreco"
+                    }
+                ]
+            }
+        }
+```
+
+| Property |Required| Description | 
+|----------|--------|-------------|
+| `base_field` | ✅ | Dot-path to the raw value (without any discount)|
+| `discounts` | ✅ |  A list of discount rules|
+| `discounts.disc_type` | ✅ | Define how will the discount be applied, all options shown bellow|
+| `discounts.disc_field` | ✅ | Dot-path to the discount value|
+| `discounts.cond_field` | - | Dot-path to the condition value to apply the discount|
+| `discounts.cond_value` | - | Raw value that the condition needs to fullfil|
+
+### 8.1. Discount Types
+| Type | Description | Example |
+|------|-------------|-------- |
+|0 | base * (1 - disc) | 0.25|
+|1 | base  - disc | $5 |
+|2 | base  * (1 - (disc * 0.01)) | 25%|
+|3 | disc | $15 |
+
+> `op: "calc_min_price"` must be set alongside `min_price_rules` for the rule to be recognised.
 
 ---
 
