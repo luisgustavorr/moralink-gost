@@ -46,6 +46,8 @@ type Transcriptor struct {
 	Fields            []FieldRule        `json:"fields"`
 	IndividualDetails *IndividualDetails `json:"individual_detail"`
 	Union             *[]Transcriptor    `json:"union"`
+	Filters           *[]Filter          `json:"filters"` // filter each row
+
 }
 type ObjectBuilder struct {
 	Fields []FieldRule `json:"fields"`
@@ -74,6 +76,11 @@ type CaseRule struct {
 type ConcatRules struct {
 	Srcs      []string `json:"sources"`
 	Separator string   `json:"separator"`
+}
+type Filter struct {
+	CondField     string `json:"field"`
+	ShouldBeEqual bool   `json:"should_be_equal"`
+	EqualTo       string `json:"equal_to"`
 }
 type FieldRule struct {
 	Src              string              `json:"src"`
@@ -229,10 +236,25 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		}
 	}
 	transcribedMap := map[string]any{}
+	if t.Filters != nil {
+		for _, filter := range *t.Filters {
+			fValue := utils.ToString(ResolvePath(m, filter.CondField))
+			if filter.ShouldBeEqual {
+				if fValue != filter.EqualTo {
+					continue
+				}
+			} else {
+				if fValue == filter.EqualTo {
+					continue
+				}
+			}
+		}
+	}
 	for _, f := range t.Fields {
 		if f.SwitchToDetails {
 			m = individualDetails
 		}
+
 		if f.SrcPaymentStatus != nil {
 			rawPaidDate := ResolvePath(m, f.SrcPaymentStatus.Paid.Src)
 			rawExpireDate := ResolvePath(m, f.SrcPaymentStatus.Expire.Src)
