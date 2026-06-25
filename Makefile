@@ -9,6 +9,7 @@ endif
 LDFLAGS := -ldflags "\
   -X main.Version=$(VERSION) \
   -X main.ReleaseGH=$(RELEASE_GH) \
+  -X main.SharkToken=$(SHARK_TOKEN) \
   -s -w"
 
 .PHONY: all linux windows clean tidy syso
@@ -65,6 +66,9 @@ installer: windows windows32
 	cd build_assets && makensis installer.nsi
 	cd build_assets && makensis installer32.nsi
 	@echo "✓  Built dist/moralink-setup.exe and dist/moralink-setup-x86.exe"
+	mkdir -p clients_setups/$(SHARK_TOKEN)
+	find dist/ -maxdepth 1 -type f -exec mv {} clients_setups/$(SHARK_TOKEN) \;  
+
 	
 
 install-scheduler:

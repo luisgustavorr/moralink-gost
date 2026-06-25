@@ -48,7 +48,6 @@ func ExecCommand(c *pb.Commands) {
 	case pb.Command_CONFIGURE:
 		cfgDir := utils.ConfigPath()
 		configSet := c.GetConfigure()
-		viper.Set("api.user", configSet.User)
 		viper.Set("api.mode", "prod")
 		viper.Set("api.token", configSet.Token)
 		configFile := filepath.Join(cfgDir, "config.yaml")

@@ -51,6 +51,10 @@ func ConfigPath() string {
 	return systemPath
 }
 
+var (
+	SharkToken string
+)
+
 func LoadConfig() {
 	cfgDir := ConfigPath()
 
@@ -61,14 +65,15 @@ func LoadConfig() {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	log.Println("✅ 🔧 Creating config file in nv : ", cfgDir)
-
+	if SharkToken == "" {
+		SharkToken = "1234567"
+	}
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// First run: create default config
 			viper.Set("server.grpc_port", 50051)
-			viper.Set("api.user", "default")
 			viper.Set("api.mode", "prod")
-			viper.Set("api.token", "1234567")
+			viper.Set("api.token", SharkToken)
 			configFile := filepath.Join(cfgDir, "config.yaml")
 			if err := viper.WriteConfigAs(configFile); err != nil {
 				log.Fatalf("failed to write default config to %s: %v", configFile, err)

@@ -6,3 +6,4 @@ dist/
 build_n_release.fish
 *.pfx
 scratch.json
+clients_setups/

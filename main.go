@@ -5,6 +5,7 @@ import (
 	"MoraLinkGOst/modules/logger"
 	Service "MoraLinkGOst/modules/service"
 	"MoraLinkGOst/modules/updater"
+	"MoraLinkGOst/modules/utils"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -15,11 +16,13 @@ import (
 )
 
 var (
-	Version   = "dev"
-	ReleaseGH = "" // injected at build time from .env via ldflags
+	Version    = "dev"
+	ReleaseGH  = "" // injected at build time from .env via ldflags
+	SharkToken = "" // injected at build time from .env via ldflags
 )
 
 func main() {
+	utils.SharkToken = SharkToken
 	updater.Configure(ReleaseGH)
 	exePath, err := os.Executable()
 	if err == nil {
