@@ -255,10 +255,11 @@ func (APIOwner) EnumDescriptor() ([]byte, []int) {
 type Command int32
 
 const (
-	Command_RESTART_APP Command = 0
-	Command_RESTART_DB  Command = 1
-	Command_UPDATE_APP  Command = 2
-	Command_CONFIGURE   Command = 3
+	Command_RESTART_APP   Command = 0
+	Command_RESTART_DB    Command = 1
+	Command_UPDATE_APP    Command = 2
+	Command_CONFIGURE     Command = 3
+	Command_UNINSTALL_APP Command = 4
 )
 
 // Enum value maps for Command.
@@ -268,12 +269,14 @@ var (
 		1: "RESTART_DB",
 		2: "UPDATE_APP",
 		3: "CONFIGURE",
+		4: "UNINSTALL_APP",
 	}
 	Command_value = map[string]int32{
-		"RESTART_APP": 0,
-		"RESTART_DB":  1,
-		"UPDATE_APP":  2,
-		"CONFIGURE":   3,
+		"RESTART_APP":   0,
+		"RESTART_DB":    1,
+		"UPDATE_APP":    2,
+		"CONFIGURE":     3,
+		"UNINSTALL_APP": 4,
 	}
 )
 
@@ -3049,14 +3052,15 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\bFRONTSYS\x10\x00\x12\b\n" +
 	"\x04TRAY\x10\x01\x12\x10\n" +
 	"\fGESTAO_CLICK\x10\x02\x12\x0f\n" +
-	"\vTOOLSPHARMA\x10\x03*I\n" +
+	"\vTOOLSPHARMA\x10\x03*\\\n" +
 	"\aCommand\x12\x0f\n" +
 	"\vRESTART_APP\x10\x00\x12\x0e\n" +
 	"\n" +
 	"RESTART_DB\x10\x01\x12\x0e\n" +
 	"\n" +
 	"UPDATE_APP\x10\x02\x12\r\n" +
-	"\tCONFIGURE\x10\x03*s\n" +
+	"\tCONFIGURE\x10\x03\x12\x11\n" +
+	"\rUNINSTALL_APP\x10\x04*s\n" +
 	"\x05Table\x12\r\n" +
 	"\tQPRODUTOS\x10\x00\x12\r\n" +
 	"\tQCLIENTES\x10\x01\x12\x0f\n" +
