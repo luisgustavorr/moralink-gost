@@ -66,6 +66,7 @@ installer: windows windows32
 	cd build_assets && makensis installer.nsi
 	cd build_assets && makensis installer32.nsi
 	@echo "✓  Built dist/moralink-setup.exe and dist/moralink-setup-x86.exe"
+	rm -rf ./clients_setups/*
 	mkdir -p clients_setups/$(SHARK_TOKEN)
 	find dist/ -maxdepth 1 -type f -exec mv {} clients_setups/$(SHARK_TOKEN) \;  
 
