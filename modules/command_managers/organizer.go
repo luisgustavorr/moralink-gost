@@ -55,6 +55,10 @@ func ExecCommand(c *pb.Commands) {
 			log.Fatalf("failed to write default config to %s: %v", configFile, err)
 		}
 		RestartSelf()
+	case pb.Command_DEACTIVATE_APP:
+		DeactivateSelf()
+	case pb.Command_REACTIVATE_APP:
+		ReactivateSelf()
 	}
 
 }

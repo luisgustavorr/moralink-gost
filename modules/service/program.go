@@ -43,7 +43,6 @@ func (p *Program) run() {
 	// emergencyLog("logger.Init(exe dir) done")
 	utils.LoadConfig()
 	// emergencyLog(fmt.Sprintf("LoadConfig done, ConfigPath=%s", utils.ConfigPath()))
-
 	logger.Init(utils.ConfigPath())
 	// emergencyLog("logger.Init(ConfigPath) done")
 
