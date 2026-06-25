@@ -484,6 +484,10 @@ func (c *Client) SendError(message string, batchid string) error {
 }
 
 func GRPCGuardian(ctx context.Context) {
+	if !utils.IsAPIActive {
+		log.Println("🛑 Guardian stopping, deactivated app")
+		return
+	}
 	host := "134.209.215.199:50051"
 	if os.Getenv("dev") == "1" {
 		host = "localhost:50051"
@@ -511,6 +515,12 @@ func GRPCGuardian(ctx context.Context) {
 		if err != nil {
 			log.Println("⛔ -> grpc disconnected error:", err, viper.GetString("api.token"))
 		}
-		time.Sleep(1 * time.Minute)
+		if utils.IsAPIActive {
+			log.Println("⌛ Waiting 1 minute to try again")
+			time.Sleep(1 * time.Minute)
+		} else {
+			log.Println("⌛ Waiting 1 day to try again")
+			time.Sleep(24 * time.Hour)
+		}
 	}
 }

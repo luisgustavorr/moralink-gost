@@ -56,6 +56,8 @@ enum Command {
    RESTART_DB =1;
    UPDATE_APP =2;
    CONFIGURE   = 3; 
+   DEACTIVATE_APP   = 4; 
+   REACTIVATE_APP   = 5; 
 }
 message Commands {
   Command type = 1;

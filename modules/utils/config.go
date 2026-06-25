@@ -52,7 +52,8 @@ func ConfigPath() string {
 }
 
 var (
-	SharkToken string
+	SharkToken  string
+	IsAPIActive bool
 )
 
 func LoadConfig() {
@@ -65,14 +66,13 @@ func LoadConfig() {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	log.Println("✅ 🔧 Creating config file in nv : ", cfgDir)
-	if SharkToken == "" {
-		SharkToken = "1234567"
-	}
+
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// First run: create default config
 			viper.Set("server.grpc_port", 50051)
 			viper.Set("api.mode", "prod")
+			viper.Set("api.active", true)
 			viper.Set("api.token", SharkToken)
 			configFile := filepath.Join(cfgDir, "config.yaml")
 			if err := viper.WriteConfigAs(configFile); err != nil {
@@ -82,5 +82,15 @@ func LoadConfig() {
 		} else {
 			log.Fatalf("failed to read config: %v", err)
 		}
+	}
+	if SharkToken == "" {
+		SharkToken = "1234567"
+	}
+	viperActiveVal := viper.Get("api.active")
+	if viperActiveVal != nil {
+		IsAPIActive = viperActiveVal.(bool)
+	}
+	if viperActiveVal == nil {
+		IsAPIActive = true
 	}
 }

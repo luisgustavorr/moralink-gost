@@ -1,12 +1,16 @@
 package commandManagers
 
 import (
+	"MoraLinkGOst/modules/utils"
+	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"syscall"
 
 	"github.com/kardianos/service"
+	"github.com/spf13/viper"
 )
 
 func RestartSelf() error {
@@ -25,6 +29,24 @@ func RestartSelf() error {
 		return cmd.Run()
 	}
 	return syscall.Exec(self, args, env)
+}
+func DeactivateSelf() {
+	cfgDir := utils.ConfigPath()
+	viper.Set("api.active", false)
+	configFile := filepath.Join(cfgDir, "config.yaml")
+	if err := viper.WriteConfigAs(configFile); err != nil {
+		log.Fatalf("failed to write default config to %s: %v", configFile, err)
+	}
+	RestartSelf()
+}
+func ReactivateSelf() {
+	cfgDir := utils.ConfigPath()
+	viper.Set("api.active", true)
+	configFile := filepath.Join(cfgDir, "config.yaml")
+	if err := viper.WriteConfigAs(configFile); err != nil {
+		log.Fatalf("failed to write default config to %s: %v", configFile, err)
+	}
+	RestartSelf()
 }
 
 var ServiceRunning service.Service
