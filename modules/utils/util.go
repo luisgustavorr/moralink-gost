@@ -574,7 +574,7 @@ func ToInt(v interface{}) int {
 		if err != nil {
 			f, err := strconv.ParseFloat(n, 64)
 			if err != nil {
-				fmt.Println("❌ Error converting string:", err, "value:", n)
+				log.Println("❌ Error converting string:", err, "value:", n)
 				return 0
 			}
 			return int(f)
