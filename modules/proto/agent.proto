@@ -209,6 +209,7 @@ message Cliente {
   int32 idade = 13;
   string sexo =14;
   int32 vendedor_id =15;
+  string cep =16;
 }
 // clientes ---
 
