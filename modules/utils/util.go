@@ -39,6 +39,7 @@ type ClienteRow struct {
 	Idade       *int32  `db:"idade"`
 	Sexo        *string `db:"sexo"`
 	VendedorId  *int32  `db:"vendedor_id"`
+	CEP         *string `db:"cep"`
 }
 type ProdutoRow struct {
 	IdExterno     *string  `db:"id_externo"`
@@ -269,6 +270,9 @@ func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {
 		}
 		if r.Sexo != nil {
 			cliente.Sexo = sanitizeUTF8(*r.Sexo)
+		}
+		if r.CEP != nil {
+			cliente.Cep = sanitizeUTF8(*r.CEP)
 		}
 		if r.VendedorId != nil {
 			cliente.VendedorId = *r.VendedorId
