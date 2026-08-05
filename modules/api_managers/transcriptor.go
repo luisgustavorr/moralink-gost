@@ -403,6 +403,10 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 						values = append(values, value)
 					}
 				}
+				if len(values) == 0 {
+					transcribedMap[f.Dst] = 0
+					continue
+				}
 				minVal := values[0]
 				for _, c := range values[1:] {
 					if c < minVal {
