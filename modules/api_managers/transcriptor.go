@@ -77,6 +77,10 @@ type ConcatRules struct {
 	Srcs      []string `json:"sources"`
 	Separator string   `json:"separator"`
 }
+type ConcatCustomRules struct {
+	Srcs      []FieldRule `json:"sources"`
+	Separator string      `json:"separator"`
+}
 type Filter struct {
 	CondField     string `json:"field"`
 	ShouldBeEqual bool   `json:"should_be_equal"`
@@ -89,6 +93,7 @@ type FieldRule struct {
 	SrcBuildJson     *SrcBuildJson       `json:"src_object_builder"` // build a map[string]any
 	SrcPaymentStatus *SrcPaymentStatus   `json:"src_payment_status"` // build a map[string]any
 	SrcConcat        *ConcatRules        `json:"src_concat"`         // concatenate multiples src into one value
+	SrcConcatCustom  *ConcatCustomRules  `json:"src_custom_concat"`  // concatenate multiples src into one value
 	Dst              string              `json:"dst"`
 	Op               string              `json:"op"`             // "", "path", "expr", "fetch"
 	Method           string              `json:"method"`         // for fetch
@@ -254,175 +259,182 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		if f.SwitchToDetails {
 			m = individualDetails
 		}
+		transcribedMap[f.Dst] = ExtractFromField(f, m)
 
-		if f.SrcPaymentStatus != nil {
-			rawPaidDate := ResolvePath(m, f.SrcPaymentStatus.Paid.Src)
-			rawExpireDate := ResolvePath(m, f.SrcPaymentStatus.Expire.Src)
-			expireDate := getDate(utils.ToString(rawExpireDate), f.SrcPaymentStatus.Expire.FormatDate.RawTemplate)
-			paga := true
-			now := time.Now()
-			if rawExpireDate == nil {
-				transcribedMap[f.Dst] = "criada"
-				continue
-			}
-			if rawPaidDate == nil {
-				paga = false
-			} else {
-				paga = true
-			}
-			if paga {
-				transcribedMap[f.Dst] = "paga"
-				continue
-			} else {
-				if now.Before(expireDate) {
-					transcribedMap[f.Dst] = "criada"
-				} else {
-					transcribedMap[f.Dst] = "vencida"
-				}
-			}
-			// fmt.Println(expireDate.Format("2006-01-02"), paidDate.Format("2006-01-02"), ResolvePath(m, f.SrcPaymentStatus.Paid.Src), paidDate)
-			continue
-		}
-		if f.SrcBuildJson != nil {
-			subT := Transcriptor{
-				Fields: f.SrcBuildJson.ObjectBuilder.Fields,
-			}
-			whereToSearch := ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
-			// fmt.Println("JSON AQUI", utils.JsonViewInterface(whereToSearch))
-
-			result := []map[string]any{}
-			for _, v := range whereToSearch {
-				result = append(result, Transcribe(v, subT))
-			}
-			transcribedMap[f.Dst] = result
-			continue
-
-		}
-		if f.SrcRawValue != "" {
-			transcribedMap[f.Dst] = f.SrcRawValue
-			continue
-		}
-		if f.SrcConcat != nil {
-			if len(f.SrcConcat.Srcs) >= 1 {
-				strs := []string{}
-				for _, v := range f.SrcConcat.Srcs {
-					strs = append(strs, utils.ToString(ResolvePath(m, v)))
-				}
-
-				m["concatenated_value"] = strings.Join(strs, f.SrcConcat.Separator)
-				f.Src = "concatenated_value"
-			}
-		}
-
-		if len(f.SrcList) >= 1 {
-			for _, s := range f.SrcList {
-				if utils.ToString(ResolvePath(m, f.Src)) == "" && utils.ToString(ResolvePath(m, s)) != "" {
-					if f.Nullif != nil && utils.ToString(ResolvePath(m, s)) == *f.Nullif {
-						continue
-					}
-					f.Src = s
-				}
-			}
-		}
-
-		switch f.Op {
-		// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
-		case "case":
-			result := f.Case.Default
-			matched := false
-			for _, v := range f.Case.Conditions {
-				if v.When == ResolvePath(m, f.Src) && !matched {
-					result = v.Then
-					matched = true
-				}
-			}
-			transcribedMap[f.Dst] = result
-		case "format_date":
-			input := utils.ToString(ResolvePath(m, f.Src))
-			if input == "" {
-				transcribedMap[f.Dst] = ""
-				continue
-			}
-			parsed := getDate(input, f.FormatDate.RawTemplate)
-			output := parsed.Add(time.Duration(f.FormatDate.TimezoneDiff) * time.Hour).Format(f.FormatDate.FormattedTemplate)
-
-			transcribedMap[f.Dst] = output
-		case "calc_duration":
-			id_categoria := ResolvePath(m, f.Src)
-			if f.DurationRules != nil {
-				durationSelected := "0"
-				for duration, v := range f.DurationRules {
-					if utils.Contains(v, utils.ToString(id_categoria)) {
-						durationSelected = duration
-					}
-				}
-				transcribedMap[f.Dst] = durationSelected
-			}
-		case "to_int":
-			transcribedMap[f.Dst] = utils.ToInt(ResolvePath(m, f.Src))
-		case "to_float":
-			transcribedMap[f.Dst] = utils.ToFloat(ResolvePath(m, f.Src))
-		case "days_to_now":
-			input := utils.ToString(ResolvePath(m, f.Src))
-			if input == "" {
-				transcribedMap[f.Dst] = ""
-				continue
-			}
-			parsed := getDate(input, f.FormatDate.RawTemplate)
-			transcribedMap[f.Dst] = utils.CalendarDays(time.Now(), parsed) - 1
-		case "extract":
-			if f.Dst == "codigo" {
-				// fmt.Println("Codigo from : ", ResolvePath(m, f.Src), f.Src, utils.JsonViewInterface(m))
-
-			}
-			transcribedMap[f.Dst] = ResolvePath(m, f.Src)
-		case "calc_min_price":
-			if f.MinPriceRules != nil {
-				baseValue := utils.ToFloat(ResolvePath(m, f.MinPriceRules.BaseField))
-				values := []float64{}
-				for _, discount := range f.MinPriceRules.Discounts {
-					if discount.CondField != "" && discount.CondValue != "" {
-						condValue := ResolvePath(m, discount.CondField)
-						if utils.ToString(condValue) != discount.CondValue {
-							continue
-						}
-					}
-					disc := utils.ToFloat(ResolvePath(m, discount.DiscField))
-					var value float64
-					switch discount.DiscType {
-					case 0:
-						value = baseValue * (1 - disc)
-					case 1:
-						value = baseValue - disc
-					case 2:
-						value = baseValue * (1 - (disc * 0.01))
-					case 3:
-						value = disc
-					}
-					if value > 0 {
-						values = append(values, value)
-					}
-				}
-				if len(values) == 0 {
-					transcribedMap[f.Dst] = 0
-					continue
-				}
-				minVal := values[0]
-				for _, c := range values[1:] {
-					if c < minVal {
-						minVal = c
-					}
-				}
-				transcribedMap[f.Dst] = float32(math.Round(minVal*100) / 100)
-			}
-		default:
-			transcribedMap[f.Dst] = m[f.Src]
-		}
 	}
-	// fmt.Println(utils.JsonViewInterface(transcribedMap))
+	// fmt.Println("T map :", utils.JsonViewInterface(transcribedMap), utils.JsonViewInterface(m))
 	return transcribedMap
 }
+func ExtractFromField(f FieldRule, m map[string]any) any {
+	if f.SrcPaymentStatus != nil {
+		rawPaidDate := ResolvePath(m, f.SrcPaymentStatus.Paid.Src)
+		rawExpireDate := ResolvePath(m, f.SrcPaymentStatus.Expire.Src)
+		expireDate := getDate(utils.ToString(rawExpireDate), f.SrcPaymentStatus.Expire.FormatDate.RawTemplate)
+		paga := true
+		now := time.Now()
+		if rawExpireDate == nil {
+			return "criada"
+		}
+		if rawPaidDate == nil {
+			paga = false
+		} else {
+			paga = true
+		}
+		if paga {
+			return "paga"
+		} else {
+			if now.Before(expireDate) {
+				return "criada"
+			} else {
+				return "vencida"
+			}
+		}
+	}
+	if f.SrcBuildJson != nil {
+		subT := Transcriptor{
+			Fields: f.SrcBuildJson.ObjectBuilder.Fields,
+		}
+		whereToSearch := ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
+		// fmt.Println("JSON AQUI", utils.JsonViewInterface(whereToSearch))
 
+		result := []map[string]any{}
+		for _, v := range whereToSearch {
+			result = append(result, Transcribe(v, subT))
+		}
+		return result
+
+	}
+	if f.SrcRawValue != "" {
+		return f.SrcRawValue
+	}
+	if f.SrcConcat != nil {
+		if len(f.SrcConcat.Srcs) >= 1 {
+			strs := []string{}
+			for _, v := range f.SrcConcat.Srcs {
+				strs = append(strs, utils.ToString(ResolvePath(m, v)))
+			}
+
+			m["concatenated_value"] = strings.Join(strs, f.SrcConcat.Separator)
+			f.Src = "concatenated_value"
+		}
+	}
+	if f.SrcConcatCustom != nil {
+		if len(f.SrcConcatCustom.Srcs) >= 1 {
+			strs := []string{}
+			for _, v := range f.SrcConcatCustom.Srcs {
+				strs = append(strs, utils.ToString(ExtractFromField(v, m)))
+			}
+
+			m["concatenated_value"] = strings.Join(strs, f.SrcConcatCustom.Separator)
+			f.Src = "concatenated_value"
+		}
+	}
+
+	if len(f.SrcList) >= 1 {
+		for _, s := range f.SrcList {
+			if utils.ToString(ResolvePath(m, f.Src)) == "" && utils.ToString(ResolvePath(m, s)) != "" {
+				if f.Nullif != nil && utils.ToString(ResolvePath(m, s)) == *f.Nullif {
+					continue
+				}
+				f.Src = s
+			}
+		}
+	}
+
+	switch f.Op {
+	// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
+	case "case":
+		result := f.Case.Default
+		matched := false
+		for _, v := range f.Case.Conditions {
+			if v.When == ResolvePath(m, f.Src) && !matched {
+				result = v.Then
+				matched = true
+			}
+		}
+		return result
+	case "format_date":
+		input := utils.ToString(ResolvePath(m, f.Src))
+		if input == "" {
+			return ""
+
+		}
+		parsed := getDate(input, f.FormatDate.RawTemplate)
+		output := parsed.Add(time.Duration(f.FormatDate.TimezoneDiff) * time.Hour).Format(f.FormatDate.FormattedTemplate)
+
+		return output
+	case "calc_duration":
+		id_categoria := ResolvePath(m, f.Src)
+		if f.DurationRules != nil {
+			durationSelected := "0"
+			for duration, v := range f.DurationRules {
+				if utils.Contains(v, utils.ToString(id_categoria)) {
+					durationSelected = duration
+				}
+			}
+			return durationSelected
+		}
+	case "to_int":
+		return utils.ToInt(ResolvePath(m, f.Src))
+	case "to_float":
+		return utils.ToFloat(ResolvePath(m, f.Src))
+	case "days_to_now":
+		input := utils.ToString(ResolvePath(m, f.Src))
+		if input == "" {
+			return ""
+		}
+		parsed := getDate(input, f.FormatDate.RawTemplate)
+		return utils.CalendarDays(time.Now(), parsed) - 1
+	case "extract":
+		if f.Dst == "codigo" {
+			// fmt.Println("Codigo from : ", ResolvePath(m, f.Src), f.Src, utils.JsonViewInterface(m))
+
+		}
+		return ResolvePath(m, f.Src)
+	case "calc_min_price":
+		if f.MinPriceRules != nil {
+			baseValue := utils.ToFloat(ResolvePath(m, f.MinPriceRules.BaseField))
+			values := []float64{}
+			for _, discount := range f.MinPriceRules.Discounts {
+				if discount.CondField != "" && discount.CondValue != "" {
+					condValue := ResolvePath(m, discount.CondField)
+					if utils.ToString(condValue) != discount.CondValue {
+						continue
+					}
+				}
+				disc := utils.ToFloat(ResolvePath(m, discount.DiscField))
+				var value float64
+				switch discount.DiscType {
+				case 0:
+					value = baseValue * (1 - disc)
+				case 1:
+					value = baseValue - disc
+				case 2:
+					value = baseValue * (1 - (disc * 0.01))
+				case 3:
+					value = disc
+				}
+				if value > 0 {
+					values = append(values, value)
+				}
+			}
+			if len(values) == 0 {
+
+				return 0
+			}
+			minVal := values[0]
+			for _, c := range values[1:] {
+				if c < minVal {
+					minVal = c
+				}
+			}
+			return float32(math.Round(minVal*100) / 100)
+		}
+	default:
+		return m[f.Src]
+	}
+	return ""
+}
 func TranscribeMapToProdutoRow(v map[string]any) (utils.ProdutoRow, error) {
 	var p utils.ProdutoRow
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
