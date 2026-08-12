@@ -5,6 +5,7 @@ ifneq (,$(wildcard .env))
   include .env
   export
 endif
+GO_WIN7 := $(HOME)/sdk/go-legacy-win7/go/bin/go
 
 LDFLAGS := -ldflags "\
   -X main.Version=$(VERSION) \
@@ -42,6 +43,17 @@ windows32: dist syso
 	go build $(LDFLAGS) -o dist/$(APP)-windows-386.exe .
 	@echo "✓  Built dist/$(APP)-windows-386.exe"
 
+
+windows-win7: dist syso
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc \
+	$(GO_WIN7) build $(LDFLAGS) -o dist/$(APP)-windows-amd64.exe .
+	@echo "✓  Built dist/$(APP)-windows-amd64.exe (Win7-compatible)"
+
+windows32-win7: dist syso
+	GOOS=windows GOARCH=386 CGO_ENABLED=1 CC=i686-w64-mingw32-gcc \
+	$(GO_WIN7) build $(LDFLAGS) -o dist/$(APP)-windows-386.exe .
+	@echo "✓  Built dist/$(APP)-windows-386.exe (Win7-compatible)"
+
 sign:
 	@test -f "$(CERT_PATH)" || (echo "❌ CERT_PATH not set or file missing" && exit 1)
 	osslsigncode sign \
@@ -63,6 +75,15 @@ release: windows installer
 	
 installer: windows windows32
 	@echo "→  Building Windows installers..."
+	cd build_assets && makensis installer.nsi
+	cd build_assets && makensis installer32.nsi
+	@echo "✓  Built dist/moralink-setup.exe and dist/moralink-setup-x86.exe"
+	rm -rf ./clients_setups/*
+	mkdir -p clients_setups/$(SHARK_TOKEN)
+	find dist/ -maxdepth 1 -type f -exec mv {} clients_setups/$(SHARK_TOKEN) \;  
+
+installer-win7: windows-win7 windows32-win7
+	@echo "→  Building Windows 7 installers..."
 	cd build_assets && makensis installer.nsi
 	cd build_assets && makensis installer32.nsi
 	@echo "✓  Built dist/moralink-setup.exe and dist/moralink-setup-x86.exe"
