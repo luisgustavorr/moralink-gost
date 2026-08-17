@@ -206,7 +206,7 @@ const (
 	APIOwner_TRAY         APIOwner = 1
 	APIOwner_GESTAO_CLICK APIOwner = 2
 	APIOwner_TOOLSPHARMA  APIOwner = 3
-	APIOwner_TRIER        APIOwner = 4
+	APIOwner_TRIER_CLOUD  APIOwner = 4
 )
 
 // Enum value maps for APIOwner.
@@ -216,14 +216,14 @@ var (
 		1: "TRAY",
 		2: "GESTAO_CLICK",
 		3: "TOOLSPHARMA",
-		4: "TRIER",
+		4: "TRIER_CLOUD",
 	}
 	APIOwner_value = map[string]int32{
 		"FRONTSYS":     0,
 		"TRAY":         1,
 		"GESTAO_CLICK": 2,
 		"TOOLSPHARMA":  3,
-		"TRIER":        4,
+		"TRIER_CLOUD":  4,
 	}
 )
 
@@ -3062,13 +3062,13 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x05MSSQL\x10\x03\x12\r\n" +
 	"\tMYSQL_OLD\x10\x04\x12\a\n" +
 	"\x03MDB\x10\x05\x12\v\n" +
-	"\aPARADOX\x10\x06*Q\n" +
+	"\aPARADOX\x10\x06*W\n" +
 	"\tAPI_owner\x12\f\n" +
 	"\bFRONTSYS\x10\x00\x12\b\n" +
 	"\x04TRAY\x10\x01\x12\x10\n" +
 	"\fGESTAO_CLICK\x10\x02\x12\x0f\n" +
-	"\vTOOLSPHARMA\x10\x03\x12\t\n" +
-	"\x05TRIER\x10\x04*q\n" +
+	"\vTOOLSPHARMA\x10\x03\x12\x0f\n" +
+	"\vTRIER_CLOUD\x10\x04*q\n" +
 	"\aCommand\x12\x0f\n" +
 	"\vRESTART_APP\x10\x00\x12\x0e\n" +
 	"\n" +
