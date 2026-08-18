@@ -73,18 +73,20 @@ func StreamProdutosTrier(transcriptor string, d *sqlx.DB, batchSize int, cb func
 		for theresMore {
 			page += 1
 			r, err := Request(requestInfo{
-				url:    fmt.Sprintf("%s&Pagina=%d", url, page),
+				url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
 				method: "GET",
+				token:  "Bearer " + ClientToken,
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 			if err != nil {
 				fmt.Println("ERROR stream produtos Trier :", err.Error())
+				return err
 			}
 			genMap := map[string]any{}
 			err = json.Unmarshal(r, &genMap)
 			if err != nil {
 				fmt.Println("Error unmarshall err :", err)
 			}
-			clients, ok := genMap["list"].([]any)
+			clients, ok := genMap["resposta"].([]any)
 			if len(clients) == 0 || !ok {
 				theresMore = false
 			}
@@ -145,21 +147,25 @@ func StreamClientesTrier(transcriptor string, d *sqlx.DB, batchSize int, cb func
 		for theresMore {
 			page += 1
 			r, err := Request(requestInfo{
-				url:    fmt.Sprintf("%s&pagina=%d", url, page),
+				url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
+				token:  "Bearer " + ClientToken,
 				method: "GET",
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 			if err != nil {
 				fmt.Println("ERROR stream clientes Trier :", err.Error())
+				return err
+
 			}
 			genMap := map[string]any{}
 			err = json.Unmarshal(r, &genMap)
 			if err != nil {
 				fmt.Println("Error unmarshall err :", err)
 			}
-			clients, ok := genMap["list"].([]any)
+			clients, ok := genMap["resposta"].([]any)
 			if len(clients) == 0 || !ok {
 				theresMore = false
 			}
+
 			// fmt.Println(fmt.Sprintf("%s&page=%d", url, page), len(clients))
 
 			for _, m := range clients {
@@ -214,18 +220,22 @@ func GetCategoriasTrier(transcriptor string, db *sqlx.DB) ([]utils.CategoriaRow,
 	for theresMore {
 		page += 1
 		r, err := Request(requestInfo{
-			url:    fmt.Sprintf("%s&pagina=%d", url, page),
+			url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
+			token:  "Bearer " + ClientToken,
 			method: "GET",
 		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 		if err != nil {
 			fmt.Println("ERROR stream produtos Trier :", err.Error())
+			return []utils.CategoriaRow{}, err
 		}
 		genMapParent := map[string]any{}
 		err = json.Unmarshal(r, &genMapParent)
-		localGenMap := genMapParent["list"].([]any)
+
+		localGenMap := genMapParent["resposta"].([]any)
 		if len(localGenMap) == 0 {
 			theresMore = false
 		}
+
 		// fmt.Println("adding batch", page, len(localGenMap))
 
 		if err != nil {
@@ -270,7 +280,9 @@ func GetVendedoresTrier(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, 
 	for theresMore {
 		page += 1
 		r, err := Request(requestInfo{
-			url:    fmt.Sprintf("%s&pagina=%d", url, page),
+			url:   fmt.Sprintf("%s&numeroPagina=%d", url, page),
+			token: "Bearer " + ClientToken,
+
 			method: "GET",
 		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 		if err != nil {
@@ -278,7 +290,9 @@ func GetVendedoresTrier(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, 
 		}
 		genMapParent := map[string]any{}
 		err = json.Unmarshal(r, &genMapParent)
-		localGenMap := genMapParent["list"].([]any)
+
+		localGenMap := genMapParent["resposta"].([]any)
+
 		if len(localGenMap) == 0 {
 			theresMore = false
 		}
@@ -331,7 +345,8 @@ func StreamVendasTrier(transcriptor string, db *sqlx.DB, batchSize int, cb func(
 		for theresMore {
 			page += 1
 			r, err := Request(requestInfo{
-				url:    strings.ReplaceAll(fmt.Sprintf("%s&pagina=%d", url, page), " ", "%20"),
+				url:    strings.ReplaceAll(fmt.Sprintf("%s&numeroPagina=%d", url, page), " ", "%20"),
+				token:  "Bearer " + ClientToken,
 				method: "GET",
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 
