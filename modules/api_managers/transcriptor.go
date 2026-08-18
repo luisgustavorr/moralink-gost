@@ -262,7 +262,7 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		transcribedMap[f.Dst] = ExtractFromField(f, m)
 
 	}
-	fmt.Println("T map :", utils.JsonViewInterface(transcribedMap), utils.JsonViewInterface(m))
+	// fmt.Println("T map :", utils.JsonViewInterface(transcribedMap), utils.JsonViewInterface(m))
 	return transcribedMap
 }
 func ExtractFromField(f FieldRule, m map[string]any) any {
