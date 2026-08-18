@@ -49,7 +49,7 @@ enum API_owner {
   TRAY = 1;
   GESTAO_CLICK = 2;
   TOOLSPHARMA= 3;
-  TRIER= 4;
+  TRIER_CLOUD= 4;
 }
 // desc: Which Command was requested
 enum Command {
@@ -85,6 +85,11 @@ message AgentMessage {
 
   
 }
+message Log {
+  int64 length = 1;
+  int64 offset =2;
+  string text =3;
+}
 message AgentPayload {
   oneof data {
     Produtos produtos = 1;
@@ -99,6 +104,7 @@ message AgentPayload {
     ACKReturn ack_return =10;
     Commands command = 11;
     TraceEvent query_trace =12;
+    Log get_log =13; 
   }
 }
 
