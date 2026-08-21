@@ -105,6 +105,7 @@ message AgentPayload {
     Commands command = 11;
     TraceEvent query_trace =12;
     Log get_log =13; 
+    MostSold most_sold=14;
   }
 }
 
@@ -177,6 +178,9 @@ message Error {
 // produtos ---
 message Produtos {
   repeated Produto items = 1; // batch
+}
+message MostSold {
+  repeated string id_externo = 1; // batch
 }
 message Produto {
   string id_externo = 1;
