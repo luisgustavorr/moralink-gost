@@ -37,7 +37,7 @@ func connectTrier(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, erro
 		Financeiros: StreamCobrancasTrier,
 		Vendas:      StreamVendasTrier,
 		Generic:     StreamGenericTrier,
-		MostSold:    GetMostSold,
+		MostSold:    GetMostSoldTrier,
 	}
 	t := tokenReturn{}
 	err = json.Unmarshal(r, &t)
@@ -476,7 +476,7 @@ func StreamCobrancasTrier(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 	}
 	return err
 }
-func GetMostSold(transcriptor string, db *sqlx.DB) ([]utils.MostSoldRow, error) {
+func GetMostSoldTrier(transcriptor string, db *sqlx.DB) ([]utils.MostSoldRow, error) {
 	t, err := JsonToTranscriptor([]byte(transcriptor))
 	if err != nil {
 		fmt.Println(err)
@@ -519,7 +519,6 @@ func GetMostSold(transcriptor string, db *sqlx.DB) ([]utils.MostSoldRow, error) 
 
 			}
 		}
-		fmt.Println("Lgmp:", len(genMap))
 		time.Sleep(350 * time.Millisecond)
 	}
 	result := []utils.MostSoldRow{}
