@@ -105,7 +105,7 @@ message AgentPayload {
     Commands command = 11;
     TraceEvent query_trace =12;
     Log get_log =13; 
-    MostSold most_sold=14;
+    MostSoldRows most_sold=14;
   }
 }
 
@@ -121,6 +121,7 @@ enum Table {
   QVENDEDORES=4;
   QFINANCEIRO=5;
   QGENERIC=6;
+  QMOSTSOLD=7;
 }
 message ACKReturn {
   ConnectStatus status =1;
@@ -180,7 +181,10 @@ message Produtos {
   repeated Produto items = 1; // batch
 }
 message MostSold {
-  repeated string id_externo = 1; // batch
+   string id_externo = 1; // batch
+}
+message MostSoldRows {
+   repeated MostSold items = 1; // batch
 }
 message Produto {
   string id_externo = 1;
