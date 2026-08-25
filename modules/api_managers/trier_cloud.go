@@ -37,6 +37,7 @@ func connectTrier(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, erro
 		Financeiros: StreamCobrancasTrier,
 		Vendas:      StreamVendasTrier,
 		Generic:     StreamGenericTrier,
+		MostSold:    GetMostSold,
 	}
 	t := tokenReturn{}
 	err = json.Unmarshal(r, &t)
@@ -93,7 +94,7 @@ func StreamProdutosTrier(transcriptor string, d *sqlx.DB, batchSize int, cb func
 			// fmt.Println(fmt.Sprintf("%s&page=%d", url, page), len(clients))
 
 			for _, m := range clients {
-				row, err := TranscribeMapToProdutoRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToProdutoRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -169,7 +170,7 @@ func StreamClientesTrier(transcriptor string, d *sqlx.DB, batchSize int, cb func
 			// fmt.Println(fmt.Sprintf("%s&page=%d", url, page), len(clients))
 
 			for _, m := range clients {
-				row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -253,7 +254,7 @@ func GetCategoriasTrier(transcriptor string, db *sqlx.DB) ([]utils.CategoriaRow,
 	result := []utils.CategoriaRow{}
 
 	for _, m := range genMap {
-		row, err := TranscribeMapToCategoriaRow(Transcribe(m, t))
+		row, err := TranscribeMapToCategoriaRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -311,7 +312,7 @@ func GetVendedoresTrier(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, 
 	}
 	result := []utils.VendedorRow{}
 	for _, m := range genMap {
-		row, err := TranscribeMapToVendedorRow(Transcribe(m, t))
+		row, err := TranscribeMapToVendedorRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -365,7 +366,7 @@ func StreamVendasTrier(transcriptor string, db *sqlx.DB, batchSize int, cb func(
 			// fmt.Println(fmt.Sprintf("%s&pagina=%d", url, page), len(orders))
 
 			for _, m := range orders {
-				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -443,7 +444,7 @@ func StreamCobrancasTrier(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 			// fmt.Println(fmt.Sprintf("%s&pagina=%d", url, page), len(orders))
 
 			for _, m := range orders {
-				row, err := TranscribeMapToFinanceiroRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToFinanceiroRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -474,4 +475,71 @@ func StreamCobrancasTrier(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 		return cb(batch)
 	}
 	return err
+}
+func GetMostSold(transcriptor string, db *sqlx.DB) ([]utils.MostSoldRow, error) {
+	t, err := JsonToTranscriptor([]byte(transcriptor))
+	if err != nil {
+		fmt.Println(err)
+	}
+	url := t.Url
+	if t.Url != "" {
+		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
+	}
+	theresMore := true
+	page := 0
+	genMap := []map[string]any{}
+	for theresMore {
+		page += 1
+		r, err := Request(requestInfo{
+			url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
+			token:  "Bearer " + ClientToken,
+			method: "GET",
+		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
+		if err != nil {
+			fmt.Println("ERROR stream produtos Trier :", err.Error())
+			return []utils.MostSoldRow{}, err
+		}
+		genMapParent := map[string]any{}
+		err = json.Unmarshal(r, &genMapParent)
+
+		localGenMap := genMapParent["resposta"].([]any)
+		if len(localGenMap) == 0 {
+			theresMore = false
+		}
+
+		fmt.Println("adding batch", page, len(localGenMap), t.RowCounter.Get("id_externo"))
+
+		if err != nil {
+			fmt.Println("Error unmarshall err :", err)
+		} else {
+			for _, lgm := range localGenMap {
+				if v, ok := lgm.(map[string]any); ok {
+					genMap = append(genMap, v)
+				}
+
+			}
+		}
+		fmt.Println("Lgmp:", len(genMap))
+		time.Sleep(350 * time.Millisecond)
+	}
+	result := []utils.MostSoldRow{}
+	for _, m := range genMap {
+		_, err := TranscribeMapToMostSoldRow(Transcribe(m, &t))
+		if err != nil {
+			fmt.Println("Erro transcribe to row", err)
+			continue
+		}
+	}
+	if len(t.RowCounter.Counter) > 0 {
+		result = []utils.MostSoldRow{}
+		for _, v := range utils.GetSortedMostSoldKeys(t.RowCounter.Counter) {
+			result = append(result, utils.MostSoldRow{
+				IdExterno:  &v.Key,
+				AmountSold: v.Value,
+			})
+		}
+	}
+
+	fmt.Println(utils.JsonViewInterface(result))
+	return result, err
 }

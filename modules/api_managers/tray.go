@@ -85,7 +85,7 @@ func StreamProdutosTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 
 		for _, m := range prods {
 
-			row, err := TranscribeMapToProdutoRow(Transcribe(m.(map[string]any), t))
+			row, err := TranscribeMapToProdutoRow(Transcribe(m.(map[string]any), &t))
 			if err != nil {
 				fmt.Println("Erro transcribe to row", err)
 				continue
@@ -150,7 +150,7 @@ func StreamClientesTray(transcriptor string, d *sqlx.DB, batchSize int, cb func(
 			}
 
 			for _, m := range clients {
-				row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -231,7 +231,7 @@ func GetCategoriasTray(transcriptor string, db *sqlx.DB) ([]utils.CategoriaRow, 
 	result := []utils.CategoriaRow{}
 
 	for _, m := range genMap {
-		row, err := TranscribeMapToCategoriaRow(Transcribe(m, t))
+		row, err := TranscribeMapToCategoriaRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -285,7 +285,7 @@ func GetVendedoresTray(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, e
 	}
 	result := []utils.VendedorRow{}
 	for _, m := range genMap {
-		row, err := TranscribeMapToVendedorRow(Transcribe(m, t))
+		row, err := TranscribeMapToVendedorRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -337,7 +337,7 @@ func StreamVendasTray(transcriptor string, db *sqlx.DB, batchSize int, cb func([
 			}
 
 			for _, m := range orders {
-				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -395,7 +395,7 @@ func StreamCobrancasTray(transcriptor string, db *sqlx.DB, batchSize int, cb fun
 	}
 	batch := make([]utils.FinanceiroRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
-		row, err := TranscribeMapToFinanceiroRow(Transcribe(m, t))
+		row, err := TranscribeMapToFinanceiroRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue

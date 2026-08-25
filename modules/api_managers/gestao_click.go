@@ -90,7 +90,7 @@ func StreamProdutosGestaoClick(transcriptor string, d *sqlx.DB, batchSize int, c
 			// fmt.Println(fmt.Sprintf("%s&page=%d", url, page), len(clients))
 
 			for _, m := range clients {
-				row, err := TranscribeMapToProdutoRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToProdutoRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -163,7 +163,7 @@ func StreamClientesGestaoClick(transcriptor string, d *sqlx.DB, batchSize int, c
 			// fmt.Println(fmt.Sprintf("%s&page=%d", url, page), len(clients))
 
 			for _, m := range clients {
-				row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToClienteRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -244,7 +244,7 @@ func GetCategoriasGestaoClick(transcriptor string, db *sqlx.DB) ([]utils.Categor
 	result := []utils.CategoriaRow{}
 
 	for _, m := range genMap {
-		row, err := TranscribeMapToCategoriaRow(Transcribe(m, t))
+		row, err := TranscribeMapToCategoriaRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -298,7 +298,7 @@ func GetVendedoresGestaoClick(transcriptor string, db *sqlx.DB) ([]utils.Vendedo
 	}
 	result := []utils.VendedorRow{}
 	for _, m := range genMap {
-		row, err := TranscribeMapToVendedorRow(Transcribe(m, t))
+		row, err := TranscribeMapToVendedorRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -351,7 +351,7 @@ func StreamVendasGestaoClick(transcriptor string, db *sqlx.DB, batchSize int, cb
 			// fmt.Println(fmt.Sprintf("%s&pagina=%d", url, page), len(orders))
 
 			for _, m := range orders {
-				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToVendaRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
@@ -429,7 +429,7 @@ func StreamCobrancasGestaoClick(transcriptor string, db *sqlx.DB, batchSize int,
 			// fmt.Println(fmt.Sprintf("%s&pagina=%d", url, page), len(orders))
 
 			for _, m := range orders {
-				row, err := TranscribeMapToFinanceiroRow(Transcribe(m.(map[string]any), t))
+				row, err := TranscribeMapToFinanceiroRow(Transcribe(m.(map[string]any), &t))
 				if err != nil {
 					fmt.Println("Erro transcribe to row", err)
 					continue
