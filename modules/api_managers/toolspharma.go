@@ -462,67 +462,71 @@ func StreamCobrancasToolspharma(transcriptor string, db *sqlx.DB, batchSize int,
 	return err
 }
 func GetMostSoldToolspharma(transcriptor string, db *sqlx.DB) ([]utils.MostSoldRow, error) {
-	t, err := JsonToTranscriptor([]byte(transcriptor))
+	tr, err := JsonToTranscriptor([]byte(transcriptor))
 	if err != nil {
 		fmt.Println(err)
 	}
-	url := t.Url
-	if t.Url != "" {
-		url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
-	}
-	theresMore := true
-	page := 0
-	genMap := []map[string]any{}
-	for theresMore {
-		page += 1
-		r, err := Request(requestInfo{
-			url:    fmt.Sprintf("%s&pagina=%d", url, page),
-			method: "GET",
-		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
-		if err != nil {
-			fmt.Println("ERROR stream produtos Trier :", err.Error())
-			return []utils.MostSoldRow{}, err
-		}
-		genMapParent := map[string]any{}
-		err = json.Unmarshal(r, &genMapParent)
-
-		localGenMap := genMapParent["list"].([]any)
-		if len(localGenMap) == 0 {
-			theresMore = false
-		}
-
-		fmt.Println("adding batch", page, len(localGenMap), t.RowCounter.Get("id_externo"))
-
-		if err != nil {
-			fmt.Println("Error unmarshall err :", err)
-		} else {
-			for _, lgm := range localGenMap {
-				if v, ok := lgm.(map[string]any); ok {
-					genMap = append(genMap, v)
-				}
-
-			}
-		}
-		time.Sleep(350 * time.Millisecond)
+	transcriptors := []Transcriptor{tr}
+	if tr.Union != nil {
+		transcriptors = append(transcriptors, *tr.Union...)
 	}
 	result := []utils.MostSoldRow{}
-	for _, m := range genMap {
-		_, err := TranscribeMapToMostSoldRow(Transcribe(m, &t))
-		if err != nil {
-			fmt.Println("Erro transcribe to row", err)
-			continue
+
+	for _, t := range transcriptors {
+		url := t.Url
+		if t.Url != "" {
+			url = t.Url + t.Id_1.Key + ResolveDynamicId(t.Id_1.Value) + t.Id_2.Key + ResolveDynamicId(t.Id_2.Value) + t.Id_3.Key + ResolveDynamicId(t.Id_3.Value)
 		}
-	}
-	if len(t.RowCounter.Counter) > 0 {
-		result = []utils.MostSoldRow{}
-		for _, v := range utils.GetSortedMostSoldKeys(t.RowCounter.Counter) {
-			result = append(result, utils.MostSoldRow{
-				IdExterno:  &v.Key,
-				AmountSold: v.Value,
-			})
+		theresMore := true
+		page := 0
+		genMap := []map[string]any{}
+		for theresMore {
+			page += 1
+			r, err := Request(requestInfo{
+				url:    fmt.Sprintf("%s&pagina=%d", url, page),
+				method: "GET",
+			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
+			if err != nil {
+				fmt.Println("ERROR stream produtos Trier :", err.Error())
+				return []utils.MostSoldRow{}, err
+			}
+			genMapParent := map[string]any{}
+			err = json.Unmarshal(r, &genMapParent)
+
+			localGenMap := genMapParent["list"].([]any)
+			if len(localGenMap) == 0 {
+				theresMore = false
+			}
+
+			if err != nil {
+				fmt.Println("Error unmarshall err :", err)
+			} else {
+				for _, lgm := range localGenMap {
+					if v, ok := lgm.(map[string]any); ok {
+						genMap = append(genMap, v)
+					}
+
+				}
+			}
+			time.Sleep(350 * time.Millisecond)
+		}
+		for _, m := range genMap {
+			_, err := TranscribeMapToMostSoldRow(Transcribe(m, &t))
+			if err != nil {
+				fmt.Println("Erro transcribe to row", err)
+				continue
+			}
+		}
+		if len(t.RowCounter.Counter) > 0 {
+			result = []utils.MostSoldRow{}
+			for _, v := range utils.GetSortedMostSoldKeys(t.RowCounter.Counter) {
+				result = append(result, utils.MostSoldRow{
+					IdExterno:  &v.Key,
+					AmountSold: v.Value,
+				})
+			}
 		}
 	}
 
-	fmt.Println(utils.JsonViewInterface(result))
 	return result, err
 }

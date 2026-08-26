@@ -383,13 +383,11 @@ func ExtractFromField(f FieldRule, m map[string]any, r *RowCounter) any {
 				key := utils.ToStringNumeric(v["id_externo"])
 				qnt := v["quantidade"]
 				newVal = r.Add(utils.ToInt(qnt), key)
-				fmt.Println(r.Get(key), len(r.Counter))
 			}
 		} else {
 			f.Op = "extract"
 			key := utils.ToStringNumeric(ExtractFromField(f, m, r))
 			newVal = r.Add(1, key)
-			fmt.Println(r.Get(key))
 		}
 		return newVal
 
