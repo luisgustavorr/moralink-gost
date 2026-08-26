@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,10 @@ var Version string = "v0.0.9"
 type CategoriaRow struct {
 	IdExterno *string `db:"id_externo"`
 	Nome      *string `db:"nome"`
+}
+type KeyValue struct {
+	Key   string
+	Value int
 }
 type ClienteRow struct {
 	IdExterno   *string `db:"id_externo"`
@@ -64,6 +69,10 @@ type ProdutoVendaRow struct {
 }
 type DatasVencimentoRow struct {
 	DataVencimento string `json:"data_vencimento"`
+}
+type MostSoldRow struct {
+	IdExterno  *string `db:"id_externo"`
+	AmountSold int     `db:"amount_sold"`
 }
 type VendaRow struct {
 	IdExterno          *string               `db:"id_externo"`
@@ -128,6 +137,7 @@ type QueriesFunctions struct {
 	Vendedores  func(string, *sqlx.DB) ([]VendedorRow, error)
 	Clientes    func(query string, db *sqlx.DB, batchSize int, cb func([]ClienteRow) error) error
 	Financeiros func(query string, db *sqlx.DB, batchSize int, cb func([]FinanceiroRow) error) error
+	MostSold    func(query string, db *sqlx.DB) ([]MostSoldRow, error)
 	Generic     func(query string, db *sqlx.DB, batchSize int, cb func([]map[string]interface{}) error) error
 }
 
@@ -224,6 +234,18 @@ func ToProtoGenecric(list []map[string]interface{}) (*structpb.ListValue, error)
 	}
 	return structpb.NewList(raw)
 }
+func ToProtoMostSold(rows []MostSoldRow) []*pb.MostSold {
+	out := make([]*pb.MostSold, 0, len(rows))
+	for _, r := range rows {
+		row := &pb.MostSold{}
+		if r.IdExterno != nil {
+			row.IdExterno = *r.IdExterno
+		}
+
+		out = append(out, row)
+	}
+	return out
+}
 
 func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {
 	out := make([]*pb.Cliente, 0, len(rows))
@@ -309,6 +331,16 @@ func ToStringNumeric(val interface{}) string {
 		return strings.ToValidUTF8(result, "")
 	}
 	return result
+}
+func GetSortedMostSoldKeys(rows map[string]int) []KeyValue {
+	var ss []KeyValue
+	for k, v := range rows {
+		ss = append(ss, KeyValue{k, v})
+	}
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Value > ss[j].Value
+	})
+	return ss
 }
 func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 	out := make([]*pb.Produto, 0, len(rows))

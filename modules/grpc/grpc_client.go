@@ -2,6 +2,7 @@ package Grpcclient
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -80,6 +81,7 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		dbConn := utils.Conn.DB
 		batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 		tableAskedFor := msg.GetTable()
+		fmt.Println("Table asked for : ", tableAskedFor)
 		switch tableAskedFor {
 		case 0:
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
@@ -358,6 +360,53 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 
 			})
 			if err != nil {
+				c.SendError(err.Error(), msg.GetBatchId())
+			}
+		case 7:
+			fmt.Println("mOST SOLD")
+			result, err := dbConn.Queries.MostSold(msg.Payload.GetQueryRequest().Query, dbConn.DB)
+			if strings.TrimSpace(msg.Payload.GetQueryRequest().GetQuery()) == "" {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				return
+			}
+			fmt.Println("MOST SOLD IMPORT")
+			if err == nil {
+				if len(result) == 0 {
+					c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
+				}
+				for i := 0; i < len(result); i += batchSize {
+					logger.Debug("devolver resultado", len(result))
+					end := i + batchSize
+					isLast := len(result) < batchSize
+					if end > len(result) {
+						log.Println("Último ? ")
+						end = len(result)
+					}
+					resultPb := utils.ToProtoMostSold(result[i:end])
+					if runned == 0 {
+						c.SendTrace(msg.GetBatchId(), pb.TraceStep_GOST_DB_EXECUTED, true, "Query was executed")
+					}
+					runned++
+					c.SendMessage(&agentpb.AgentMessage{
+						AgentId: viper.GetString("api.token"),
+						Type:    agentpb.MessageType_RESULT,
+						Table:   tableAskedFor,
+						BatchId: msg.GetBatchId(),
+						IsLast:  isLast,
+						Payload: &pb.AgentPayload{
+							Data: &pb.AgentPayload_MostSold{
+								MostSold: &pb.MostSoldRows{
+									Items: resultPb,
+								},
+							},
+						},
+					})
+					resultPb = nil
+
+				}
+
+			} else {
+				c.SendMessage(buildEmptyMimicReturn(tableAskedFor, msg.GetBatchId()))
 				c.SendError(err.Error(), msg.GetBatchId())
 			}
 		}

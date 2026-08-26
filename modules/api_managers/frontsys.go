@@ -64,7 +64,7 @@ func StreamProdutosFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb f
 	}
 	batch := make([]utils.ProdutoRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
-		row, err := TranscribeMapToProdutoRow(Transcribe(m, t))
+		row, err := TranscribeMapToProdutoRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -108,7 +108,7 @@ func StreamClientesFrontsys(transcriptor string, d *sqlx.DB, batchSize int, cb f
 
 	batch := make([]utils.ClienteRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
-		row, err := TranscribeMapToClienteRow(Transcribe(m, t))
+		row, err := TranscribeMapToClienteRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -158,7 +158,7 @@ func GetCategoriasFrontsys(transcriptor string, db *sqlx.DB) ([]utils.CategoriaR
 	result := []utils.CategoriaRow{}
 
 	for _, m := range genMap {
-		row, err := TranscribeMapToCategoriaRow(Transcribe(m, t))
+		row, err := TranscribeMapToCategoriaRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -192,7 +192,7 @@ func GetVendedoresFrontsys(transcriptor string, db *sqlx.DB) ([]utils.VendedorRo
 	result := []utils.VendedorRow{}
 
 	for _, m := range genMap {
-		row, err := TranscribeMapToVendedorRow(Transcribe(m, t))
+		row, err := TranscribeMapToVendedorRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -225,7 +225,7 @@ func StreamVendasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb fu
 
 	batch := make([]utils.VendaRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
-		row, err := TranscribeMapToVendaRow(Transcribe(m, t))
+		row, err := TranscribeMapToVendaRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue
@@ -276,7 +276,7 @@ func StreamCobrancasFrontsys(transcriptor string, db *sqlx.DB, batchSize int, cb
 	}
 	batch := make([]utils.FinanceiroRow, 0, batchSize) // create a recyclable batch
 	for _, m := range genMap {
-		row, err := TranscribeMapToFinanceiroRow(Transcribe(m, t))
+		row, err := TranscribeMapToFinanceiroRow(Transcribe(m, &t))
 		if err != nil {
 			fmt.Println("Erro transcribe to row", err)
 			continue

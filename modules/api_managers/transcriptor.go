@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -37,6 +38,31 @@ type IndividualDetails struct {
 	KeyGetter FieldRule `json:"key_getter"`
 	Id_1      *Id       `json:"id_1"`
 }
+
+type RowCounter struct {
+	Counter map[string]int `json:"counter"`
+	mu      sync.Mutex
+}
+
+func (rc *RowCounter) Add(amount int, key string) int {
+	if key == "" {
+		return 0
+	}
+	if rc.Counter == nil {
+		rc.Counter = make(map[string]int)
+	}
+	rc.mu.Lock()
+	rc.Counter[key] += amount
+	rc.mu.Unlock()
+	return rc.Get(key)
+}
+func (rc *RowCounter) Get(key string) int {
+	rc.mu.Lock()
+	amm := rc.Counter[key]
+	rc.mu.Unlock()
+	return amm
+}
+
 type Transcriptor struct {
 	Id_1              Id                 `json:"id_1"`
 	Id_2              Id                 `json:"id_2"`
@@ -47,7 +73,7 @@ type Transcriptor struct {
 	IndividualDetails *IndividualDetails `json:"individual_detail"`
 	Union             *[]Transcriptor    `json:"union"`
 	Filters           *[]Filter          `json:"filters"` // filter each row
-
+	RowCounter        *RowCounter        `json:"row_counter"`
 }
 type ObjectBuilder struct {
 	Fields []FieldRule `json:"fields"`
@@ -218,7 +244,7 @@ func ResolvePathToJSONBuilder(data map[string]any, path string) []map[string]any
 	}
 	return result
 }
-func Transcribe(m map[string]any, t Transcriptor) map[string]any {
+func Transcribe(m map[string]any, t *Transcriptor) map[string]any {
 	individualDetails := map[string]any{}
 	if t.IndividualDetails != nil {
 		rawUrl := t.IndividualDetails.Url
@@ -259,13 +285,13 @@ func Transcribe(m map[string]any, t Transcriptor) map[string]any {
 		if f.SwitchToDetails {
 			m = individualDetails
 		}
-		transcribedMap[f.Dst] = ExtractFromField(f, m)
+		transcribedMap[f.Dst] = ExtractFromField(f, m, t.RowCounter)
 
 	}
 	// fmt.Println("T map :", utils.JsonViewInterface(transcribedMap), utils.JsonViewInterface(m))
 	return transcribedMap
 }
-func ExtractFromField(f FieldRule, m map[string]any) any {
+func ExtractFromField(f FieldRule, m map[string]any, r *RowCounter) any {
 	if f.SrcPaymentStatus != nil {
 		rawPaidDate := ResolvePath(m, f.SrcPaymentStatus.Paid.Src)
 		rawExpireDate := ResolvePath(m, f.SrcPaymentStatus.Expire.Src)
@@ -290,18 +316,25 @@ func ExtractFromField(f FieldRule, m map[string]any) any {
 			}
 		}
 	}
+	srcBuildResult := []map[string]any{}
 	if f.SrcBuildJson != nil {
 		subT := Transcriptor{
 			Fields: f.SrcBuildJson.ObjectBuilder.Fields,
 		}
 		whereToSearch := ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
 		// fmt.Println("JSON AQUI", utils.JsonViewInterface(whereToSearch))
-
 		result := []map[string]any{}
 		for _, v := range whereToSearch {
-			result = append(result, Transcribe(v, subT))
+			if f.Op == "count" {
+				srcBuildResult = append(result, Transcribe(v, &subT))
+			} else {
+				result = append(result, Transcribe(v, &subT))
+
+			}
 		}
-		return result
+		if f.Op != "count" {
+			return result
+		}
 
 	}
 	if f.SrcRawValue != "" {
@@ -322,7 +355,7 @@ func ExtractFromField(f FieldRule, m map[string]any) any {
 		if len(f.SrcConcatCustom.Srcs) >= 1 {
 			strs := []string{}
 			for _, v := range f.SrcConcatCustom.Srcs {
-				strs = append(strs, utils.ToString(ExtractFromField(v, m)))
+				strs = append(strs, utils.ToString(ExtractFromField(v, m, r)))
 			}
 
 			m["concatenated_value"] = strings.Join(strs, f.SrcConcatCustom.Separator)
@@ -343,6 +376,23 @@ func ExtractFromField(f FieldRule, m map[string]any) any {
 
 	switch f.Op {
 	// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
+	case "count":
+		newVal := 0
+		if len(srcBuildResult) > 0 {
+			for _, v := range srcBuildResult {
+				key := utils.ToStringNumeric(v["id_externo"])
+				qnt := v["quantidade"]
+				newVal = r.Add(utils.ToInt(qnt), key)
+				fmt.Println(r.Get(key), len(r.Counter))
+			}
+		} else {
+			f.Op = "extract"
+			key := utils.ToStringNumeric(ExtractFromField(f, m, r))
+			newVal = r.Add(1, key)
+			fmt.Println(r.Get(key))
+		}
+		return newVal
+
 	case "case":
 		result := f.Case.Default
 		matched := false
@@ -490,6 +540,21 @@ func TranscribeMapToVendaRow(v map[string]any) (utils.VendaRow, error) {
 			jsonMarshalHook(),
 			mapstructure.StringToTimeDurationHookFunc(),
 		),
+	})
+	if err != nil {
+		return p, err
+	}
+	if err := decoder.Decode(v); err != nil {
+		return p, err
+	}
+	return p, err
+}
+func TranscribeMapToMostSoldRow(v map[string]any) (utils.MostSoldRow, error) {
+	var p utils.MostSoldRow
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		Result:           &p,
+		TagName:          "db",
+		WeaklyTypedInput: true,
 	})
 	if err != nil {
 		return p, err
