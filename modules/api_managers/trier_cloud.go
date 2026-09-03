@@ -46,7 +46,7 @@ func connectTrier(c *pb.APITokenGetter, dI *utils.DbInfos) (*utils.DbInfos, erro
 
 		return dI, err
 	}
-	ClientToken = t.Token
+	ClientToken = "Bearer " + t.Token
 	API_TokenGetter = c
 
 	return dI, nil
@@ -76,7 +76,7 @@ func StreamProdutosTrier(transcriptor string, d *sqlx.DB, batchSize int, cb func
 			r, err := Request(requestInfo{
 				url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
 				method: "GET",
-				token:  "Bearer " + ClientToken,
+				token:  ClientToken,
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 			if err != nil {
 				fmt.Println("ERROR stream produtos Trier :", err.Error())
@@ -149,7 +149,7 @@ func StreamClientesTrier(transcriptor string, d *sqlx.DB, batchSize int, cb func
 			page += 1
 			r, err := Request(requestInfo{
 				url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
-				token:  "Bearer " + ClientToken,
+				token:  ClientToken,
 				method: "GET",
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 			if err != nil {
@@ -222,7 +222,7 @@ func GetCategoriasTrier(transcriptor string, db *sqlx.DB) ([]utils.CategoriaRow,
 		page += 1
 		r, err := Request(requestInfo{
 			url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
-			token:  "Bearer " + ClientToken,
+			token:  ClientToken,
 			method: "GET",
 		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 		if err != nil {
@@ -282,7 +282,7 @@ func GetVendedoresTrier(transcriptor string, db *sqlx.DB) ([]utils.VendedorRow, 
 		page += 1
 		r, err := Request(requestInfo{
 			url:   fmt.Sprintf("%s&numeroPagina=%d", url, page),
-			token: "Bearer " + ClientToken,
+			token: ClientToken,
 
 			method: "GET",
 		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
@@ -347,7 +347,7 @@ func StreamVendasTrier(transcriptor string, db *sqlx.DB, batchSize int, cb func(
 			page += 1
 			r, err := Request(requestInfo{
 				url:    strings.ReplaceAll(fmt.Sprintf("%s&numeroPagina=%d", url, page), " ", "%20"),
-				token:  "Bearer " + ClientToken,
+				token:  ClientToken,
 				method: "GET",
 			}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 
@@ -492,7 +492,7 @@ func GetMostSoldTrier(transcriptor string, db *sqlx.DB) ([]utils.MostSoldRow, er
 		page += 1
 		r, err := Request(requestInfo{
 			url:    fmt.Sprintf("%s&numeroPagina=%d", url, page),
-			token:  "Bearer " + ClientToken,
+			token:  ClientToken,
 			method: "GET",
 		}, API_TokenGetter.CustomKeys, API_TokenGetter.CustomValues)
 		if err != nil {
