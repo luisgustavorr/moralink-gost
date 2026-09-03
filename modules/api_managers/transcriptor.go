@@ -154,6 +154,14 @@ func ResolveDynamicId(id string) string {
 		now = now.Add(time.Duration(daysAgo) * time.Hour)
 		return now.Format(format)
 	}
+	if strings.Contains(id, "hours_ago") {
+		dInfo := strings.Split(id, "!")
+		hoursAgo, _ := strconv.Atoi(dInfo[1])
+		format := dInfo[2]
+		now := time.Now()
+		now = now.Add(time.Duration(hoursAgo) * time.Hour)
+		return now.Format(format)
+	}
 	if strings.Contains(id, "token") {
 		return strings.ReplaceAll(id, "token", ClientToken)
 	}
