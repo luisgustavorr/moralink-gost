@@ -256,13 +256,13 @@ func Transcribe(m map[string]any, t *Transcriptor) map[string]any {
 	individualDetails := map[string]any{}
 	if t.IndividualDetails != nil {
 		rawUrl := t.IndividualDetails.Url
-		id := ResolvePath(m, t.IndividualDetails.KeyGetter.Src)
+		id := ExtractFromField(t.IndividualDetails.KeyGetter, m, t.RowCounter)
 		url := strings.ReplaceAll(rawUrl, t.IndividualDetails.KeyGetter.Dst, utils.ToString(id))
 		if t.IndividualDetails.Id_1 != nil {
 			url = url + t.IndividualDetails.Id_1.Key + ResolveDynamicId(t.IndividualDetails.Id_1.Value)
 		}
 		time.Sleep(400 * time.Millisecond)
-		// fmt.Println(rawUrl, id, t.IndividualDetails.KeyGetter, url, ClientToken)
+		// fmt.Println("Raw url :", rawUrl, id, t.IndividualDetails.KeyGetter, url, ClientToken)
 		r, err := Request(requestInfo{
 			url:    url,
 			token:  ClientToken,
@@ -290,10 +290,11 @@ func Transcribe(m map[string]any, t *Transcriptor) map[string]any {
 		}
 	}
 	for _, f := range t.Fields {
+		chosenM := m
 		if f.SwitchToDetails {
-			m = individualDetails
+			chosenM = individualDetails
 		}
-		transcribedMap[f.Dst] = ExtractFromField(f, m, t.RowCounter)
+		transcribedMap[f.Dst] = ExtractFromField(f, chosenM, t.RowCounter)
 
 	}
 	// fmt.Println("T map :", utils.JsonViewInterface(transcribedMap), utils.JsonViewInterface(m))
