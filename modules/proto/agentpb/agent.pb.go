@@ -2319,6 +2319,7 @@ type Vendedor struct {
 	Codigo          string                 `protobuf:"bytes,3,opt,name=codigo,proto3" json:"codigo,omitempty"`
 	TodasPermissoes bool                   `protobuf:"varint,4,opt,name=todas_permissoes,json=todasPermissoes,proto3" json:"todas_permissoes,omitempty"`
 	Ativo           bool                   `protobuf:"varint,5,opt,name=ativo,proto3" json:"ativo,omitempty"`
+	Funcao          string                 `protobuf:"bytes,6,opt,name=funcao,proto3" json:"funcao,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -2386,6 +2387,13 @@ func (x *Vendedor) GetAtivo() bool {
 		return x.Ativo
 	}
 	return false
+}
+
+func (x *Vendedor) GetFuncao() string {
+	if x != nil {
+		return x.Funcao
+	}
+	return ""
 }
 
 // vendedores ---
@@ -3158,14 +3166,15 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x04nome\x18\x02 \x01(\tR\x04nome\"3\n" +
 	"\n" +
 	"Vendedores\x12%\n" +
-	"\x05items\x18\x01 \x03(\v2\x0f.agent.VendedorR\x05items\"\x96\x01\n" +
+	"\x05items\x18\x01 \x03(\v2\x0f.agent.VendedorR\x05items\"\xae\x01\n" +
 	"\bVendedor\x12\x1d\n" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\x12\x12\n" +
 	"\x04nome\x18\x02 \x01(\tR\x04nome\x12\x16\n" +
 	"\x06codigo\x18\x03 \x01(\tR\x06codigo\x12)\n" +
 	"\x10todas_permissoes\x18\x04 \x01(\bR\x0ftodasPermissoes\x12\x14\n" +
-	"\x05ativo\x18\x05 \x01(\bR\x05ativo\",\n" +
+	"\x05ativo\x18\x05 \x01(\bR\x05ativo\x12\x16\n" +
+	"\x06funcao\x18\x06 \x01(\tR\x06funcao\",\n" +
 	"\x06Vendas\x12\"\n" +
 	"\x05items\x18\x01 \x03(\v2\f.agent.VendaR\x05items\"\x9a\x05\n" +
 	"\x05Venda\x12\x1d\n" +

@@ -248,6 +248,7 @@ message Vendedor {
   string codigo = 3;
   bool todas_permissoes=4;
   bool ativo =5;
+  string funcao=6;
 }
 // vendedores ---
 // vendas ---

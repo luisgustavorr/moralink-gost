@@ -102,6 +102,7 @@ type VendedorRow struct {
 	Codigo          *string `db:"codigo"`
 	TodasPermissoes *bool   `db:"todas_permissoes"`
 	Ativo           *bool   `db:"ativo"`
+	Funcao          *string `db:"funcao"`
 }
 type FinanceiroRow struct {
 	IdExterno          *string            `db:"id_externo"`
@@ -579,6 +580,9 @@ func ToProtoVendedores(rows []VendedorRow) []*pb.Vendedor {
 		}
 		if r.Ativo != nil {
 			vendedor.Ativo = *r.Ativo
+		}
+		if r.Funcao != nil {
+			vendedor.Funcao = *r.Funcao
 		}
 		out = append(out, vendedor)
 	}
