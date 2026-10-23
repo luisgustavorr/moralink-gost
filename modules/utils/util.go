@@ -61,6 +61,7 @@ type ProdutoRow struct {
 	ContarEstoque *bool    `db:"contar_estoque"`
 	Ativo         *bool    `db:"ativo"`
 	Complemento   *string  `db:"complemento"`
+	Referencia    *string  `db:"referencia"`
 }
 type ProdutoVendaRow struct {
 	IdProduto  any     `json:"produto_id"`
@@ -388,6 +389,9 @@ func ToProtoProdutos(rows []ProdutoRow) []*pb.Produto {
 		}
 		if r.Complemento != nil {
 			produto.Complemento = sanitizeUTF8(*r.Complemento)
+		}
+		if r.Referencia != nil {
+			produto.Referencia = sanitizeUTF8(*r.Referencia)
 		}
 		out = append(out, produto)
 	}

@@ -1829,6 +1829,7 @@ type Produto struct {
 	ContarEstoque bool                   `protobuf:"varint,12,opt,name=contar_estoque,json=contarEstoque,proto3" json:"contar_estoque,omitempty"`
 	Ativo         bool                   `protobuf:"varint,13,opt,name=ativo,proto3" json:"ativo,omitempty"`
 	Complemento   string                 `protobuf:"bytes,14,opt,name=complemento,proto3" json:"complemento,omitempty"`
+	Referencia    string                 `protobuf:"bytes,15,opt,name=referencia,proto3" json:"referencia,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1957,6 +1958,13 @@ func (x *Produto) GetAtivo() bool {
 func (x *Produto) GetComplemento() string {
 	if x != nil {
 		return x.Complemento
+	}
+	return ""
+}
+
+func (x *Produto) GetReferencia() string {
+	if x != nil {
+		return x.Referencia
 	}
 	return ""
 }
@@ -3114,7 +3122,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\"5\n" +
 	"\fMostSoldRows\x12%\n" +
-	"\x05items\x18\x01 \x03(\v2\x0f.agent.MostSoldR\x05items\"\x9b\x03\n" +
+	"\x05items\x18\x01 \x03(\v2\x0f.agent.MostSoldR\x05items\"\xbb\x03\n" +
 	"\aProduto\x12\x1d\n" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\x12\x12\n" +
@@ -3132,7 +3140,10 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\aestoque\x18\v \x01(\tR\aestoque\x12%\n" +
 	"\x0econtar_estoque\x18\f \x01(\bR\rcontarEstoque\x12\x14\n" +
 	"\x05ativo\x18\r \x01(\bR\x05ativo\x12 \n" +
-	"\vcomplemento\x18\x0e \x01(\tR\vcomplemento\"0\n" +
+	"\vcomplemento\x18\x0e \x01(\tR\vcomplemento\x12\x1e\n" +
+	"\n" +
+	"referencia\x18\x0f \x01(\tR\n" +
+	"referencia\"0\n" +
 	"\bClientes\x12$\n" +
 	"\x05items\x18\x01 \x03(\v2\x0e.agent.ClienteR\x05items\"\xa0\x03\n" +
 	"\aCliente\x12\x1d\n" +

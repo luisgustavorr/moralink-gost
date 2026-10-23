@@ -201,6 +201,7 @@ message Produto {
   bool contar_estoque = 12;
   bool ativo = 13;  
   string complemento = 14;
+  string referencia = 15;
 }
 // produtos ---
 
