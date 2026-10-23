@@ -120,6 +120,8 @@ goto retry
 rem swap failed: keep the old binary
 del "%[1]s" >nul 2>&1
 :done
+"%[2]s" uninstall
+"%[2]s" install
 net start moralink-gost
 del "%%~f0"
 `, tmpPath, targetPath)
