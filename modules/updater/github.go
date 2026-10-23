@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -53,11 +54,7 @@ func spawnApplyAndExit(tmpPath, targetPath string) error {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		// On Windows use cmd.exe to wait a moment then apply
-		script := fmt.Sprintf(
-			`timeout /t 3 /nobreak >nul && move /Y "%s" "%s" && sc start moralink-gost`,
-			tmpPath, targetPath,
-		)
-		cmd = exec.Command("cmd.exe", "/C", script)
+		return applyWindows(tmpPath, targetPath)
 	} else {
 		// On Linux/macOS: wait, swap, restart via systemctl
 		script := fmt.Sprintf(
@@ -103,6 +100,41 @@ func spawnApplyAndExit(tmpPath, targetPath string) error {
 	}
 	return syscall.Exec(self, args, env)
 	// return nil
+}
+
+func applyWindows(tmpPath, targetPath string) error {
+	bat := filepath.Join(filepath.Dir(targetPath), "update.bat")
+	script := fmt.Sprintf(`@echo off
+ping -n 4 127.0.0.1 >nul
+net stop moralink-gost
+set /a tries=0
+:retry
+copy /Y "%[1]s" "%[2]s.old" >nul 2>&1
+move /Y "%[1]s" "%[2]s" >nul 2>&1
+if not errorlevel 1 goto done
+set /a tries+=1
+if %%tries%% GEQ 15 goto rollback
+ping -n 3 127.0.0.1 >nul
+goto retry
+:rollback
+rem swap failed: keep the old binary
+del "%[1]s" >nul 2>&1
+:done
+net start moralink-gost
+del "%%~f0"
+`, tmpPath, targetPath)
+
+	if err := os.WriteFile(bat, []byte(strings.ReplaceAll(script, "\n", "\r\n")), 0o644); err != nil {
+		return err
+	}
+
+	cmd := exec.Command("cmd.exe", "/C", bat)
+	setSysProcAttrDetached(cmd)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to spawn updater: %w", err)
+	}
+	log.Printf("Updater spawned (pid %d); service will be stopped, swapped and restarted", cmd.Process.Pid)
+	return nil // don't exec/restart: the helper stops us
 }
 func DownloadRelease(tag string) error {
 	release, err := GetRelease(tag)
