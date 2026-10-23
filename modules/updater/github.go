@@ -179,7 +179,6 @@ func GetRelease(tag string) (*Release, error) {
 	req.Header.Set("Authorization", "Bearer "+githubToken)
 
 	resp, err := client.Do(req)
-	fmt.Println("Pegou release :", resp.Body, githubToken)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to reach GitHub: %w", err)
