@@ -1,6 +1,7 @@
 package updater
 
 import (
+	"MoraLinkGOst/modules/logger"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -48,7 +50,6 @@ func spawnApplyAndExit(tmpPath, targetPath string) error {
 	if err != nil {
 		return err
 	}
-
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
 		// On Windows use cmd.exe to wait a moment then apply
@@ -60,9 +61,10 @@ func spawnApplyAndExit(tmpPath, targetPath string) error {
 	} else {
 		// On Linux/macOS: wait, swap, restart via systemctl
 		script := fmt.Sprintf(
-			`sleep 3 && mv -f "%s" "%s" && systemctl restart moralink-gost`,
-			tmpPath, targetPath,
+			`sleep 3 && mv -f "%s" "%s" && sudo %s uninstall && sudo %s install && sudo %s restart`,
+			tmpPath, targetPath, targetPath, targetPath, targetPath,
 		)
+		logger.Debug("Running script : ", script)
 		cmd = exec.Command("bash", "-c", script)
 	}
 
@@ -71,7 +73,7 @@ func spawnApplyAndExit(tmpPath, targetPath string) error {
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	cmd.Stdin = nil
-	setSysProcAttrDetached(cmd) // platform-specific, see below
+	// setSysProcAttrDetached(cmd) // platform-specific, see below
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to spawn updater: %w", err)
@@ -80,13 +82,27 @@ func spawnApplyAndExit(tmpPath, targetPath string) error {
 	log.Printf("✅ Updater process spawned (pid %d). Service will restart shortly.\n", cmd.Process.Pid)
 
 	// Signal the service to stop cleanly — the spawned process will restart it
-	go func() {
-		time.Sleep(1 * time.Second)
-		p, _ := os.FindProcess(os.Getpid())
-		p.Signal(os.Interrupt)
-	}()
-
-	return nil
+	// go func() {
+	// 	time.Sleep(1 * time.Second)
+	// 	p, _ := os.FindProcess(os.Getpid())
+	// 	p.Signal(os.Interrupt)
+	// }()
+	self, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	args := os.Args
+	env := os.Environ()
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command(self, args[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		cmd.Env = env
+		return cmd.Run()
+	}
+	return syscall.Exec(self, args, env)
+	// return nil
 }
 func DownloadRelease(tag string) error {
 	release, err := GetRelease(tag)
@@ -163,6 +179,8 @@ func GetRelease(tag string) (*Release, error) {
 	req.Header.Set("Authorization", "Bearer "+githubToken)
 
 	resp, err := client.Do(req)
+	fmt.Println("Pegou release :", resp.Body, githubToken)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to reach GitHub: %w", err)
 	}

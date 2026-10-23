@@ -31,6 +31,9 @@ func main() {
 	_ = godotenv.Load()
 
 	if os.Getenv("dev") == "1" {
+		ReleaseGH = os.Getenv("RELEASE_GH")
+		updater.Configure(ReleaseGH)
+
 		go func() {
 			log.Println("pprof listening on :6060")
 			http.ListenAndServe("localhost:6060", nil)
