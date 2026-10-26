@@ -81,7 +81,6 @@ func (c *Client) handleMessage(msg *pb.AgentMessage, s grpc.BidiStreamingClient[
 		dbConn := utils.Conn.DB
 		batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
 		tableAskedFor := msg.GetTable()
-		fmt.Println("Table asked for : ", tableAskedFor)
 		switch tableAskedFor {
 		case 0:
 			batchSize := int(msg.Payload.GetQueryRequest().BatchSize)
