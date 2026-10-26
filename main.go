@@ -4,7 +4,8 @@ import (
 	commandManagers "MoraLinkGOst/modules/command_managers"
 	"MoraLinkGOst/modules/logger"
 	Service "MoraLinkGOst/modules/service"
-	"MoraLinkGOst/modules/updater"
+	"MoraLinkGOst/updater"
+
 	"MoraLinkGOst/modules/utils"
 	"log"
 	"net/http"
@@ -22,6 +23,14 @@ var (
 )
 
 func main() {
+	handled, err := updater.RunApplyMode(os.Args[1:])
+	if handled {
+		if err != nil {
+			log.Printf("Updater failed: %v", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 	utils.SharkToken = SharkToken
 	updater.Configure(ReleaseGH)
 	exePath, err := os.Executable()

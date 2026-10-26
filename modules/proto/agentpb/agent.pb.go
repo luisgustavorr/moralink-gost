@@ -2032,6 +2032,7 @@ type Cliente struct {
 	Sexo          string                 `protobuf:"bytes,14,opt,name=sexo,proto3" json:"sexo,omitempty"`
 	VendedorId    int32                  `protobuf:"varint,15,opt,name=vendedor_id,json=vendedorId,proto3" json:"vendedor_id,omitempty"`
 	Cep           string                 `protobuf:"bytes,16,opt,name=cep,proto3" json:"cep,omitempty"`
+	Estado        string                 `protobuf:"bytes,17,opt,name=estado,proto3" json:"estado,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2174,6 +2175,13 @@ func (x *Cliente) GetVendedorId() int32 {
 func (x *Cliente) GetCep() string {
 	if x != nil {
 		return x.Cep
+	}
+	return ""
+}
+
+func (x *Cliente) GetEstado() string {
+	if x != nil {
+		return x.Estado
 	}
 	return ""
 }
@@ -3145,7 +3153,7 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"referencia\x18\x0f \x01(\tR\n" +
 	"referencia\"0\n" +
 	"\bClientes\x12$\n" +
-	"\x05items\x18\x01 \x03(\v2\x0e.agent.ClienteR\x05items\"\xa0\x03\n" +
+	"\x05items\x18\x01 \x03(\v2\x0e.agent.ClienteR\x05items\"\xb8\x03\n" +
 	"\aCliente\x12\x1d\n" +
 	"\n" +
 	"id_externo\x18\x01 \x01(\tR\tidExterno\x12\x12\n" +
@@ -3167,7 +3175,8 @@ const file_modules_proto_agent_proto_rawDesc = "" +
 	"\x04sexo\x18\x0e \x01(\tR\x04sexo\x12\x1f\n" +
 	"\vvendedor_id\x18\x0f \x01(\x05R\n" +
 	"vendedorId\x12\x10\n" +
-	"\x03cep\x18\x10 \x01(\tR\x03cep\"4\n" +
+	"\x03cep\x18\x10 \x01(\tR\x03cep\x12\x16\n" +
+	"\x06estado\x18\x11 \x01(\tR\x06estado\"4\n" +
 	"\n" +
 	"Categorias\x12&\n" +
 	"\x05items\x18\x01 \x03(\v2\x10.agent.CategoriaR\x05items\">\n" +

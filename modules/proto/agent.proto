@@ -226,6 +226,8 @@ message Cliente {
   string sexo =14;
   int32 vendedor_id =15;
   string cep =16;
+  string estado = 17;
+
 }
 // clientes ---
 

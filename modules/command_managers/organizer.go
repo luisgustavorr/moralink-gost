@@ -3,8 +3,10 @@ package commandManagers
 import (
 	dbmanagers "MoraLinkGOst/modules/db_managers"
 	pb "MoraLinkGOst/modules/proto/agentpb"
-	"MoraLinkGOst/modules/updater"
 	"MoraLinkGOst/modules/utils"
+	"MoraLinkGOst/updater"
+	"context"
+	"fmt"
 	"log"
 	"path/filepath"
 
@@ -40,9 +42,13 @@ func ExecCommand(c *pb.Commands) {
 			version = "latest" // you can resolve "latest" in GetRelease
 		}
 		go func() { // run in goroutine so gRPC stream isn't blocked
-			err := updater.DownloadRelease(version)
-			if err != nil {
-				log.Println("❌ Update failed:", err.Error())
+			// err := updater.DownloadRelease(version)
+			// if err != nil {
+			// 	log.Println("❌ Update failed:", err.Error())
+			// }
+			ctx := context.Background()
+			if err := updater.RequestUpdate(ctx, version); err != nil {
+				fmt.Errorf("schedule MoraLinkGOst update: %w", err)
 			}
 		}()
 	case pb.Command_CONFIGURE:

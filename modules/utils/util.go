@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-var Version string = "v0.1.0"
+var Version string = "v0.1.1"
 
 type CategoriaRow struct {
 	IdExterno *string `db:"id_externo"`
@@ -45,6 +45,7 @@ type ClienteRow struct {
 	Sexo        *string `db:"sexo"`
 	VendedorId  *int32  `db:"vendedor_id"`
 	CEP         *string `db:"cep"`
+	Estado      *string `db:"estado"`
 }
 type ProdutoRow struct {
 	IdExterno     *string  `db:"id_externo"`
@@ -300,6 +301,9 @@ func ToProtoClientes(rows []ClienteRow) []*pb.Cliente {
 		}
 		if r.VendedorId != nil {
 			cliente.VendedorId = *r.VendedorId
+		}
+		if r.Estado != nil {
+			cliente.Estado = *r.Estado
 		}
 		out = append(out, cliente)
 	}

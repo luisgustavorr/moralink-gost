@@ -2,8 +2,6 @@ module MoraLinkGOst
 
 go 1.26.0
 
-toolchain go1.24.12
-
 require (
 	github.com/alexbrainman/odbc v0.0.0-20250601004241-49e6b2bc0cf0
 	github.com/go-sql-driver/mysql v1.9.3
