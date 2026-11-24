@@ -136,6 +136,7 @@ Each object in `fields` maps one value from the raw API response to one destinat
 | `src_object_builder` | object | — | Build a nested JSON object (triggers `build_object` behaviour) |
 | `src_payment_status` | object | — | Resolve a payment status string (triggers payment status logic) |
 | `src_concat` | object | — | Concatenate multiple source fields into one value before applying `op` |
+| `src_sum` | object | — | Sum values returned by a nested `field` rule across each item in `get_from` |
 | `nullif` | string | — | Treat the resolved value as empty if it equals this string |
 | `format_date` | object | — | Date format config when `op` is `format_date` |
 | `duration_rules` | object | — | Category-to-duration map when `op` is `calc_duration` |
@@ -365,6 +366,7 @@ The `op` field controls how the resolved `src` value is transformed before being
 | `case` | Conditional value mapping using `case.conditions` and `case.default` |
 | `to_int` | Convert the resolved value to an integer |
 | `to_float` | Convert the resolved value to a float |
+| `sum` | Sum numeric values across array items in `src` (e.g. `itens.*.valorTotalLiquido` or `itens.valorTotalLiquido`) |
 | `days_to_now` | Parse a date from `format_date.raw` layout and output the number of calendar days between that date and today (result is an integer) |
 
 > Operations `disc_percent`, `disc_value`, `coalesce`, and `fetch` appear in internal constants but are not implemented in the current transcription switch. Do not use them in configs.
@@ -473,6 +475,36 @@ Converts the resolved `src` value to a numeric type. Both ops use `ResolvePath` 
 ```
 
 Both handle strings, JSON numbers, and all native integer/float types. `to_float` also accepts `json.Number`. If conversion fails the result is `0`.
+
+---
+
+## `sum` / `src_sum`
+
+Sums numeric values across an array of objects.
+
+For simple field sums, use `op: "sum"` with a dot-path in `src` (with or without `.*.`):
+
+```json
+{ "src": "itens.*.valorTotalLiquido", "dst": "valor_liquido", "op": "sum" }
+```
+
+```json
+{ "src": "itens.valorTotalLiquido", "dst": "valor_liquido", "op": "sum" }
+```
+
+If each element requires a full nested rule (such as `src_list` coalesce or `calc_min_price`), use `src_sum`:
+
+```json
+{
+  "src_sum": {
+    "get_from": "itens",
+    "field": { "src": "valorTotalLiquido" }
+  },
+  "dst": "valor_liquido"
+}
+```
+
+Missing, `null`, or empty arrays evaluate to `0`.
 
 ---
 

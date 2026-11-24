@@ -112,6 +112,10 @@ type Filter struct {
 	ShouldBeEqual bool   `json:"should_be_equal"`
 	EqualTo       string `json:"equal_to"`
 }
+type SrcSum struct {
+	Field   FieldRule `json:"field"`
+	GetFrom string    `json:"get_from"`
+}
 type FieldRule struct {
 	Src              string              `json:"src"`
 	SrcList          []string            `json:"src_list"`           // work as a coalesce
@@ -120,6 +124,7 @@ type FieldRule struct {
 	SrcPaymentStatus *SrcPaymentStatus   `json:"src_payment_status"` // build a map[string]any
 	SrcConcat        *ConcatRules        `json:"src_concat"`         // concatenate multiples src into one value
 	SrcConcatCustom  *ConcatCustomRules  `json:"src_custom_concat"`  // concatenate multiples src into one value
+	SrcSum           *SrcSum             `json:"src_sum"`            // sum numeric values from a nested array
 	Dst              string              `json:"dst"`
 	Op               string              `json:"op"`             // "", "path", "expr", "fetch"
 	Method           string              `json:"method"`         // for fetch
@@ -349,6 +354,9 @@ func ExtractFromField(f FieldRule, m map[string]any, r *RowCounter) any {
 	if f.SrcRawValue != "" {
 		return f.SrcRawValue
 	}
+	if f.SrcSum != nil {
+		return evalSrcSum(f.SrcSum, m, r)
+	}
 	if f.SrcConcat != nil {
 		if len(f.SrcConcat.Srcs) >= 1 {
 			strs := []string{}
@@ -435,6 +443,8 @@ func ExtractFromField(f FieldRule, m map[string]any, r *RowCounter) any {
 		return utils.ToInt(ResolvePath(m, f.Src))
 	case "to_float":
 		return utils.ToFloat(ResolvePath(m, f.Src))
+	case "sum":
+		return roundSum(sumPath(m, strings.Split(f.Src, ".")))
 	case "days_to_now":
 		input := utils.ToString(ResolvePath(m, f.Src))
 		if input == "" {
@@ -491,6 +501,141 @@ func ExtractFromField(f FieldRule, m map[string]any, r *RowCounter) any {
 		return m[f.Src]
 	}
 	return ""
+}
+
+func roundSum(v float64) float64 {
+	return math.Round(v*1e6) / 1e6
+}
+
+func toFloat64(v any) float64 {
+	if v == nil {
+		return 0
+	}
+	switch n := v.(type) {
+	case float64:
+		return n
+	case float32:
+		return float64(n)
+	case int:
+		return float64(n)
+	case int64:
+		return float64(n)
+	case int32:
+		return float64(n)
+	case int16:
+		return float64(n)
+	case int8:
+		return float64(n)
+	case uint:
+		return float64(n)
+	case uint64:
+		return float64(n)
+	case uint32:
+		return float64(n)
+	case uint16:
+		return float64(n)
+	case uint8:
+		return float64(n)
+	default:
+		return utils.ToFloat(v)
+	}
+}
+
+func sumPath(current any, parts []string) float64 {
+	if current == nil {
+		return 0
+	}
+	if len(parts) == 0 || (len(parts) == 1 && parts[0] == "") {
+		switch v := current.(type) {
+		case []any:
+			total := 0.0
+			for _, item := range v {
+				total += toFloat64(item)
+			}
+			return total
+		default:
+			return toFloat64(current)
+		}
+	}
+
+	part, rest := parts[0], parts[1:]
+	switch v := current.(type) {
+	case map[string]any:
+		if part == "*" {
+			total := 0.0
+			for _, val := range v {
+				total += sumPath(val, rest)
+			}
+			return total
+		}
+		return sumPath(v[part], rest)
+	case []any:
+		return sumSlice(v, parts)
+	case []map[string]any:
+		return sumSlice(v, parts)
+	default:
+		return 0
+	}
+}
+
+func sumSlice[T any](items []T, parts []string) float64 {
+	part, rest := parts[0], parts[1:]
+	if part == "*" {
+		total := 0.0
+		for _, item := range items {
+			total += sumPath(item, rest)
+		}
+		return total
+	}
+	if idx, err := strconv.Atoi(part); err == nil {
+		if idx < 0 || idx >= len(items) {
+			return 0
+		}
+		return sumPath(items[idx], rest)
+	}
+	// Implicit fan-out over slice elements when "*" is omitted (e.g. "itens.valorTotalLiquido").
+	total := 0.0
+	for _, item := range items {
+		total += sumPath(item, parts)
+	}
+	return total
+}
+
+func resolveSliceMaps(data map[string]any, path string) []map[string]any {
+	if path == "" {
+		return []map[string]any{data}
+	}
+	target := ResolvePath(data, path)
+	switch v := target.(type) {
+	case []map[string]any:
+		return v
+	case []any:
+		out := make([]map[string]any, 0, len(v))
+		for _, item := range v {
+			if m, ok := item.(map[string]any); ok {
+				out = append(out, m)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func evalSrcSum(s *SrcSum, m map[string]any, r *RowCounter) float64 {
+	items := resolveSliceMaps(m, s.GetFrom)
+	if len(items) == 0 {
+		return 0
+	}
+	field := s.Field
+	if field.Op == "" && field.SrcBuildJson == nil && field.SrcPaymentStatus == nil && field.SrcRawValue == "" {
+		field.Op = "extract"
+	}
+	total := 0.0
+	for _, item := range items {
+		total += toFloat64(ExtractFromField(field, item, r))
+	}
+	return roundSum(total)
 }
 func TranscribeMapToProdutoRow(v map[string]any) (utils.ProdutoRow, error) {
 	var p utils.ProdutoRow

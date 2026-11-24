@@ -50,6 +50,7 @@ enum API_owner {
   GESTAO_CLICK = 2;
   TOOLSPHARMA= 3;
   TRIER_CLOUD= 4;
+  TRIER_SGF= 5;
 }
 // desc: Which Command was requested
 enum Command {

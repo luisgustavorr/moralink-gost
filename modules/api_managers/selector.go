@@ -68,6 +68,8 @@ func DecideWhoActs(ao pb.APIOwner, c *pb.APITokenGetter) (*utils.DbInfos, error)
 		connectToolspharma(c, db)
 	case pb.APIOwner_TRIER_CLOUD:
 		connectTrier(c, db)
+	case pb.APIOwner_TRIER_SGF:
+		connectTrierSGF(c, db)
 	}
 	return db, nil
 }
