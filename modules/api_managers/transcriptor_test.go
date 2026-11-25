@@ -159,3 +159,120 @@ func TestSrcSum(t *testing.T) {
 		t.Fatalf("coalesced_sum = %v, want 20.4", got["coalesced_sum"])
 	}
 }
+
+func TestOpCountAndUnionMostSold(t *testing.T) {
+	var sale1 map[string]any
+	if err := json.Unmarshal([]byte(sampleTrierVendaJSON), &sale1); err != nil {
+		t.Fatalf("unmarshal sale1: %v", err)
+	}
+	sale2JSON := `{"numeroNota": 467715, "itens": [{"codigoProduto": 36279, "quantidadeProdutos": 3}]}`
+	var sale2 map[string]any
+	if err := json.Unmarshal([]byte(sale2JSON), &sale2); err != nil {
+		t.Fatalf("unmarshal sale2: %v", err)
+	}
+
+	t.Run("wildcard count without quantity_src counts occurrences", func(t *testing.T) {
+		dsl := `{
+			"fields": [
+				{ "src": "itens.*.codigoProduto", "dst": "id_externo", "op": "count" }
+			]
+		}`
+		tr, err := JsonToTranscriptor([]byte(dsl))
+		if err != nil {
+			t.Fatalf("JsonToTranscriptor: %v", err)
+		}
+		expanded := ExpandTranscriptors(&tr)
+		Transcribe(sale1, &expanded[0])
+		Transcribe(sale2, &expanded[0])
+
+		if got := tr.RowCounter.Get("36279"); got != 2 {
+			t.Fatalf("36279 count = %d, want 2", got)
+		}
+		if got := tr.RowCounter.Get("50052"); got != 1 {
+			t.Fatalf("50052 count = %d, want 1", got)
+		}
+		if got := tr.RowCounter.Get("34001"); got != 1 {
+			t.Fatalf("34001 count = %d, want 1", got)
+		}
+	})
+
+	t.Run("wildcard count with quantity_src and union inheritance", func(t *testing.T) {
+		dsl := `{
+			"url": "https://api-sgf-gateway.triersistemas.com.br/sgfpod1/rest/integracao/venda/obter-v1?quantidadeRegistros=900&ativo=true",
+			"id_1": { "key": "&dataEmissaoInicial=", "value": "days_ago!30!2006-01-02T15:04:05-0700" },
+			"fields": [
+				{
+					"src": "itens.*.codigoProduto",
+					"quantity_src": "quantidadeProdutos",
+					"dst": "id_externo",
+					"op": "count"
+				}
+			],
+			"union": [
+				{
+					"id_1": { "key": "&dataEmissaoInicial=", "value": "days_ago!60!2006-01-02T15:04:05-0700" },
+					"id_2": { "key": "&dataEmissaoFinal=", "value": "days_ago!30!2006-01-02T15:04:05-0700" }
+				}
+			]
+		}`
+		tr, err := JsonToTranscriptor([]byte(dsl))
+		if err != nil {
+			t.Fatalf("JsonToTranscriptor: %v", err)
+		}
+		expanded := ExpandTranscriptors(&tr)
+		if len(expanded) != 2 {
+			t.Fatalf("len(expanded) = %d, want 2", len(expanded))
+		}
+		if expanded[1].Url != tr.Url || len(expanded[1].Fields) != 1 {
+			t.Fatalf("union did not inherit url/fields: %+v", expanded[1])
+		}
+
+		Transcribe(sale1, &expanded[0])
+		Transcribe(sale2, &expanded[1])
+
+		if got := tr.RowCounter.Get("36279"); got != 5 {
+			t.Fatalf("36279 qty = %d, want 5", got)
+		}
+		if got := tr.RowCounter.Get("50052"); got != 1 {
+			t.Fatalf("50052 qty = %d, want 1", got)
+		}
+		if got := tr.RowCounter.Get("34001"); got != 1 {
+			t.Fatalf("34001 qty = %d, want 1", got)
+		}
+	})
+
+	t.Run("src_object_builder count accumulates all items", func(t *testing.T) {
+		dsl := `{
+			"row_counter": {},
+			"fields": [
+				{
+					"src_object_builder": {
+						"get_from": "itens",
+						"object_builder": {
+							"fields": [
+								{ "src": "codigoProduto", "dst": "id_externo" },
+								{ "src": "quantidadeProdutos", "dst": "quantidade" }
+							]
+						}
+					},
+					"dst": "id_externo",
+					"op": "count"
+				}
+			]
+		}`
+		tr, err := JsonToTranscriptor([]byte(dsl))
+		if err != nil {
+			t.Fatalf("JsonToTranscriptor: %v", err)
+		}
+		Transcribe(sale1, &tr)
+		if got := tr.RowCounter.Get("36279"); got != 2 {
+			t.Fatalf("36279 = %d, want 2", got)
+		}
+		if got := tr.RowCounter.Get("50052"); got != 1 {
+			t.Fatalf("50052 = %d, want 1", got)
+		}
+		if got := tr.RowCounter.Get("34001"); got != 1 {
+			t.Fatalf("34001 = %d, want 1", got)
+		}
+	})
+}

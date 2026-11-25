@@ -45,18 +45,22 @@ type RowCounter struct {
 }
 
 func (rc *RowCounter) Add(amount int, key string) int {
-	if key == "" {
+	if rc == nil || key == "" {
 		return 0
 	}
+	rc.mu.Lock()
 	if rc.Counter == nil {
 		rc.Counter = make(map[string]int)
 	}
-	rc.mu.Lock()
 	rc.Counter[key] += amount
+	amm := rc.Counter[key]
 	rc.mu.Unlock()
-	return rc.Get(key)
+	return amm
 }
 func (rc *RowCounter) Get(key string) int {
+	if rc == nil {
+		return 0
+	}
 	rc.mu.Lock()
 	amm := rc.Counter[key]
 	rc.mu.Unlock()
@@ -118,6 +122,7 @@ type SrcSum struct {
 }
 type FieldRule struct {
 	Src              string              `json:"src"`
+	QuantitySrc      string              `json:"quantity_src"`       // optional quantity path for op:"count"
 	SrcList          []string            `json:"src_list"`           // work as a coalesce
 	SrcRawValue      string              `json:"src_raw_value"`      // get the value as final result
 	SrcBuildJson     *SrcBuildJson       `json:"src_object_builder"` // build a map[string]any
@@ -335,21 +340,23 @@ func ExtractFromField(f FieldRule, m map[string]any, r *RowCounter) any {
 		subT := Transcriptor{
 			Fields: f.SrcBuildJson.ObjectBuilder.Fields,
 		}
-		whereToSearch := ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
-		// fmt.Println("JSON AQUI", utils.JsonViewInterface(whereToSearch))
+		var whereToSearch []map[string]any
+		if f.Op == "count" {
+			whereToSearch = resolveSliceMaps(m, f.SrcBuildJson.GetFrom)
+		} else {
+			whereToSearch = ResolvePathToJSONBuilder(m, f.SrcBuildJson.GetFrom)
+		}
 		result := []map[string]any{}
 		for _, v := range whereToSearch {
 			if f.Op == "count" {
-				srcBuildResult = append(result, Transcribe(v, &subT))
+				srcBuildResult = append(srcBuildResult, Transcribe(v, &subT))
 			} else {
 				result = append(result, Transcribe(v, &subT))
-
 			}
 		}
 		if f.Op != "count" {
 			return result
 		}
-
 	}
 	if f.SrcRawValue != "" {
 		return f.SrcRawValue
@@ -395,18 +402,23 @@ func ExtractFromField(f FieldRule, m map[string]any, r *RowCounter) any {
 	// fmt.Println(utils.JsonViewInterface(), "OK AQUI FEZ O DELE")
 	case "count":
 		newVal := 0
-		if len(srcBuildResult) > 0 {
+		if f.SrcBuildJson != nil {
 			for _, v := range srcBuildResult {
 				key := utils.ToStringNumeric(v["id_externo"])
-				qnt := v["quantidade"]
-				newVal = r.Add(utils.ToInt(qnt), key)
+				qnt := 1
+				if v["quantidade"] != nil {
+					qnt = utils.ToInt(v["quantidade"])
+				}
+				newVal = r.Add(qnt, key)
 			}
-		} else {
-			f.Op = "extract"
-			key := utils.ToStringNumeric(ExtractFromField(f, m, r))
-			newVal = r.Add(1, key)
+			return newVal
 		}
-		return newVal
+		parts := strings.Split(f.Src, ".")
+		var qtyParts []string
+		if f.QuantitySrc != "" {
+			qtyParts = strings.Split(f.QuantitySrc, ".")
+		}
+		return countPath(m, parts, qtyParts, nil, r)
 
 	case "case":
 		result := f.Case.Default
@@ -636,6 +648,119 @@ func evalSrcSum(s *SrcSum, m map[string]any, r *RowCounter) float64 {
 		total += toFloat64(ExtractFromField(field, item, r))
 	}
 	return roundSum(total)
+}
+
+// ExpandTranscriptors returns the primary transcriptor followed by any union
+// entries, initializing a shared RowCounter and inheriting omitted url,
+// get_from, filters, and fields from the primary transcriptor.
+func ExpandTranscriptors(tr *Transcriptor) []Transcriptor {
+	if tr.RowCounter == nil {
+		tr.RowCounter = &RowCounter{Counter: make(map[string]int)}
+	} else if tr.RowCounter.Counter == nil {
+		tr.RowCounter.Counter = make(map[string]int)
+	}
+	out := []Transcriptor{*tr}
+	if tr.Union == nil {
+		return out
+	}
+	for _, u := range *tr.Union {
+		if u.Url == "" {
+			u.Url = tr.Url
+		}
+		if u.GetFrom == "" {
+			u.GetFrom = tr.GetFrom
+		}
+		if len(u.Fields) == 0 {
+			u.Fields = tr.Fields
+		}
+		if u.Filters == nil {
+			u.Filters = tr.Filters
+		}
+		u.RowCounter = tr.RowCounter
+		out = append(out, u)
+	}
+	return out
+}
+
+func countPath(current any, parts []string, qtyParts []string, resolvedQty *int, r *RowCounter) int {
+	if current == nil {
+		return 0
+	}
+	if len(parts) == 0 || (len(parts) == 1 && parts[0] == "") {
+		if items, ok := current.([]any); ok {
+			last := 0
+			for _, item := range items {
+				last = countPath(item, nil, qtyParts, resolvedQty, r)
+			}
+			return last
+		}
+		key := utils.ToStringNumeric(current)
+		amount := 1
+		if resolvedQty != nil {
+			amount = *resolvedQty
+		}
+		return r.Add(amount, key)
+	}
+
+	part, rest := parts[0], parts[1:]
+	switch v := current.(type) {
+	case map[string]any:
+		if part == "*" {
+			last := 0
+			for _, val := range v {
+				last = countPath(val, rest, qtyParts, resolvedQty, r)
+			}
+			return last
+		}
+		nextQtyParts := qtyParts
+		nextResolvedQty := resolvedQty
+		if len(qtyParts) > 0 {
+			if qtyParts[0] == part {
+				nextQtyParts = qtyParts[1:]
+			} else if qtyVal := ResolvePath(v, strings.Join(qtyParts, ".")); qtyVal != nil {
+				q := utils.ToInt(qtyVal)
+				nextResolvedQty = &q
+				nextQtyParts = nil
+			}
+		}
+		return countPath(v[part], rest, nextQtyParts, nextResolvedQty, r)
+	case []any:
+		return countSlice(v, parts, qtyParts, resolvedQty, r)
+	case []map[string]any:
+		return countSlice(v, parts, qtyParts, resolvedQty, r)
+	default:
+		return 0
+	}
+}
+
+func countSlice[T any](items []T, parts []string, qtyParts []string, resolvedQty *int, r *RowCounter) int {
+	part, rest := parts[0], parts[1:]
+	if part == "*" {
+		nextQty := qtyParts
+		if len(qtyParts) > 0 && qtyParts[0] == "*" {
+			nextQty = qtyParts[1:]
+		}
+		last := 0
+		for _, item := range items {
+			last = countPath(item, rest, nextQty, resolvedQty, r)
+		}
+		return last
+	}
+	if idx, err := strconv.Atoi(part); err == nil {
+		if idx < 0 || idx >= len(items) {
+			return 0
+		}
+		nextQty := qtyParts
+		if len(qtyParts) > 0 && qtyParts[0] == part {
+			nextQty = qtyParts[1:]
+		}
+		return countPath(items[idx], rest, nextQty, resolvedQty, r)
+	}
+	last := 0
+	for _, item := range items {
+		last = countPath(item, parts, qtyParts, resolvedQty, r)
+	}
+	return last
 }
 func TranscribeMapToProdutoRow(v map[string]any) (utils.ProdutoRow, error) {
 	var p utils.ProdutoRow

@@ -130,6 +130,7 @@ Each object in `fields` maps one value from the raw API response to one destinat
 |----------|------|----------|-------------|
 | `dst` | string | ✅ | Destination key — must match the `db` struct tag on the target row type |
 | `src` | string | — | Source key or dot-path in the current element |
+| `quantity_src` | string | — | Optional quantity field path when `op` is `count` (defaults to `1` per item) |
 | `op` | string | — | Operation to apply (see [Operations](#operations)) |
 | `src_raw_value` | string | — | Write a literal value; no source lookup performed |
 | `src_list` | string[] | — | Coalesce — additional fallback keys tried after `src` |
@@ -367,6 +368,7 @@ The `op` field controls how the resolved `src` value is transformed before being
 | `to_int` | Convert the resolved value to an integer |
 | `to_float` | Convert the resolved value to a float |
 | `sum` | Sum numeric values across array items in `src` (e.g. `itens.*.valorTotalLiquido` or `itens.valorTotalLiquido`) |
+| `count` | Accumulate per-key counts into `row_counter` (supports `src` with `itens.*.codigoProduto` and optional `quantity_src`, or `src_object_builder`) |
 | `days_to_now` | Parse a date from `format_date.raw` layout and output the number of calendar days between that date and today (result is an integer) |
 
 > Operations `disc_percent`, `disc_value`, `coalesce`, and `fetch` appear in internal constants but are not implemented in the current transcription switch. Do not use them in configs.
@@ -505,6 +507,43 @@ If each element requires a full nested rule (such as `src_list` coalesce or `cal
 ```
 
 Missing, `null`, or empty arrays evaluate to `0`.
+
+---
+
+## `count`
+
+Accumulates counts per key into `row_counter` (used by `MostSold` queries).
+
+Supports wildcard dot-paths with an optional `quantity_src` (which defaults to `1` per matched item when omitted):
+
+```json
+{
+  "src": "itens.*.codigoProduto",
+  "quantity_src": "quantidadeProdutos",
+  "dst": "id_externo",
+  "op": "count"
+}
+```
+
+Or using `src_object_builder` when item fields need transformations:
+
+```json
+{
+  "src_object_builder": {
+    "get_from": "itens",
+    "object_builder": {
+      "fields": [
+        { "src": "codigoProduto", "dst": "id_externo" },
+        { "src": "quantidadeProdutos", "dst": "quantidade" }
+      ]
+    }
+  },
+  "dst": "id_externo",
+  "op": "count"
+}
+```
+
+When using `union` on a `MostSold` config, union entries share the primary `row_counter` and inherit omitted `url`, `get_from`, `filters`, and `fields` from the parent config.
 
 ---
 
